@@ -55,7 +55,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[url('@/assets/hero-bg.jpg')] bg-cover bg-center bg-opacity-70">
+    <div className="min-h-screen bg-[url('@/assets/hero-bg.jpg')] bg-cover bg-center bg-opacity-20">
       <Navbar />
       {/* Videos Grid */}
       <section className="container px-4 py-12">
