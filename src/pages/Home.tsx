@@ -56,8 +56,8 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen relative h-64 bg-cover"
-      bg-center
+      className="min-h-screen relative h-64 bg-cover
+      bg-center"
       style="background-image: url('@/assets/hero-bg.jpg');"
     >
       <Navbar />
