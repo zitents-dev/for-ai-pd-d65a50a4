@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { LikeButton } from "@/components/LikeButton";
+import { CommentSection } from "@/components/CommentSection";
 
 interface Video {
   id: string;
@@ -264,6 +265,9 @@ export default function VideoView() {
                 ))}
               </div>
             )}
+
+            {/* Comments Section */}
+            <CommentSection videoId={video.id} />
           </div>
         </div>
       </div>
