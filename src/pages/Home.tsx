@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Navbar } from '@/components/Navbar';
-import { VideoCard } from '@/components/VideoCard';
-import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Navbar } from "@/components/Navbar";
+import { VideoCard } from "@/components/VideoCard";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface Video {
   id: string;
@@ -28,8 +28,9 @@ export default function Home() {
   const loadVideos = async () => {
     try {
       const { data, error } = await supabase
-        .from('videos')
-        .select(`
+        .from("videos")
+        .select(
+          `
           id,
           title,
           thumbnail_url,
@@ -40,20 +41,21 @@ export default function Home() {
             name,
             avatar_url
           )
-        `)
-        .order('created_at', { ascending: false });
+        `,
+        )
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setVideos(data || []);
     } catch (error) {
-      console.error('Error loading videos:', error);
+      console.error("Error loading videos:", error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[url('@/assets/hero-bg.jpg')] bg-cover bg-center bg-opacity-70">
       <Navbar />
       {/* Videos Grid */}
       <section className="container px-4 py-12">
@@ -68,10 +70,7 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {videos.map((video) => (
-              <VideoCard
-                key={video.id}
-                video={video}
-              />
+              <VideoCard key={video.id} video={video} />
             ))}
           </div>
         )}
