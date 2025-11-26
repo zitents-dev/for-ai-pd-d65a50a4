@@ -3,6 +3,7 @@ import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import heroBg from "@/assets/hero-bg.jpg";
 
 interface Video {
   id: string;
@@ -55,7 +56,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center opacity-25" style="background-image: url('@/assets/hero-bg.jpg');">
+    <div className="min-h-screen relative">
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-25 -z-10"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      />
       <Navbar />
       {/* Videos Grid */}
       <section className="container px-4 py-12">
