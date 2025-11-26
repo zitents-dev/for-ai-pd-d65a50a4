@@ -55,11 +55,7 @@ export default function Home() {
   };
 
   return (
-    <div
-      className="min-h-screen relative h-64 bg-cover
-      bg-center"
-      style="background-image: url('@/assets/hero-bg.jpg');"
-    >
+    <div className="min-h-screen bg-cover bg-center opacity-25" style="background-image: url('@/assets/hero-bg.jpg');">
       <Navbar />
       {/* Videos Grid */}
       <section className="container px-4 py-12">
