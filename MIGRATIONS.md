@@ -55,20 +55,7 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 
 ---
 
-### 5. Core Schema Rebuild
-**File**: `20251130073638_bd2006a5-8cba-4bbc-bfd3-b570af908ff8.sql`  
-**Date**: November 30, 2025
-
-**Changes**:
-- Comprehensive rebuild of core tables: `profiles`, `videos`, `likes`, `favorites`, `comments`
-- Consolidates and updates all RLS policies
-- Recreates storage buckets and access policies
-- Reimplements `handle_new_user()` function and trigger
-- Ensures consistent foreign key relationships
-
----
-
-### 6. Add Playlists Feature
+### 5. Add Playlists Feature
 **File**: `20251130105237_2cb8eb17-19d3-49be-9829-f24a06d82eaf.sql`  
 **Date**: November 30, 2025
 
@@ -81,7 +68,7 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 
 ---
 
-### 7. Fix Playlist Function Security
+### 6. Fix Playlist Function Security
 **File**: `20251130105307_0debe1f4-10c0-4f5c-a657-f733f04f795c.sql`  
 **Date**: November 30, 2025
 
@@ -91,7 +78,7 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 
 ---
 
-### 8. Add Watch History
+### 7. Add Watch History
 **File**: `20251130105900_5cf438e0-014f-4900-8d26-fdffaa98e654.sql`  
 **Date**: November 30, 2025
 
@@ -103,7 +90,7 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 
 ---
 
-### 9. Add Performance Indexes
+### 8. Add Performance Indexes
 **File**: `20251130111201_90392ba9-2b0c-42f5-8572-4bab69a44343.sql`  
 **Date**: November 30, 2025
 
@@ -117,6 +104,61 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 - Adds `idx_playlists_public_created` for public playlist discovery
 - Adds `idx_comments_video_created` for comment retrieval
 - Adds `idx_favorites_user_created` for user favorites
+
+---
+
+### 9. Add Video Content Restrictions
+**File**: `20251130115933_0fa7ae96-4e6f-41d0-a687-9e7edf463d78.sql`  
+**Date**: November 30, 2025
+
+**Changes**:
+- Adds `age_restriction` array column to videos (child, under_19, adult)
+- Adds `has_sexual_content` boolean flag
+- Adds `has_violence_drugs` boolean flag
+- Includes documentation comments for content filtering
+
+---
+
+### 10. Add User Content Preferences
+**File**: `20251130120600_18605d3b-b993-4819-b303-98360521ab84.sql`  
+**Date**: November 30, 2025
+
+**Changes**:
+- Adds content filtering preferences to profiles table:
+  - `hide_child_content`
+  - `hide_under19_content`
+  - `hide_adult_content`
+  - `hide_sexual_content`
+  - `hide_violence_drugs_content`
+
+---
+
+### 11. Add Profile Metadata Fields
+**File**: `20251130121557_3413efd4-ada1-4fb9-abde-d2b866049ecc.sql`  
+**Date**: November 30, 2025
+
+**Changes**:
+- Adds `name_updated_at` timestamp to track name changes
+- Adds `show_email` boolean for email visibility control
+- Backfills `name_updated_at` with existing `created_at` values
+
+---
+
+### 12. Add Profile Email Display
+**File**: `20251130121726_aac11811-e2d3-4616-98c4-5e8a180d1a6e.sql`  
+**Date**: November 30, 2025
+
+**Changes**:
+- Adds `email` text column to profiles for optional public display
+
+---
+
+### 13. Add Profile Banner Support
+**File**: `20251130121850_8cef40df-b5e2-4e31-8fa9-8b0a469bb4de.sql`  
+**Date**: November 30, 2025
+
+**Changes**:
+- Adds `banner_url` text column to profiles for banner image customization
 
 ---
 
