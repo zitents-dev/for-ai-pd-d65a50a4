@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,6 +22,10 @@ export default function Upload() {
   const [tags, setTags] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [promptCommand, setPromptCommand] = useState('');
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [aiSolution, setAiSolution] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -77,6 +83,10 @@ export default function Upload() {
           thumbnail_url: thumbnailUrl,
           duration,
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+          prompt_command: promptCommand || null,
+          show_prompt: showPrompt,
+          ai_solution: aiSolution || null,
+          category: category || null,
         });
 
       if (dbError) throw dbError;
@@ -165,7 +175,63 @@ export default function Upload() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={uploading || !videoFile}>
+              <div className="space-y-2">
+                <Label htmlFor="category">카테고리 *</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="카테고리 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="commercial">Commercial</SelectItem>
+                    <SelectItem value="fiction">Fiction</SelectItem>
+                    <SelectItem value="podcast">Podcast</SelectItem>
+                    <SelectItem value="entertainment">Entertainment</SelectItem>
+                    <SelectItem value="tutorial">Tutorial</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ai_solution">AI 솔루션 *</Label>
+                <Select value={aiSolution} onValueChange={setAiSolution}>
+                  <SelectTrigger id="ai_solution">
+                    <SelectValue placeholder="사용한 AI 솔루션 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NanoBanana">NanoBanana</SelectItem>
+                    <SelectItem value="Veo">Veo</SelectItem>
+                    <SelectItem value="Sora">Sora</SelectItem>
+                    <SelectItem value="Runway">Runway</SelectItem>
+                    <SelectItem value="Pika">Pika</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="prompt">프롬프트 명령어 (선택)</Label>
+                <Textarea
+                  id="prompt"
+                  value={promptCommand}
+                  onChange={(e) => setPromptCommand(e.target.value)}
+                  placeholder="AI 영상 생성에 사용한 프롬프트를 입력하세요"
+                  rows={3}
+                />
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="show-prompt"
+                    checked={showPrompt}
+                    onCheckedChange={setShowPrompt}
+                  />
+                  <Label htmlFor="show-prompt" className="font-normal">
+                    다른 사용자에게 프롬프트 공개
+                  </Label>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={uploading || !videoFile || !category || !aiSolution}>
                 {uploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

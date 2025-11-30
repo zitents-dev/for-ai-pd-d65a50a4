@@ -53,6 +53,74 @@ export type Database = {
           },
         ]
       }
+      directories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directory_videos: {
+        Row: {
+          added_at: string | null
+          directory_id: string
+          id: string
+          video_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          directory_id: string
+          id?: string
+          video_id: string
+        }
+        Update: {
+          added_at?: string | null
+          directory_id?: string
+          id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_videos_directory_id_fkey"
+            columns: ["directory_id"]
+            isOneToOne: false
+            referencedRelation: "directories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directory_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -93,18 +161,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          type: string
           user_id: string
           video_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
+          type?: string
           user_id: string
           video_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
+          type?: string
           user_id?: string
           video_id?: string
         }
@@ -149,12 +220,97 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          awarded_at: string | null
+          awarded_by: string | null
+          badge_type: Database["public"]["Enums"]["badge_type"]
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_by?: string | null
+          badge_type: Database["public"]["Enums"]["badge_type"]
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_by?: string | null
+          badge_type?: Database["public"]["Enums"]["badge_type"]
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_awarded_by_fkey"
+            columns: ["awarded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       videos: {
         Row: {
+          ai_solution: Database["public"]["Enums"]["ai_solution"] | null
+          category: Database["public"]["Enums"]["video_category"] | null
           created_at: string | null
           creator_id: string
           description: string | null
           id: string
+          prompt_command: string | null
+          show_prompt: boolean | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string
@@ -162,10 +318,14 @@ export type Database = {
           views: number | null
         }
         Insert: {
+          ai_solution?: Database["public"]["Enums"]["ai_solution"] | null
+          category?: Database["public"]["Enums"]["video_category"] | null
           created_at?: string | null
           creator_id: string
           description?: string | null
           id?: string
+          prompt_command?: string | null
+          show_prompt?: boolean | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
@@ -173,10 +333,14 @@ export type Database = {
           views?: number | null
         }
         Update: {
+          ai_solution?: Database["public"]["Enums"]["ai_solution"] | null
+          category?: Database["public"]["Enums"]["video_category"] | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
           id?: string
+          prompt_command?: string | null
+          show_prompt?: boolean | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
@@ -201,7 +365,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      ai_solution: "NanoBanana" | "Veo" | "Sora" | "Runway" | "Pika" | "Other"
+      badge_type: "best" | "official"
+      video_category:
+        | "education"
+        | "commercial"
+        | "fiction"
+        | "podcast"
+        | "entertainment"
+        | "tutorial"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -328,6 +501,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      ai_solution: ["NanoBanana", "Veo", "Sora", "Runway", "Pika", "Other"],
+      badge_type: ["best", "official"],
+      video_category: [
+        "education",
+        "commercial",
+        "fiction",
+        "podcast",
+        "entertainment",
+        "tutorial",
+        "other",
+      ],
+    },
   },
 } as const
