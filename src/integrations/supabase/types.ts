@@ -383,12 +383,15 @@ export type Database = {
       }
       videos: {
         Row: {
+          age_restriction: string[] | null
           ai_solution: Database["public"]["Enums"]["ai_solution"] | null
           category: Database["public"]["Enums"]["video_category"] | null
           created_at: string | null
           creator_id: string
           description: string | null
           duration: number | null
+          has_sexual_content: boolean | null
+          has_violence_drugs: boolean | null
           id: string
           prompt_command: string | null
           show_prompt: boolean | null
@@ -399,12 +402,15 @@ export type Database = {
           views: number | null
         }
         Insert: {
+          age_restriction?: string[] | null
           ai_solution?: Database["public"]["Enums"]["ai_solution"] | null
           category?: Database["public"]["Enums"]["video_category"] | null
           created_at?: string | null
           creator_id: string
           description?: string | null
           duration?: number | null
+          has_sexual_content?: boolean | null
+          has_violence_drugs?: boolean | null
           id?: string
           prompt_command?: string | null
           show_prompt?: boolean | null
@@ -415,12 +421,15 @@ export type Database = {
           views?: number | null
         }
         Update: {
+          age_restriction?: string[] | null
           ai_solution?: Database["public"]["Enums"]["ai_solution"] | null
           category?: Database["public"]["Enums"]["video_category"] | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
           duration?: number | null
+          has_sexual_content?: boolean | null
+          has_violence_drugs?: boolean | null
           id?: string
           prompt_command?: string | null
           show_prompt?: boolean | null
