@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Video {
@@ -39,11 +41,13 @@ const CATEGORIES = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [filtersLoaded, setFiltersLoaded] = useState(false);
   
   // Content filters
   const [hideChild, setHideChild] = useState(false);
@@ -54,10 +58,76 @@ export default function Home() {
 
   const VIDEOS_PER_PAGE = 12;
 
+  // Load user filter preferences on mount
   useEffect(() => {
-    setCurrentPage(1);
-    loadVideos(1);
-  }, [selectedCategory, hideChild, hideUnder19, hideAdult, hideSexual, hideViolence]);
+    if (user) {
+      loadFilterPreferences();
+    } else {
+      setFiltersLoaded(true);
+    }
+  }, [user]);
+
+  // Save filter preferences when they change (only after initial load)
+  useEffect(() => {
+    if (filtersLoaded && user) {
+      const timeoutId = setTimeout(() => {
+        saveFilterPreferences();
+      }, 500); // Debounce to avoid too many updates
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [hideChild, hideUnder19, hideAdult, hideSexual, hideViolence, filtersLoaded, user]);
+
+  useEffect(() => {
+    if (filtersLoaded) {
+      setCurrentPage(1);
+      loadVideos(1);
+    }
+  }, [selectedCategory, hideChild, hideUnder19, hideAdult, hideSexual, hideViolence, filtersLoaded]);
+
+  const loadFilterPreferences = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('hide_child_content, hide_under19_content, hide_adult_content, hide_sexual_content, hide_violence_drugs_content')
+        .eq('id', user!.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setHideChild(data.hide_child_content || false);
+        setHideUnder19(data.hide_under19_content || false);
+        setHideAdult(data.hide_adult_content || false);
+        setHideSexual(data.hide_sexual_content || false);
+        setHideViolence(data.hide_violence_drugs_content || false);
+      }
+    } catch (error) {
+      console.error('Error loading filter preferences:', error);
+    } finally {
+      setFiltersLoaded(true);
+    }
+  };
+
+  const saveFilterPreferences = async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          hide_child_content: hideChild,
+          hide_under19_content: hideUnder19,
+          hide_adult_content: hideAdult,
+          hide_sexual_content: hideSexual,
+          hide_violence_drugs_content: hideViolence,
+        })
+        .eq('id', user!.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving filter preferences:', error);
+      toast.error('Failed to save filter preferences');
+    }
+  };
 
   const loadVideos = async (pageNum: number = 1) => {
     try {

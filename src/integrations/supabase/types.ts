@@ -281,6 +281,11 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          hide_adult_content: boolean | null
+          hide_child_content: boolean | null
+          hide_sexual_content: boolean | null
+          hide_under19_content: boolean | null
+          hide_violence_drugs_content: boolean | null
           id: string
           name: string | null
         }
@@ -288,6 +293,11 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          hide_adult_content?: boolean | null
+          hide_child_content?: boolean | null
+          hide_sexual_content?: boolean | null
+          hide_under19_content?: boolean | null
+          hide_violence_drugs_content?: boolean | null
           id: string
           name?: string | null
         }
@@ -295,6 +305,11 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          hide_adult_content?: boolean | null
+          hide_child_content?: boolean | null
+          hide_sexual_content?: boolean | null
+          hide_under19_content?: boolean | null
+          hide_violence_drugs_content?: boolean | null
           id?: string
           name?: string | null
         }
