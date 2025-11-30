@@ -321,7 +321,10 @@ export default function VideoView() {
             </div>
 
             {/* Creator Info */}
-            <Card className="p-4">
+            <Card 
+              className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={() => navigate(`/profile/${video.creator_id}`)}
+            >
               <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={video.profiles.avatar_url || ""} />

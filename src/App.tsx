@@ -11,6 +11,7 @@ import Upload from "./pages/Upload";
 import VideoView from "./pages/VideoView";
 import Search from "./pages/Search";
 import Playlist from "./pages/Playlist";
+import PublicProfile from "./pages/PublicProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/video/:id" element={<VideoView />} />
             <Route path="/search" element={<Search />} />
             <Route path="/playlist/:id" element={<Playlist />} />
+            <Route path="/profile/:userId" element={<PublicProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
