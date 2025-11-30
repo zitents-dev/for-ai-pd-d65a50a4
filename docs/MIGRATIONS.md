@@ -100,3 +100,29 @@ SET request.jwt.claims.sub = 'user-uuid';
 SELECT * FROM your_table;
 RESET ROLE;
 ```
+
+---
+
+## Backup & Recovery
+
+For comprehensive backup and restore procedures, see [BACKUP.md](./BACKUP.md).
+
+### Quick Backup Before Migration
+
+```bash
+# Create backup before running migration
+supabase db dump -f pre_migration_backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Create restore point
+psql -c "SELECT pg_create_restore_point('before_migration_X');"
+```
+
+### Rollback Failed Migration
+
+```sql
+-- If migration fails, restore from backup
+psql -f pre_migration_backup_20251130_120000.sql
+
+-- Or use restore point
+-- (Contact Supabase support for PITR recovery)
+```

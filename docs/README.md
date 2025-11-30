@@ -19,6 +19,14 @@ Database migration history and best practices:
 - Rollback procedures
 - Common pitfalls to avoid
 
+### [BACKUP.md](./BACKUP.md)
+Comprehensive backup and restore procedures:
+- Automated and manual backup strategies
+- Point-in-Time Recovery (PITR)
+- Disaster recovery procedures
+- Storage bucket backups
+- Backup verification and testing
+
 ### [FUNCTIONS.md](../supabase/FUNCTIONS.md)
 Edge Functions documentation:
 - Function descriptions and usage
@@ -38,6 +46,7 @@ Edge Functions documentation:
 - [RLS Policies](../SCHEMA.md#security-considerations) - Row-level security setup
 - [Performance](../SCHEMA.md#performance-optimizations) - Query optimization
 - [Maintenance](./MIGRATIONS.md#database-maintenance) - Regular tasks
+- [Backup & Recovery](./BACKUP.md) - Data protection procedures
 
 ### For DevOps
 - [Edge Functions](../supabase/FUNCTIONS.md) - Deployment and monitoring
