@@ -11,13 +11,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Image } from 'lucide-react';
 
 interface Profile {
   id: string;
   name: string;
   bio: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   hide_child_content: boolean;
   hide_under19_content: boolean;
   hide_adult_content: boolean;
@@ -36,6 +37,7 @@ export default function Settings() {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
 
   // Filter preferences
   const [hideChild, setHideChild] = useState(false);
@@ -88,6 +90,7 @@ export default function Settings() {
 
     try {
       let avatarUrl = profile?.avatar_url;
+      let bannerUrl = profile?.banner_url;
 
       // Upload new avatar if selected
       if (avatarFile) {
@@ -107,6 +110,24 @@ export default function Settings() {
         avatarUrl = publicUrl;
       }
 
+      // Upload new banner if selected
+      if (bannerFile) {
+        const fileExt = bannerFile.name.split('.').pop();
+        const filePath = `${user!.id}/banner.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('thumbnails')
+          .upload(filePath, bannerFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('thumbnails')
+          .getPublicUrl(filePath);
+
+        bannerUrl = publicUrl;
+      }
+
       // Update profile
       const { error } = await supabase
         .from('profiles')
@@ -114,6 +135,7 @@ export default function Settings() {
           name,
           bio,
           avatar_url: avatarUrl,
+          banner_url: bannerUrl,
           hide_child_content: hideChild,
           hide_under19_content: hideUnder19,
           hide_adult_content: hideAdult,
@@ -157,6 +179,40 @@ export default function Settings() {
               <CardDescription>프로필 정보를 관리하세요</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="banner">프로필 배너</Label>
+                {(bannerFile || profile?.banner_url) && (
+                  <div className="relative w-full h-32 rounded-lg overflow-hidden mb-2">
+                    <img
+                      src={bannerFile ? URL.createObjectURL(bannerFile) : profile?.banner_url || ''}
+                      alt="Banner preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="banner"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
+                  />
+                  {bannerFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setBannerFile(null)}
+                    >
+                      제거
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  권장 크기: 1200x400px
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="name">이름 *</Label>
                 <Input

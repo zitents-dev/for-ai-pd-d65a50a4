@@ -14,6 +14,7 @@ interface Profile {
   name: string;
   bio: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   show_email: boolean | null;
   email: string | null;
 }
@@ -55,7 +56,7 @@ export default function PublicProfile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, name, bio, avatar_url, show_email, email")
+        .select("id, name, bio, avatar_url, banner_url, show_email, email")
         .eq("id", userId)
         .maybeSingle();
 
@@ -134,10 +135,21 @@ export default function PublicProfile() {
 
       <div className="container px-4 py-8 max-w-7xl mx-auto">
         {/* Profile Header */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
+        <Card className="mb-8 overflow-hidden">
+          {/* Banner Section */}
+          <div className="relative h-48 md:h-64 bg-gradient-to-r from-primary/20 to-primary/10">
+            {profile.banner_url && (
+              <img
+                src={profile.banner_url}
+                alt="Profile banner"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+          
+          <CardContent className="pt-6 -mt-16 md:-mt-20">
             <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-              <Avatar className="h-24 w-24 md:h-32 md:w-32">
+              <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background">
                 <AvatarImage src={profile.avatar_url || undefined} />
                 <AvatarFallback className="text-3xl md:text-4xl">
                   {profile.name[0]}
