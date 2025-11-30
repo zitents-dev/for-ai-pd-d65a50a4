@@ -196,6 +196,86 @@ export type Database = {
           },
         ]
       }
+      playlist_videos: {
+        Row: {
+          added_at: string | null
+          id: string
+          playlist_id: string
+          position: number
+          video_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          id?: string
+          playlist_id: string
+          position?: number
+          video_id: string
+        }
+        Update: {
+          added_at?: string | null
+          id?: string
+          playlist_id?: string
+          position?: number
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_videos_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlist_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      playlists: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
