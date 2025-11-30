@@ -24,6 +24,7 @@ interface Profile {
   avatar_url: string | null;
   name_updated_at: string;
   show_email: boolean;
+  email: string | null;
 }
 
 interface Video {
@@ -197,6 +198,7 @@ export default function MyPage() {
         bio,
         avatar_url: avatarUrl,
         show_email: showEmail,
+        email: user?.email || null,
       };
 
       // Only update name if it changed and user can change it
