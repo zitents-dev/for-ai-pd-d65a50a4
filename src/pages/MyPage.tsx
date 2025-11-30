@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DirectoryManager } from '@/components/DirectoryManager';
+import { PlaylistManager } from '@/components/PlaylistManager';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -296,6 +297,9 @@ export default function MyPage() {
             </div>
           )}
         </div>
+
+        {/* Playlists Section */}
+        <PlaylistManager />
 
         {/* Directories Section */}
         <DirectoryManager />

@@ -5,7 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Eye, Calendar, Info } from "lucide-react";
+import { Heart, Eye, Calendar, Info, ListPlus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -14,6 +14,7 @@ import { DislikeButton } from "@/components/DislikeButton";
 import { ReportDialog } from "@/components/ReportDialog";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
+import { AddToPlaylistDialog } from "@/components/AddToPlaylistDialog";
 import {
   Collapsible,
   CollapsibleContent,
@@ -58,6 +59,7 @@ export default function VideoView() {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [creatorBadges, setCreatorBadges] = useState<Badge[]>([]);
+  const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -298,6 +300,22 @@ export default function VideoView() {
                   <Heart className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
                   {isFavorited ? "Favorited" : "Favorite"}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!user) {
+                      toast.error("Please sign in to add to playlist");
+                      navigate("/auth");
+                      return;
+                    }
+                    setPlaylistDialogOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <ListPlus className="w-4 h-4" />
+                  Add to Playlist
+                </Button>
                 <ReportDialog videoId={video.id} />
               </div>
             </div>
@@ -380,6 +398,13 @@ export default function VideoView() {
           </div>
         </div>
       </div>
+
+      {/* Add to Playlist Dialog */}
+      <AddToPlaylistDialog
+        videoId={video.id}
+        open={playlistDialogOpen}
+        onOpenChange={setPlaylistDialogOpen}
+      />
     </div>
   );
 }
