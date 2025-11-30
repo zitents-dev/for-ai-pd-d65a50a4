@@ -12,6 +12,9 @@ interface Video {
   duration: number;
   views: number;
   created_at: string;
+  age_restriction?: string[];
+  has_sexual_content?: boolean;
+  has_violence_drugs?: boolean;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -62,6 +65,9 @@ export const RecommendedVideos = () => {
             duration,
             views,
             created_at,
+            age_restriction,
+            has_sexual_content,
+            has_violence_drugs,
             profiles (
               name,
               avatar_url

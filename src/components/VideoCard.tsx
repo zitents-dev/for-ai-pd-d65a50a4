@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Eye } from "lucide-react";
+import { Eye, AlertTriangle } from "lucide-react";
 
 interface VideoCardProps {
   video: {
@@ -12,6 +13,9 @@ interface VideoCardProps {
     duration: number | null;
     views: number;
     created_at: string;
+    age_restriction?: string[];
+    has_sexual_content?: boolean;
+    has_violence_drugs?: boolean;
     profiles: {
       name: string;
       avatar_url: string | null;
@@ -31,6 +35,19 @@ export const VideoCard = ({ video }: VideoCardProps) => {
     }
   };
 
+  const hasWarnings = 
+    (video.age_restriction && video.age_restriction.length > 0) ||
+    video.has_sexual_content ||
+    video.has_violence_drugs;
+
+  const getAgeWarningText = () => {
+    if (!video.age_restriction || video.age_restriction.length === 0) return null;
+    if (video.age_restriction.includes('adult')) return '성인';
+    if (video.age_restriction.includes('under_19')) return '19+';
+    if (video.age_restriction.includes('child')) return '청소년';
+    return null;
+  };
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -45,6 +62,25 @@ export const VideoCard = ({ video }: VideoCardProps) => {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black/90"></div>
+        )}
+        {hasWarnings && (
+          <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+            {getAgeWarningText() && (
+              <Badge variant="destructive" className="text-xs">
+                {getAgeWarningText()}
+              </Badge>
+            )}
+            {video.has_sexual_content && (
+              <Badge variant="destructive" className="text-xs">
+                성적표현
+              </Badge>
+            )}
+            {video.has_violence_drugs && (
+              <Badge variant="destructive" className="text-xs">
+                폭력/마약
+              </Badge>
+            )}
+          </div>
         )}
         {video.duration && (
           <span className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm">
