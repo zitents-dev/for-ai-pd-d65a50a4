@@ -13,7 +13,8 @@ import { WatchHistory } from '@/components/WatchHistory';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Upload, LogOut } from 'lucide-react';
+import { Loader2, Upload, LogOut, Camera, Mail } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { VideoCard } from '@/components/VideoCard';
 
 interface Profile {
@@ -21,6 +22,8 @@ interface Profile {
   name: string;
   bio: string | null;
   avatar_url: string | null;
+  name_updated_at: string;
+  show_email: boolean;
 }
 
 interface Video {
@@ -61,6 +64,10 @@ export default function MyPage() {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [showEmail, setShowEmail] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [canChangeName, setCanChangeName] = useState(true);
+  const [nextNameChangeDate, setNextNameChangeDate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -89,6 +96,18 @@ export default function MyPage() {
       setProfile(data);
       setName(data.name);
       setBio(data.bio || '');
+      setShowEmail(data.show_email || false);
+
+      // Check if user can change name (14 days since last change)
+      const nameUpdatedAt = new Date(data.name_updated_at);
+      const daysSinceUpdate = (Date.now() - nameUpdatedAt.getTime()) / (1000 * 60 * 60 * 24);
+      setCanChangeName(daysSinceUpdate >= 14);
+      
+      if (daysSinceUpdate < 14) {
+        const nextChangeDate = new Date(nameUpdatedAt);
+        nextChangeDate.setDate(nextChangeDate.getDate() + 14);
+        setNextNameChangeDate(nextChangeDate);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -153,14 +172,53 @@ export default function MyPage() {
     setSaving(true);
 
     try {
+      let avatarUrl = profile?.avatar_url;
+
+      // Upload new avatar if selected
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const filePath = `${user!.id}/avatar.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('thumbnails')
+          .upload(filePath, avatarFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('thumbnails')
+          .getPublicUrl(filePath);
+
+        avatarUrl = publicUrl;
+      }
+
+      // Prepare update data
+      const updateData: any = {
+        bio,
+        avatar_url: avatarUrl,
+        show_email: showEmail,
+      };
+
+      // Only update name if it changed and user can change it
+      if (name !== profile?.name) {
+        if (!canChangeName) {
+          toast.error('이름은 14일에 한 번만 변경할 수 있습니다');
+          setSaving(false);
+          return;
+        }
+        updateData.name = name;
+        updateData.name_updated_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ name, bio })
+        .update(updateData)
         .eq('id', user!.id);
 
       if (error) throw error;
       
-      toast.success('Profile updated successfully!');
+      toast.success('프로필이 업데이트되었습니다!');
+      setAvatarFile(null);
       loadProfile();
     } catch (error: any) {
       toast.error(error.message);
@@ -195,10 +253,25 @@ export default function MyPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="text-2xl">{name[0]}</AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={avatarFile ? URL.createObjectURL(avatarFile) : profile?.avatar_url || undefined} />
+                    <AvatarFallback className="text-2xl">{name[0]}</AvatarFallback>
+                  </Avatar>
+                  <Label 
+                    htmlFor="avatar-upload" 
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Label>
+                  <Input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                  />
+                </div>
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -209,7 +282,13 @@ export default function MyPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    disabled={!canChangeName}
                   />
+                  {!canChangeName && nextNameChangeDate && (
+                    <p className="text-xs text-muted-foreground">
+                      다음 변경 가능: {nextNameChangeDate.toLocaleDateString('ko-KR')}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -221,6 +300,24 @@ export default function MyPage() {
                     placeholder="당신을 소개하세요!"
                     rows={4}
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>이메일 주소</Label>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Mail className="h-4 w-4" />
+                    <span>{user?.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="show-email"
+                      checked={showEmail}
+                      onCheckedChange={(checked) => setShowEmail(checked as boolean)}
+                    />
+                    <Label htmlFor="show-email" className="font-normal cursor-pointer text-sm">
+                      프로필에 이메일 표시
+                    </Label>
+                  </div>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={saving}>

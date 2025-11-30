@@ -288,6 +288,8 @@ export type Database = {
           hide_violence_drugs_content: boolean | null
           id: string
           name: string | null
+          name_updated_at: string | null
+          show_email: boolean | null
         }
         Insert: {
           avatar_url?: string | null
@@ -300,6 +302,8 @@ export type Database = {
           hide_violence_drugs_content?: boolean | null
           id: string
           name?: string | null
+          name_updated_at?: string | null
+          show_email?: boolean | null
         }
         Update: {
           avatar_url?: string | null
@@ -312,6 +316,8 @@ export type Database = {
           hide_violence_drugs_content?: boolean | null
           id?: string
           name?: string | null
+          name_updated_at?: string | null
+          show_email?: boolean | null
         }
         Relationships: []
       }
