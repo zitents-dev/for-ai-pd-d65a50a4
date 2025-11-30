@@ -22,6 +22,15 @@ interface VideoCardProps {
 export const VideoCard = ({ video }: VideoCardProps) => {
   const navigate = useNavigate();
 
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Get creator_id from the video data if available, otherwise extract from profiles relation
+    const creatorId = (video as any).creator_id || (video as any).profiles?.id;
+    if (creatorId) {
+      navigate(`/profile/${creatorId}`);
+    }
+  };
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -45,7 +54,10 @@ export const VideoCard = ({ video }: VideoCardProps) => {
       </div>
       <div className="p-4">
         <div className="flex gap-3">
-          <Avatar className="w-10 h-10">
+          <Avatar 
+            className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleAvatarClick}
+          >
             <AvatarImage src={video.profiles.avatar_url || ""} />
             <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
           </Avatar>
@@ -53,7 +65,12 @@ export const VideoCard = ({ video }: VideoCardProps) => {
             <h3 className="font-semibold text-foreground line-clamp-2 mb-1">
               {video.title}
             </h3>
-            <p className="text-sm text-muted-foreground">{video.profiles.name}</p>
+            <p 
+              className="text-sm text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              onClick={handleAvatarClick}
+            >
+              {video.profiles.name}
+            </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye className="w-3 h-3" />
