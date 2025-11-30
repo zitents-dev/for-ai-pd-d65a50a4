@@ -48,6 +48,13 @@ export type Database = {
             foreignKeyName: "comments_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
+            referencedRelation: "video_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
             referencedRelation: "videos"
             referencedColumns: ["id"]
           },
@@ -116,6 +123,13 @@ export type Database = {
             foreignKeyName: "directory_videos_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
+            referencedRelation: "video_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directory_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
             referencedRelation: "videos"
             referencedColumns: ["id"]
           },
@@ -146,6 +160,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_stats"
             referencedColumns: ["id"]
           },
           {
@@ -185,6 +206,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_stats"
             referencedColumns: ["id"]
           },
           {
@@ -257,6 +285,13 @@ export type Database = {
             foreignKeyName: "reports_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
+            referencedRelation: "video_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
             referencedRelation: "videos"
             referencedColumns: ["id"]
           },
@@ -308,6 +343,7 @@ export type Database = {
           created_at: string | null
           creator_id: string
           description: string | null
+          duration: number | null
           id: string
           prompt_command: string | null
           show_prompt: boolean | null
@@ -323,6 +359,7 @@ export type Database = {
           created_at?: string | null
           creator_id: string
           description?: string | null
+          duration?: number | null
           id?: string
           prompt_command?: string | null
           show_prompt?: boolean | null
@@ -338,6 +375,7 @@ export type Database = {
           created_at?: string | null
           creator_id?: string
           description?: string | null
+          duration?: number | null
           id?: string
           prompt_command?: string | null
           show_prompt?: boolean | null
@@ -359,7 +397,14 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      video_stats: {
+        Row: {
+          dislikes_count: number | null
+          id: string | null
+          likes_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
