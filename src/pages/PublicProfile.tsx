@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Video } from "lucide-react";
+import { Loader2, Video, Mail } from "lucide-react";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 
 interface Profile {
@@ -14,6 +14,11 @@ interface Profile {
   name: string;
   bio: string | null;
   avatar_url: string | null;
+  show_email: boolean | null;
+}
+
+interface User {
+  email: string;
 }
 
 interface Video {
@@ -37,6 +42,7 @@ export default function PublicProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +59,7 @@ export default function PublicProfile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, name, bio, avatar_url")
+        .select("id, name, bio, avatar_url, show_email")
         .eq("id", userId)
         .maybeSingle();
 
@@ -66,6 +72,14 @@ export default function PublicProfile() {
       }
 
       setProfile(data);
+
+      // Load email if show_email is true
+      if (data.show_email) {
+        const { data: { user } } = await supabase.auth.admin.getUserById(userId!);
+        if (user?.email) {
+          setUserEmail(user.email);
+        }
+      }
     } catch (error: any) {
       toast.error(error.message);
       navigate("/");
@@ -150,6 +164,13 @@ export default function PublicProfile() {
 
                 {profile.bio && (
                   <p className="text-muted-foreground text-lg mb-4">{profile.bio}</p>
+                )}
+
+                {userEmail && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                    <Mail className="h-4 w-4" />
+                    <span>{userEmail}</span>
+                  </div>
                 )}
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
