@@ -13,7 +13,7 @@ import { WatchHistory } from '@/components/WatchHistory';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Upload, LogOut, Camera, Mail } from 'lucide-react';
+import { Loader2, Upload, LogOut, Camera, Mail, Image } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { VideoCard } from '@/components/VideoCard';
 
@@ -22,6 +22,7 @@ interface Profile {
   name: string;
   bio: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   name_updated_at: string;
   show_email: boolean;
   email: string | null;
@@ -67,6 +68,7 @@ export default function MyPage() {
   const [bio, setBio] = useState('');
   const [showEmail, setShowEmail] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [canChangeName, setCanChangeName] = useState(true);
   const [nextNameChangeDate, setNextNameChangeDate] = useState<Date | null>(null);
 
@@ -174,6 +176,7 @@ export default function MyPage() {
 
     try {
       let avatarUrl = profile?.avatar_url;
+      let bannerUrl = profile?.banner_url;
 
       // Upload new avatar if selected
       if (avatarFile) {
@@ -193,10 +196,29 @@ export default function MyPage() {
         avatarUrl = publicUrl;
       }
 
+      // Upload new banner if selected
+      if (bannerFile) {
+        const fileExt = bannerFile.name.split('.').pop();
+        const filePath = `${user!.id}/banner.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('thumbnails')
+          .upload(filePath, bannerFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('thumbnails')
+          .getPublicUrl(filePath);
+
+        bannerUrl = publicUrl;
+      }
+
       // Prepare update data
       const updateData: any = {
         bio,
         avatar_url: avatarUrl,
+        banner_url: bannerUrl,
         show_email: showEmail,
         email: user?.email || null,
       };
@@ -221,6 +243,7 @@ export default function MyPage() {
       
       toast.success('프로필이 업데이트되었습니다!');
       setAvatarFile(null);
+      setBannerFile(null);
       loadProfile();
     } catch (error: any) {
       toast.error(error.message);
@@ -249,14 +272,38 @@ export default function MyPage() {
       <div className="container px-4 py-8 max-w-6xl mx-auto">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Profile Card */}
-          <Card className="md:col-span-1">
+          <Card className="md:col-span-1 overflow-hidden">
+            {/* Banner Section */}
+            <div className="relative h-32 bg-gradient-to-r from-primary/20 to-primary/10">
+              {(bannerFile || profile?.banner_url) && (
+                <img
+                  src={bannerFile ? URL.createObjectURL(bannerFile) : profile?.banner_url || ''}
+                  alt="Profile banner"
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <Label 
+                htmlFor="banner-upload" 
+                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-background transition-colors"
+              >
+                <Image className="h-4 w-4" />
+              </Label>
+              <Input
+                id="banner-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
+              />
+            </div>
+            
             <CardHeader>
               <CardTitle>프로필</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
+              <div className="flex flex-col items-center space-y-4 -mt-12">
                 <div className="relative">
-                  <Avatar className="h-24 w-24">
+                  <Avatar className="h-24 w-24 border-4 border-background">
                     <AvatarImage src={avatarFile ? URL.createObjectURL(avatarFile) : profile?.avatar_url || undefined} />
                     <AvatarFallback className="text-2xl">{name[0]}</AvatarFallback>
                   </Avatar>
