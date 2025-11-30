@@ -30,6 +30,9 @@ interface Video {
   duration: number;
   views: number;
   created_at: string;
+  age_restriction?: string[];
+  has_sexual_content?: boolean;
+  has_violence_drugs?: boolean;
 }
 
 interface FavoriteVideo {
@@ -39,6 +42,9 @@ interface FavoriteVideo {
   duration: number;
   views: number;
   created_at: string;
+  age_restriction?: string[];
+  has_sexual_content?: boolean;
+  has_violence_drugs?: boolean;
   profiles: {
     name: string;
     avatar_url: string | null;
