@@ -34,7 +34,8 @@ export const LikeButton = ({ videoId, initialLiked, initialLikesCount }: LikeBut
           .from("likes")
           .delete()
           .eq("video_id", videoId)
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .eq("type", "like");
 
         if (error) throw error;
 
@@ -42,9 +43,17 @@ export const LikeButton = ({ videoId, initialLiked, initialLikesCount }: LikeBut
         setLikesCount((prev) => prev - 1);
         toast.success("좋아요 취소");
       } else {
+        // First, remove any existing dislike
+        await supabase
+          .from("likes")
+          .delete()
+          .eq("video_id", videoId)
+          .eq("user_id", user.id);
+
+        // Then add like
         const { error } = await supabase
           .from("likes")
-          .insert({ video_id: videoId, user_id: user.id });
+          .insert({ video_id: videoId, user_id: user.id, type: "like" });
 
         if (error) throw error;
 

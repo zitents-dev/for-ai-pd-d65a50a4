@@ -5,12 +5,20 @@ import { Navbar } from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Eye, Calendar } from "lucide-react";
+import { Heart, Eye, Calendar, Info } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { LikeButton } from "@/components/LikeButton";
+import { DislikeButton } from "@/components/DislikeButton";
+import { ReportDialog } from "@/components/ReportDialog";
+import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface Video {
   id: string;
@@ -21,12 +29,23 @@ interface Video {
   duration: number | null;
   views: number;
   likes_count: number;
+  dislikes_count: number;
   tags: string[] | null;
   created_at: string;
+  prompt_command: string | null;
+  show_prompt: boolean | null;
+  ai_solution: string | null;
+  category: string | null;
+  creator_id: string;
   profiles: {
+    id: string;
     name: string;
     avatar_url: string | null;
   };
+}
+
+interface Badge {
+  badge_type: "best" | "official";
 }
 
 export default function VideoView() {
@@ -37,12 +56,15 @@ export default function VideoView() {
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [isDisliked, setIsDisliked] = useState(false);
+  const [creatorBadges, setCreatorBadges] = useState<Badge[]>([]);
 
   useEffect(() => {
     if (id) {
       loadVideo();
       checkFavorite();
       checkLike();
+      checkDislike();
       incrementViews();
     }
   }, [id]);
@@ -63,6 +85,16 @@ export default function VideoView() {
 
       if (error) throw error;
       setVideo(data);
+      
+      // Load creator badges
+      if (data?.creator_id) {
+        const { data: badges } = await supabase
+          .from("user_badges")
+          .select("badge_type")
+          .eq("user_id", data.creator_id);
+        
+        setCreatorBadges(badges || []);
+      }
     } catch (error) {
       console.error("Error loading video:", error);
       toast.error("Failed to load video");
@@ -97,11 +129,30 @@ export default function VideoView() {
         .select("id")
         .eq("user_id", user.id)
         .eq("video_id", id)
+        .eq("type", "like")
         .maybeSingle();
 
       setIsLiked(!!data);
     } catch (error) {
       console.error("Error checking like:", error);
+    }
+  };
+
+  const checkDislike = async () => {
+    if (!user || !id) return;
+
+    try {
+      const { data } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("video_id", id)
+        .eq("type", "dislike")
+        .maybeSingle();
+
+      setIsDisliked(!!data);
+    } catch (error) {
+      console.error("Error checking dislike:", error);
     }
   };
 
@@ -214,20 +265,29 @@ export default function VideoView() {
                   </span>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <LikeButton 
-                  videoId={video.id} 
-                  initialLiked={isLiked} 
-                  initialLikesCount={video.likes_count || 0} 
-                />
+              <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2">
+                  <LikeButton 
+                    videoId={video.id} 
+                    initialLiked={isLiked} 
+                    initialLikesCount={video.likes_count || 0} 
+                  />
+                  <DislikeButton
+                    videoId={video.id}
+                    initialDisliked={isDisliked}
+                    initialDislikesCount={video.dislikes_count || 0}
+                  />
+                </div>
                 <Button
                   variant={isFavorited ? "default" : "outline"}
+                  size="sm"
                   onClick={toggleFavorite}
                   className="gap-2"
                 >
                   <Heart className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
-                  {isFavorited ? "Favorited" : "Add to Favorites"}
+                  {isFavorited ? "Favorited" : "Favorite"}
                 </Button>
+                <ReportDialog videoId={video.id} />
               </div>
             </div>
 
@@ -239,10 +299,48 @@ export default function VideoView() {
                   <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{video.profiles.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-foreground">{video.profiles.name}</h3>
+                    <BadgeDisplay badges={creatorBadges} size="sm" />
+                  </div>
                 </div>
               </div>
             </Card>
+
+            {/* Video Details */}
+            {(video.ai_solution || video.category || (video.prompt_command && video.show_prompt)) && (
+              <Card className="p-4">
+                <div className="space-y-3">
+                  {video.ai_solution && (
+                    <div>
+                      <span className="text-sm font-semibold text-foreground">AI Solution: </span>
+                      <span className="text-sm text-muted-foreground">{video.ai_solution}</span>
+                    </div>
+                  )}
+                  {video.category && (
+                    <div>
+                      <span className="text-sm font-semibold text-foreground">Category: </span>
+                      <span className="text-sm text-muted-foreground capitalize">{video.category}</span>
+                    </div>
+                  )}
+                  {video.prompt_command && video.show_prompt && (
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
+                          <Info className="w-4 h-4" />
+                          <span className="text-sm font-semibold">프롬프트 명령어 보기</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
+                          {video.prompt_command}
+                        </pre>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                </div>
+              </Card>
+            )}
 
             {/* Description */}
             {video.description && (

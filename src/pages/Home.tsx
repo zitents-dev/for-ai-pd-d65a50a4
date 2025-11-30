@@ -3,6 +3,7 @@ import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Video {
@@ -18,17 +19,29 @@ interface Video {
   };
 }
 
+const CATEGORIES = [
+  { value: "all", label: "All" },
+  { value: "education", label: "Education" },
+  { value: "commercial", label: "Commercial" },
+  { value: "fiction", label: "Fiction" },
+  { value: "podcast", label: "Podcast" },
+  { value: "entertainment", label: "Entertainment" },
+  { value: "tutorial", label: "Tutorial" },
+  { value: "other", label: "Other" },
+];
+
 export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
     loadVideos();
-  }, []);
+  }, [selectedCategory]);
 
   const loadVideos = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("videos")
         .select(
           `
@@ -38,13 +51,19 @@ export default function Home() {
           duration,
           views,
           created_at,
+          category,
           profiles (
             name,
             avatar_url
           )
         `,
-        )
-        .order("created_at", { ascending: false });
+        );
+      
+      if (selectedCategory !== "all") {
+        query = query.eq("category", selectedCategory);
+      }
+      
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       setVideos(data || []);
@@ -62,8 +81,25 @@ export default function Home() {
         style={{ backgroundImage: `url(${heroBg})` }}
       />
       <Navbar />
+      
+      {/* Category Filter */}
+      <section className="container px-4 py-6">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {CATEGORIES.map((cat) => (
+            <Button
+              key={cat.value}
+              variant={selectedCategory === cat.value ? "default" : "outline"}
+              onClick={() => setSelectedCategory(cat.value)}
+              className="whitespace-nowrap"
+            >
+              {cat.label}
+            </Button>
+          ))}
+        </div>
+      </section>
+
       {/* Videos Grid */}
-      <section className="container px-4 py-12">
+      <section className="container px-4 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
