@@ -440,6 +440,42 @@ export type Database = {
           },
         ]
       }
+      watch_history: {
+        Row: {
+          id: string
+          user_id: string
+          video_id: string
+          watched_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          video_id: string
+          watched_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          video_id?: string
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watch_history_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

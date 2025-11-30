@@ -68,6 +68,7 @@ export default function VideoView() {
       checkLike();
       checkDislike();
       incrementViews();
+      trackWatchHistory();
     }
   }, [id]);
 
@@ -188,6 +189,30 @@ export default function VideoView() {
       }
     } catch (error) {
       console.error("Error incrementing views:", error);
+    }
+  };
+
+  const trackWatchHistory = async () => {
+    if (!user || !id) return;
+
+    try {
+      // Use upsert to either insert new record or update existing one
+      const { error } = await supabase
+        .from("watch_history")
+        .upsert(
+          {
+            user_id: user.id,
+            video_id: id,
+            watched_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id,video_id",
+          }
+        );
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error tracking watch history:", error);
     }
   };
 
