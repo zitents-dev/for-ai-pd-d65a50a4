@@ -21,6 +21,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Database Schema](./SCHEMA.md)** - Complete database structure and RLS policies
 - **[Edge Functions](./supabase/FUNCTIONS.md)** - Backend API reference
 - **[Migrations](./docs/MIGRATIONS.md)** - Database migration history and best practices
+- **[Backup & Restore](./docs/BACKUP.md)** - Comprehensive backup and recovery procedures
 - **[Architecture Overview](./docs/README.md)** - System architecture and data flows
 
 ## Project info
