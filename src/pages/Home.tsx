@@ -4,8 +4,11 @@ import OptimizedVideoCard from "@/components/OptimizedVideoCard";
 import { TrendingSection } from "@/components/TrendingSection";
 import { RecommendedVideos } from "@/components/RecommendedVideos";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Video {
@@ -41,13 +44,20 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  // Content filters
+  const [hideChild, setHideChild] = useState(false);
+  const [hideUnder19, setHideUnder19] = useState(false);
+  const [hideAdult, setHideAdult] = useState(false);
+  const [hideSexual, setHideSexual] = useState(false);
+  const [hideViolence, setHideViolence] = useState(false);
 
   const VIDEOS_PER_PAGE = 12;
 
   useEffect(() => {
     setCurrentPage(1);
     loadVideos(1);
-  }, [selectedCategory]);
+  }, [selectedCategory, hideChild, hideUnder19, hideAdult, hideSexual, hideViolence]);
 
   const loadVideos = async (pageNum: number = 1) => {
     try {
@@ -82,6 +92,23 @@ export default function Home() {
       
       if (selectedCategory !== "all") {
         query = query.eq("category", selectedCategory as any);
+      }
+      
+      // Apply content filters
+      if (hideChild) {
+        query = query.not("age_restriction", "cs", '{"child"}');
+      }
+      if (hideUnder19) {
+        query = query.not("age_restriction", "cs", '{"under_19"}');
+      }
+      if (hideAdult) {
+        query = query.not("age_restriction", "cs", '{"adult"}');
+      }
+      if (hideSexual) {
+        query = query.eq("has_sexual_content", false);
+      }
+      if (hideViolence) {
+        query = query.eq("has_violence_drugs", false);
       }
       
       const { data, error, count } = await query.order("created_at", { ascending: false });
@@ -149,19 +176,115 @@ export default function Home() {
       {/* Trending Section */}
       <TrendingSection />
       
-      {/* Category Filter */}
+      {/* Category and Content Filters */}
       <section className="container px-4 py-6">
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {CATEGORIES.map((cat) => (
-            <Button
-              key={cat.value}
-              variant={selectedCategory === cat.value ? "default" : "outline"}
-              onClick={() => setSelectedCategory(cat.value)}
-              className="whitespace-nowrap"
-            >
-              {cat.label}
-            </Button>
-          ))}
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 flex-1">
+            {CATEGORIES.map((cat) => (
+              <Button
+                key={cat.value}
+                variant={selectedCategory === cat.value ? "default" : "outline"}
+                onClick={() => setSelectedCategory(cat.value)}
+                className="whitespace-nowrap"
+              >
+                {cat.label}
+              </Button>
+            ))}
+          </div>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="shrink-0">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="end">
+              <div className="space-y-4">
+                <h4 className="font-semibold text-sm">콘텐츠 필터</h4>
+                
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">연령 제한 숨기기</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="hide-child"
+                          checked={hideChild}
+                          onCheckedChange={(checked) => setHideChild(checked as boolean)}
+                        />
+                        <Label htmlFor="hide-child" className="font-normal cursor-pointer text-sm">
+                          어린이 부적절 콘텐츠 숨기기
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="hide-under19"
+                          checked={hideUnder19}
+                          onCheckedChange={(checked) => setHideUnder19(checked as boolean)}
+                        />
+                        <Label htmlFor="hide-under19" className="font-normal cursor-pointer text-sm">
+                          19세 미만 부적절 콘텐츠 숨기기
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="hide-adult"
+                          checked={hideAdult}
+                          onCheckedChange={(checked) => setHideAdult(checked as boolean)}
+                        />
+                        <Label htmlFor="hide-adult" className="font-normal cursor-pointer text-sm">
+                          성인 콘텐츠 숨기기
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 border-t pt-3">
+                    <Label className="text-sm font-medium">콘텐츠 유형 숨기기</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="hide-sexual"
+                          checked={hideSexual}
+                          onCheckedChange={(checked) => setHideSexual(checked as boolean)}
+                        />
+                        <Label htmlFor="hide-sexual" className="font-normal cursor-pointer text-sm">
+                          성적 표현 포함 콘텐츠 숨기기
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="hide-violence"
+                          checked={hideViolence}
+                          onCheckedChange={(checked) => setHideViolence(checked as boolean)}
+                        />
+                        <Label htmlFor="hide-violence" className="font-normal cursor-pointer text-sm">
+                          폭력/마약 표현 포함 콘텐츠 숨기기
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {(hideChild || hideUnder19 || hideAdult || hideSexual || hideViolence) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setHideChild(false);
+                        setHideUnder19(false);
+                        setHideAdult(false);
+                        setHideSexual(false);
+                        setHideViolence(false);
+                      }}
+                    >
+                      모든 필터 초기화
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </section>
 
