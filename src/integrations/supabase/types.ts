@@ -281,6 +281,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          email: string | null
           hide_adult_content: boolean | null
           hide_child_content: boolean | null
           hide_sexual_content: boolean | null
@@ -295,6 +296,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          email?: string | null
           hide_adult_content?: boolean | null
           hide_child_content?: boolean | null
           hide_sexual_content?: boolean | null
@@ -309,6 +311,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          email?: string | null
           hide_adult_content?: boolean | null
           hide_child_content?: boolean | null
           hide_sexual_content?: boolean | null

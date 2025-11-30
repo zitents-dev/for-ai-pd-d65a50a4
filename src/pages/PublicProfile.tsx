@@ -15,10 +15,7 @@ interface Profile {
   bio: string | null;
   avatar_url: string | null;
   show_email: boolean | null;
-}
-
-interface User {
-  email: string;
+  email: string | null;
 }
 
 interface Video {
@@ -42,7 +39,6 @@ export default function PublicProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +55,7 @@ export default function PublicProfile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, name, bio, avatar_url, show_email")
+        .select("id, name, bio, avatar_url, show_email, email")
         .eq("id", userId)
         .maybeSingle();
 
@@ -72,14 +68,6 @@ export default function PublicProfile() {
       }
 
       setProfile(data);
-
-      // Load email if show_email is true
-      if (data.show_email) {
-        const { data: { user } } = await supabase.auth.admin.getUserById(userId!);
-        if (user?.email) {
-          setUserEmail(user.email);
-        }
-      }
     } catch (error: any) {
       toast.error(error.message);
       navigate("/");
@@ -166,10 +154,10 @@ export default function PublicProfile() {
                   <p className="text-muted-foreground text-lg mb-4">{profile.bio}</p>
                 )}
 
-                {userEmail && (
+                {profile.show_email && profile.email && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                     <Mail className="h-4 w-4" />
-                    <span>{userEmail}</span>
+                    <span>{profile.email}</span>
                   </div>
                 )}
 
