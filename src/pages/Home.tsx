@@ -4,9 +4,8 @@ import OptimizedVideoCard from "@/components/OptimizedVideoCard";
 import { TrendingSection } from "@/components/TrendingSection";
 import { RecommendedVideos } from "@/components/RecommendedVideos";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Video {
@@ -36,42 +35,22 @@ const CATEGORIES = [
 export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const VIDEOS_PER_PAGE = 12;
 
   useEffect(() => {
-    setVideos([]);
-    setPage(0);
-    setHasMore(true);
-    loadVideos(0, true);
+    setCurrentPage(1);
+    loadVideos(1);
   }, [selectedCategory]);
 
-  const loadMoreVideos = () => {
-    if (!loadingMore && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      setLoadingMore(true);
-      loadVideos(nextPage, false);
-    }
-  };
-
-  const observerTarget = useInfiniteScroll({
-    onLoadMore: loadMoreVideos,
-    hasMore,
-    loading: loading || loadingMore,
-  });
-
-  const loadVideos = async (pageNum: number = 0, reset: boolean = false) => {
+  const loadVideos = async (pageNum: number = 1) => {
     try {
-      if (reset) {
-        setLoading(true);
-      }
+      setLoading(true);
 
-      const from = pageNum * VIDEOS_PER_PAGE;
+      const from = (pageNum - 1) * VIDEOS_PER_PAGE;
       const to = from + VIDEOS_PER_PAGE - 1;
 
       let query = supabase
@@ -103,21 +82,51 @@ export default function Home() {
 
       if (error) throw error;
 
-      if (reset) {
-        setVideos(data || []);
-      } else {
-        setVideos(prev => [...prev, ...(data || [])]);
-      }
+      setVideos(data || []);
 
       if (count !== null) {
-        setHasMore((pageNum + 1) * VIDEOS_PER_PAGE < count);
+        setTotalPages(Math.ceil(count / VIDEOS_PER_PAGE));
       }
+      
+      // Scroll to top when changing pages
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error("Error loading videos:", error);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
+  };
+
+  const goToPage = (pageNum: number) => {
+    setCurrentPage(pageNum);
+    loadVideos(pageNum);
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <Button
+          key={i}
+          variant={currentPage === i ? "default" : "outline"}
+          size="sm"
+          onClick={() => goToPage(i)}
+          disabled={loading}
+        >
+          {i}
+        </Button>
+      );
+    }
+
+    return buttons;
   };
 
   return (
@@ -168,20 +177,64 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Infinite scroll trigger */}
-            <div ref={observerTarget} className="h-20 flex items-center justify-center">
-              {loadingMore && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Loading more videos...</span>
-                </div>
-              )}
-              {!hasMore && videos.length > 0 && (
-                <p className="text-muted-foreground text-sm">
-                  No more videos to load
-                </p>
-              )}
-            </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+
+                {currentPage > 3 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(1)}
+                      disabled={loading}
+                    >
+                      1
+                    </Button>
+                    {currentPage > 4 && (
+                      <span className="px-2 text-muted-foreground">...</span>
+                    )}
+                  </>
+                )}
+
+                {renderPaginationButtons()}
+
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && (
+                      <span className="px-2 text-muted-foreground">...</span>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(totalPages)}
+                      disabled={loading}
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
           </>
         )}
       </section>
