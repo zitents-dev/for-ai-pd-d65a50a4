@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Settings, Check } from "lucide-react";
+import { Settings, Check, PictureInPicture, PictureInPicture2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { toast } from "sonner";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -25,8 +26,34 @@ const QUALITY_LABELS: Record<Quality, string> = {
 export const VideoPlayer = ({ videoUrl, onTimeUpdate }: VideoPlayerProps) => {
   const [selectedQuality, setSelectedQuality] = useState<Quality>("auto");
   const [showControls, setShowControls] = useState(false);
+  const [isPiPActive, setIsPiPActive] = useState(false);
+  const [isPiPSupported, setIsPiPSupported] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check if Picture-in-Picture is supported
+    setIsPiPSupported(
+      document.pictureInPictureEnabled && 
+      videoRef.current !== null &&
+      !videoRef.current.disablePictureInPicture
+    );
+
+    // Listen for PiP state changes
+    const handleEnterPiP = () => setIsPiPActive(true);
+    const handleLeavePiP = () => setIsPiPActive(false);
+
+    const video = videoRef.current;
+    if (video) {
+      video.addEventListener('enterpictureinpicture', handleEnterPiP);
+      video.addEventListener('leavepictureinpicture', handleLeavePiP);
+
+      return () => {
+        video.removeEventListener('enterpictureinpicture', handleEnterPiP);
+        video.removeEventListener('leavepictureinpicture', handleLeavePiP);
+      };
+    }
+  }, []);
 
   // In a real implementation, you would have different URLs for each quality
   // For now, we use the same URL but the UI is ready for multiple qualities
@@ -58,6 +85,25 @@ export const VideoPlayer = ({ videoUrl, onTimeUpdate }: VideoPlayerProps) => {
     }
   };
 
+  const togglePictureInPicture = async () => {
+    try {
+      if (!videoRef.current) return;
+
+      if (document.pictureInPictureElement) {
+        // Exit PiP
+        await document.exitPictureInPicture();
+        toast.success("Exited picture-in-picture mode");
+      } else {
+        // Enter PiP
+        await videoRef.current.requestPictureInPicture();
+        toast.success("Entered picture-in-picture mode");
+      }
+    } catch (error) {
+      console.error("PiP error:", error);
+      toast.error("Could not toggle picture-in-picture mode");
+    }
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -74,12 +120,30 @@ export const VideoPlayer = ({ videoUrl, onTimeUpdate }: VideoPlayerProps) => {
         onTimeUpdate={onTimeUpdate}
       />
       
-      {/* Quality Selector Overlay */}
+      {/* Controls Overlay */}
       <div
-        className={`absolute bottom-16 right-4 transition-opacity duration-200 ${
+        className={`absolute bottom-16 right-4 flex gap-2 transition-opacity duration-200 ${
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
+        {/* Picture-in-Picture Button */}
+        {isPiPSupported && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={togglePictureInPicture}
+            className="bg-black/80 hover:bg-black/90 text-white border-0 backdrop-blur-sm"
+            title={isPiPActive ? "Exit Picture-in-Picture" : "Enter Picture-in-Picture"}
+          >
+            {isPiPActive ? (
+              <PictureInPicture2 className="h-4 w-4" />
+            ) : (
+              <PictureInPicture className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+
+        {/* Quality Selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
