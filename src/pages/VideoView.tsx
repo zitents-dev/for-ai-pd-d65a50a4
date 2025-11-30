@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { Heart, Eye, Calendar, Info, ListPlus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -279,11 +280,9 @@ export default function VideoView() {
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Video Player */}
           <Card className="overflow-hidden">
-            <video
-              src={video.video_url}
-              controls
-              className="w-full aspect-video bg-black"
-              autoPlay
+            <VideoPlayer 
+              videoUrl={video.video_url}
+              onTimeUpdate={trackWatchHistory}
             />
           </Card>
 
