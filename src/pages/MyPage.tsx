@@ -238,7 +238,7 @@ export default function MyPage() {
               <Button asChild>
                 <a href="/upload">
                   <Upload className="mr-2 h-4 w-4" />
-                  새 작품 업로드
+                  새 작품
                 </a>
               </Button>
             </div>

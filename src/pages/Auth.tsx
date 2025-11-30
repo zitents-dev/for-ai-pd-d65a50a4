@@ -26,7 +26,7 @@ export default function Auth() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/calendar`;
+    const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -43,7 +43,7 @@ export default function Auth() {
 
   const handleKakaoSignIn = async () => {
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/calendar`;
+    const redirectUrl = `${window.location.origin}/`;
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",

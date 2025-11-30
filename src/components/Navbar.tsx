@@ -46,7 +46,7 @@ export const Navbar = () => {
               <Button asChild variant="ghost" size="sm">
                 <NavLink to="/upload">
                   <Upload className="w-4 h-4 mr-2" />
-                  관리
+                  새 작품
                 </NavLink>
               </Button>
               <Button asChild variant="ghost" size="icon">
