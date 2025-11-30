@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DirectoryManager } from '@/components/DirectoryManager';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -91,7 +92,13 @@ export default function MyPage() {
     try {
       const { data, error } = await supabase
         .from('videos')
-        .select('*')
+        .select(`
+          *,
+          profiles (
+            name,
+            avatar_url
+          )
+        `)
         .eq('creator_id', user!.id)
         .order('created_at', { ascending: false });
 
@@ -289,6 +296,9 @@ export default function MyPage() {
             </div>
           )}
         </div>
+
+        {/* Directories Section */}
+        <DirectoryManager />
       </div>
     </div>
   );

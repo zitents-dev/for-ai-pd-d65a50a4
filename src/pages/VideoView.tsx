@@ -76,6 +76,7 @@ export default function VideoView() {
         .select(`
           *,
           profiles (
+            id,
             name,
             avatar_url
           )
@@ -84,7 +85,17 @@ export default function VideoView() {
         .single();
 
       if (error) throw error;
-      setVideo(data);
+      
+      // Get likes and dislikes count
+      const { data: likesData } = await supabase
+        .from("likes")
+        .select("type")
+        .eq("video_id", id);
+      
+      const likes_count = likesData?.filter(l => l.type === "like").length || 0;
+      const dislikes_count = likesData?.filter(l => l.type === "dislike").length || 0;
+      
+      setVideo({ ...data, likes_count, dislikes_count });
       
       // Load creator badges
       if (data?.creator_id) {

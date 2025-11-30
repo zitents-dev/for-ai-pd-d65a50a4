@@ -51,7 +51,6 @@ export default function Home() {
           duration,
           views,
           created_at,
-          category,
           profiles (
             name,
             avatar_url
@@ -60,7 +59,7 @@ export default function Home() {
         );
       
       if (selectedCategory !== "all") {
-        query = query.eq("category", selectedCategory);
+        query = query.eq("category", selectedCategory as any);
       }
       
       const { data, error } = await query.order("created_at", { ascending: false });

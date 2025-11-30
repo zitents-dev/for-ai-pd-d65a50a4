@@ -75,7 +75,7 @@ export default function Upload() {
       // Create video record
       const { error: dbError } = await supabase
         .from('videos')
-        .insert({
+        .insert([{
           creator_id: user.id,
           title,
           description,
@@ -85,9 +85,9 @@ export default function Upload() {
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
           prompt_command: promptCommand || null,
           show_prompt: showPrompt,
-          ai_solution: aiSolution || null,
-          category: category || null,
-        });
+          ai_solution: aiSolution as any || null,
+          category: category as any || null,
+        }]);
 
       if (dbError) throw dbError;
 
