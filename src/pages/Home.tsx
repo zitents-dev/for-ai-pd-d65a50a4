@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
 import { TrendingSection } from "@/components/TrendingSection";
@@ -35,14 +35,52 @@ const CATEGORIES = [
 export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  const VIDEOS_PER_PAGE = 12;
 
   useEffect(() => {
-    loadVideos();
+    setVideos([]);
+    setPage(0);
+    setHasMore(true);
+    loadVideos(0, true);
   }, [selectedCategory]);
 
-  const loadVideos = async () => {
+  useEffect(() => {
+    // Set up intersection observer for infinite scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          loadMoreVideos();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, loadingMore, loading, page]);
+
+  const loadVideos = async (pageNum: number = 0, reset: boolean = false) => {
     try {
+      if (reset) {
+        setLoading(true);
+      }
+
+      const from = pageNum * VIDEOS_PER_PAGE;
+      const to = from + VIDEOS_PER_PAGE - 1;
+
       let query = supabase
         .from("videos")
         .select(
@@ -58,21 +96,41 @@ export default function Home() {
             avatar_url
           )
         `,
-        );
+          { count: "exact" }
+        )
+        .range(from, to);
       
       if (selectedCategory !== "all") {
         query = query.eq("category", selectedCategory as any);
       }
       
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const { data, error, count } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
-      setVideos(data || []);
+
+      if (reset) {
+        setVideos(data || []);
+      } else {
+        setVideos(prev => [...prev, ...(data || [])]);
+      }
+
+      // Check if there are more videos to load
+      if (count !== null) {
+        setHasMore((pageNum + 1) * VIDEOS_PER_PAGE < count);
+      }
     } catch (error) {
       console.error("Error loading videos:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMoreVideos = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    setLoadingMore(true);
+    loadVideos(nextPage, false);
   };
 
   return (
@@ -116,11 +174,28 @@ export default function Home() {
             <p className="text-muted-foreground text-lg">No videos yet. Be the first to upload!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {videos.map((video) => (
-              <VideoCard key={video.id} video={video} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {videos.map((video) => (
+                <VideoCard key={video.id} video={video} />
+              ))}
+            </div>
+
+            {/* Infinite scroll trigger */}
+            <div ref={observerTarget} className="h-20 flex items-center justify-center">
+              {loadingMore && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Loading more videos...</span>
+                </div>
+              )}
+              {!hasMore && videos.length > 0 && (
+                <p className="text-muted-foreground text-sm">
+                  No more videos to load
+                </p>
+              )}
+            </div>
+          </>
         )}
       </section>
     </div>
