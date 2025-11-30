@@ -6,12 +6,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Configuration constants
+const MAX_WATCH_HISTORY = 10;
+const MAX_AVAILABLE_VIDEOS = 50;
+const RECOMMENDED_COUNT = 8;
+const AI_MODEL = "google/gemini-2.5-flash";
+const AI_TEMPERATURE = 0.7;
+
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  
   try {
+    // Initialize Supabase client with user context
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -35,9 +46,9 @@ serve(async (req) => {
       });
     }
 
-    console.log("Generating recommendations for user:", user.id);
+    console.log(`[${user.id.substring(0, 8)}] Generating recommendations`);
 
-    // Get user's watch history
+    // Get user's watch history with detailed video information
     const { data: watchHistory, error: watchError } = await supabaseClient
       .from("watch_history")
       .select(`
@@ -52,7 +63,7 @@ serve(async (req) => {
       `)
       .eq("user_id", user.id)
       .order("watched_at", { ascending: false })
-      .limit(10);
+      .limit(MAX_WATCH_HISTORY);
 
     if (watchError) throw watchError;
 
@@ -60,14 +71,22 @@ serve(async (req) => {
     const watchedVideoIds = watchedVideos.map((v: any) => v.id);
 
     if (watchedVideos.length === 0) {
+      console.log(`[${user.id.substring(0, 8)}] No watch history, returning popular videos`);
+      
       // No watch history - return popular videos
       const { data: popularVideos, error: popularError } = await supabaseClient
         .from("videos")
         .select("id, title, description, category")
         .order("views", { ascending: false })
-        .limit(8);
+        .limit(RECOMMENDED_COUNT);
 
-      if (popularError) throw popularError;
+      if (popularError) {
+        console.error(`[${user.id.substring(0, 8)}] Error fetching popular videos:`, popularError);
+        throw popularError;
+      }
+
+      const elapsed = Date.now() - startTime;
+      console.log(`[${user.id.substring(0, 8)}] Completed in ${elapsed}ms (popular videos)`);
 
       return new Response(
         JSON.stringify({
@@ -80,16 +99,23 @@ serve(async (req) => {
       );
     }
 
+    console.log(`[${user.id.substring(0, 8)}] Watch history: ${watchedVideos.length} videos`);
+
     // Get all available videos (excluding watched ones)
     const { data: availableVideos, error: availableError } = await supabaseClient
       .from("videos")
       .select("id, title, description, category, ai_solution, tags")
       .not("id", "in", `(${watchedVideoIds.join(",")})`)
-      .limit(50);
+      .limit(MAX_AVAILABLE_VIDEOS);
 
-    if (availableError) throw availableError;
+    if (availableError) {
+      console.error(`[${user.id.substring(0, 8)}] Error fetching available videos:`, availableError);
+      throw availableError;
+    }
 
     if (!availableVideos || availableVideos.length === 0) {
+      console.log(`[${user.id.substring(0, 8)}] No new videos available`);
+      
       return new Response(
         JSON.stringify({
           recommendations: [],
@@ -100,6 +126,9 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log(`[${user.id.substring(0, 8)}] Available videos: ${availableVideos.length}`);
+
 
     // Use Lovable AI to analyze and recommend
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -137,7 +166,8 @@ Analyze patterns in:
 
 Return ONLY the video IDs as a JSON array of strings, ordered by relevance (most relevant first). Example: ["id1", "id2", "id3"]`;
 
-    console.log("Calling Lovable AI for recommendations...");
+    console.log(`[${user.id.substring(0, 8)}] Calling Lovable AI for recommendations`);
+    const aiStartTime = Date.now();
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -146,7 +176,7 @@ Return ONLY the video IDs as a JSON array of strings, ordered by relevance (most
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: AI_MODEL,
         messages: [
           {
             role: "system",
@@ -155,11 +185,15 @@ Return ONLY the video IDs as a JSON array of strings, ordered by relevance (most
           },
           { role: "user", content: prompt },
         ],
-        temperature: 0.7,
+        temperature: AI_TEMPERATURE,
       }),
     });
 
+    const aiElapsed = Date.now() - aiStartTime;
+    
     if (!aiResponse.ok) {
+      console.error(`[${user.id.substring(0, 8)}] AI error: ${aiResponse.status} after ${aiElapsed}ms`);
+      
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
@@ -179,14 +213,14 @@ Return ONLY the video IDs as a JSON array of strings, ordered by relevance (most
         );
       }
       const errorText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errorText);
+      console.error(`[${user.id.substring(0, 8)}] AI gateway error:`, aiResponse.status, errorText);
       throw new Error("AI gateway error");
     }
 
     const aiData = await aiResponse.json();
     const aiContent = aiData.choices?.[0]?.message?.content || "[]";
 
-    console.log("AI response:", aiContent);
+    console.log(`[${user.id.substring(0, 8)}] AI responded in ${aiElapsed}ms`);
 
     // Parse the AI response
     let recommendedIds: string[] = [];
@@ -197,7 +231,7 @@ Return ONLY the video IDs as a JSON array of strings, ordered by relevance (most
         recommendedIds = JSON.parse(jsonMatch[0]);
       }
     } catch (parseError) {
-      console.error("Error parsing AI response:", parseError);
+      console.error(`[${user.id.substring(0, 8)}] Error parsing AI response:`, parseError);
     }
 
     // Validate and filter recommended IDs
@@ -205,20 +239,26 @@ Return ONLY the video IDs as a JSON array of strings, ordered by relevance (most
       availableVideos.some((v: any) => v.id === id)
     );
 
-    // If we don't have enough recommendations, add some popular ones
-    if (validIds.length < 8) {
+    console.log(`[${user.id.substring(0, 8)}] AI suggested ${recommendedIds.length} videos, ${validIds.length} valid`);
+
+    // If we don't have enough recommendations, add some popular unwatched ones
+    if (validIds.length < RECOMMENDED_COUNT) {
+      const remainingCount = RECOMMENDED_COUNT - validIds.length;
       const remainingIds = availableVideos
         .filter((v: any) => !validIds.includes(v.id))
-        .slice(0, 8 - validIds.length)
+        .slice(0, remainingCount)
         .map((v: any) => v.id);
+      
+      console.log(`[${user.id.substring(0, 8)}] Adding ${remainingIds.length} fallback videos`);
       validIds.push(...remainingIds);
     }
 
-    console.log("Final recommendations:", validIds);
+    const totalElapsed = Date.now() - startTime;
+    console.log(`[${user.id.substring(0, 8)}] Completed in ${totalElapsed}ms (${validIds.length} recommendations)`);
 
     return new Response(
       JSON.stringify({
-        recommendations: validIds.slice(0, 8),
+        recommendations: validIds.slice(0, RECOMMENDED_COUNT),
         reason: "AI-powered recommendations based on watch history",
       }),
       {
@@ -226,7 +266,9 @@ Return ONLY the video IDs as a JSON array of strings, ordered by relevance (most
       }
     );
   } catch (error) {
-    console.error("Error in recommend-videos function:", error);
+    const elapsed = Date.now() - startTime;
+    console.error(`Error in recommend-videos function after ${elapsed}ms:`, error);
+    
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Unknown error",
