@@ -1,11 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
-import { VideoCard } from "@/components/VideoCard";
+import OptimizedVideoCard from "@/components/OptimizedVideoCard";
 import { TrendingSection } from "@/components/TrendingSection";
 import { RecommendedVideos } from "@/components/RecommendedVideos";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Video {
@@ -39,7 +40,6 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const observerTarget = useRef<HTMLDivElement>(null);
 
   const VIDEOS_PER_PAGE = 12;
 
@@ -50,27 +50,20 @@ export default function Home() {
     loadVideos(0, true);
   }, [selectedCategory]);
 
-  useEffect(() => {
-    // Set up intersection observer for infinite scroll
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          loadMoreVideos();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+  const loadMoreVideos = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      setLoadingMore(true);
+      loadVideos(nextPage, false);
     }
+  };
 
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [hasMore, loadingMore, loading, page]);
+  const observerTarget = useInfiniteScroll({
+    onLoadMore: loadMoreVideos,
+    hasMore,
+    loading: loading || loadingMore,
+  });
 
   const loadVideos = async (pageNum: number = 0, reset: boolean = false) => {
     try {
@@ -91,7 +84,9 @@ export default function Home() {
           duration,
           views,
           created_at,
+          creator_id,
           profiles (
+            id,
             name,
             avatar_url
           )
@@ -114,7 +109,6 @@ export default function Home() {
         setVideos(prev => [...prev, ...(data || [])]);
       }
 
-      // Check if there are more videos to load
       if (count !== null) {
         setHasMore((pageNum + 1) * VIDEOS_PER_PAGE < count);
       }
@@ -124,13 +118,6 @@ export default function Home() {
       setLoading(false);
       setLoadingMore(false);
     }
-  };
-
-  const loadMoreVideos = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    setLoadingMore(true);
-    loadVideos(nextPage, false);
   };
 
   return (
@@ -177,7 +164,7 @@ export default function Home() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {videos.map((video) => (
-                <VideoCard key={video.id} video={video} />
+                <OptimizedVideoCard key={video.id} video={video} />
               ))}
             </div>
 
