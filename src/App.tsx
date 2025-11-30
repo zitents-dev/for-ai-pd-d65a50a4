@@ -12,6 +12,7 @@ import VideoView from "./pages/VideoView";
 import Search from "./pages/Search";
 import Playlist from "./pages/Playlist";
 import PublicProfile from "./pages/PublicProfile";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/playlist/:id" element={<Playlist />} />
             <Route path="/profile/:userId" element={<PublicProfile />} />
+            <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
