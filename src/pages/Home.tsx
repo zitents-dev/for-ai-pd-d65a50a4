@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
+import { TrendingSection } from "@/components/TrendingSection";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,9 @@ export default function Home() {
         style={{ backgroundImage: `url(${heroBg})` }}
       />
       <Navbar />
+      
+      {/* Trending Section */}
+      <TrendingSection />
       
       {/* Category Filter */}
       <section className="container px-4 py-6">
