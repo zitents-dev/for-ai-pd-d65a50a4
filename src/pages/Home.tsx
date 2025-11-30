@@ -123,9 +123,11 @@ export default function Home() {
         .eq('id', user!.id);
 
       if (error) throw error;
+      
+      toast.success('필터 설정이 저장되었습니다');
     } catch (error) {
       console.error('Error saving filter preferences:', error);
-      toast.error('Failed to save filter preferences');
+      toast.error('필터 설정 저장에 실패했습니다');
     }
   };
 
