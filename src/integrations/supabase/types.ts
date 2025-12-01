@@ -45,6 +45,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "comments_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -83,6 +104,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "directories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       directory_videos: {
@@ -110,6 +138,20 @@ export type Database = {
             columns: ["directory_id"]
             isOneToOne: false
             referencedRelation: "directories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directory_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directory_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
             referencedColumns: ["id"]
           },
           {
@@ -146,6 +188,27 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "favorites_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
             referencedColumns: ["id"]
           },
           {
@@ -188,6 +251,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "likes_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -224,6 +308,27 @@ export type Database = {
             columns: ["playlist_id"]
             isOneToOne: false
             referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlist_videos_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "user_playlists_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlist_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlist_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
             referencedColumns: ["id"]
           },
           {
@@ -273,6 +378,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -361,6 +473,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reports_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reports_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -400,11 +533,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_badges_awarded_by_fkey"
+            columns: ["awarded_by"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "user_badges_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -474,6 +621,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       watch_history: {
@@ -504,6 +658,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "watch_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "watch_history_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watch_history_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "watch_history_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -514,7 +689,250 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      comment_details_view: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string | null
+          user_avatar: string | null
+          user_id: string | null
+          user_name: string | null
+          video_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trending_videos_view: {
+        Row: {
+          category: Database["public"]["Enums"]["video_category"] | null
+          comments_count: number | null
+          created_at: string | null
+          creator_avatar: string | null
+          creator_id: string | null
+          creator_name: string | null
+          description: string | null
+          dislikes_count: number | null
+          duration: number | null
+          engagement_score: number | null
+          favorites_count: number | null
+          id: string | null
+          likes_count: number | null
+          thumbnail_url: string | null
+          title: string | null
+          video_url: string | null
+          views: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_playlists_view: {
+        Row: {
+          created_at: string | null
+          creator_avatar: string | null
+          creator_name: string | null
+          description: string | null
+          id: string | null
+          is_public: boolean | null
+          thumbnail_url: string | null
+          title: string | null
+          total_duration: number | null
+          updated_at: string | null
+          user_id: string | null
+          video_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_statistics_view: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          comments_made: number | null
+          created_at: string | null
+          likes_given: number | null
+          name: string | null
+          playlists_created: number | null
+          total_views: number | null
+          user_id: string | null
+          videos_uploaded: number | null
+        }
+        Relationships: []
+      }
+      video_details_view: {
+        Row: {
+          age_restriction: string[] | null
+          ai_solution: Database["public"]["Enums"]["ai_solution"] | null
+          category: Database["public"]["Enums"]["video_category"] | null
+          comments_count: number | null
+          created_at: string | null
+          creator_avatar: string | null
+          creator_bio: string | null
+          creator_id: string | null
+          creator_name: string | null
+          description: string | null
+          dislikes_count: number | null
+          duration: number | null
+          favorites_count: number | null
+          has_sexual_content: boolean | null
+          has_violence_drugs: boolean | null
+          id: string | null
+          likes_count: number | null
+          prompt_command: string | null
+          show_prompt: boolean | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string | null
+          video_url: string | null
+          views: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      watch_history_details_view: {
+        Row: {
+          category: Database["public"]["Enums"]["video_category"] | null
+          creator_avatar: string | null
+          creator_id: string | null
+          creator_name: string | null
+          duration: number | null
+          id: string | null
+          thumbnail_url: string | null
+          user_id: string | null
+          video_description: string | null
+          video_id: string | null
+          video_title: string | null
+          views: number | null
+          watched_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "watch_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watch_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "watch_history_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watch_history_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watch_history_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
