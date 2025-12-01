@@ -193,6 +193,21 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 
 ---
 
+## Complete Schema Reference
+
+For a complete, consolidated view of the current database schema, see **[docs/SCHEMA.sql](./docs/SCHEMA.sql)**.
+
+This reference file includes:
+- All table definitions with columns and constraints
+- All enum types
+- All database views with their definitions
+- All indexes for performance optimization
+- All functions and triggers
+- Complete RLS policy definitions
+- Storage bucket configuration
+
+**Note**: The SCHEMA.sql file is for reference only. The actual database schema is managed through the migration files in `supabase/migrations/`.
+
 ## Current Database Schema
 
 ### Tables
