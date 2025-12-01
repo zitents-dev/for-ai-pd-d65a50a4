@@ -162,6 +162,21 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 
 ---
 
+### 14. Add Video Category and AI Solution Fields
+**File**: `20251201XXXXXX_add_video_category_and_ai_fields.sql`  
+**Date**: December 1, 2025
+
+**Changes**:
+- Creates `video_category` enum type (education, entertainment, gaming, music, sports, technology, lifestyle, other)
+- Creates `ai_solution` enum type (chatgpt, claude, midjourney, stable_diffusion, runway, elevenlabs, other)
+- Adds `category` column to videos table
+- Adds `ai_solution` column to videos table
+- Adds `show_prompt` boolean column to videos table
+- Adds `prompt_command` text column to videos table
+- All columns added with `IF NOT EXISTS` to prevent conflicts with existing schema
+
+---
+
 ## Current Database Schema
 
 ### Tables
