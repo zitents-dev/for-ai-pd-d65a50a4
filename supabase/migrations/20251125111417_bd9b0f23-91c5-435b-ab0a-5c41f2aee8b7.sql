@@ -4,6 +4,7 @@ CREATE TABLE public.likes (
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   video_id UUID NOT NULL REFERENCES public.videos(id) ON DELETE CASCADE,
   user_id UUID NOT NULL,
+  type TEXT NOT NULL,
   UNIQUE(video_id, user_id)
 );
 
