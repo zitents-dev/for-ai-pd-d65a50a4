@@ -177,6 +177,22 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 
 ---
 
+### 15. Add Database Views for Query Performance
+**File**: `20251201XXXXXX_create_database_views.sql`  
+**Date**: December 1, 2025
+
+**Changes**:
+- Creates `video_details_view` - Combines videos with creator info and engagement metrics
+- Creates `user_playlists_view` - Shows playlists with video counts and creator information
+- Creates `comment_details_view` - Comments joined with user profile information
+- Creates `watch_history_details_view` - Watch history with complete video and creator details
+- Creates `trending_videos_view` - Videos with engagement score for trending/popular content
+- Creates `user_statistics_view` - User profile statistics including videos, views, playlists, and activity
+- All views created with `SECURITY INVOKER` to respect RLS policies of querying users
+- Grants SELECT permissions on all views to authenticated users
+
+---
+
 ## Current Database Schema
 
 ### Tables
@@ -191,6 +207,19 @@ Migrations are executed in chronological order based on their timestamp prefix. 
 | `playlists` | Custom playlists | Public/private toggle, user-owned |
 | `playlist_videos` | Playlist contents | Junction table with position ordering |
 | `watch_history` | View tracking | Private, auto-updates timestamp |
+
+### Views
+
+| View | Purpose | Benefits |
+|------|---------|----------|
+| `video_details_view` | Videos with creator info and engagement | Single query for video cards with likes, dislikes, comments |
+| `user_playlists_view` | Playlists with video counts | Optimized playlist listings with metadata |
+| `comment_details_view` | Comments with user profiles | Pre-joined comment display data |
+| `watch_history_details_view` | History with full video details | Complete watch history in one query |
+| `trending_videos_view` | Videos with engagement scores | Pre-calculated trending algorithm results |
+| `user_statistics_view` | User activity summaries | Aggregated user metrics for profiles |
+
+**Note**: All views use `SECURITY INVOKER` to respect RLS policies of the querying user.
 
 ### Functions
 
