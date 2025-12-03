@@ -9,10 +9,11 @@ import heroBg from "@/assets/hero-bg.jpg";
 interface Video {
   id: string;
   title: string;
-  thumbnail_url: string;
-  duration: number;
-  views: number;
+  thumbnail_url: string | null;
+  duration: number | null;
+  views: number | null;
   created_at: string;
+  category?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -60,13 +61,13 @@ export default function Home() {
         );
       
       if (selectedCategory !== "all") {
-        query = query.eq("category", selectedCategory);
+        query = query.eq("category", selectedCategory as any);
       }
       
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
-      setVideos(data || []);
+      setVideos((data as Video[]) || []);
     } catch (error) {
       console.error("Error loading videos:", error);
     } finally {

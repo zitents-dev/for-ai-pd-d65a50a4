@@ -27,9 +27,9 @@ interface Video {
   video_url: string;
   thumbnail_url: string | null;
   duration: number | null;
-  views: number;
-  likes_count: number;
-  dislikes_count: number;
+  views: number | null;
+  likes_count?: number;
+  dislikes_count?: number;
   tags: string[] | null;
   created_at: string;
   prompt_command: string | null;
@@ -38,7 +38,7 @@ interface Video {
   category: string | null;
   creator_id: string;
   profiles: {
-    id: string;
+    id?: string;
     name: string;
     avatar_url: string | null;
   };
@@ -84,7 +84,7 @@ export default function VideoView() {
         .single();
 
       if (error) throw error;
-      setVideo(data);
+      setVideo(data as Video);
       
       // Load creator badges
       if (data?.creator_id) {
