@@ -48,6 +48,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, name: string) => {
+    // Check if this email has a deleted profile within 1 year
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('is_deleted, deleted_at, email')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingProfile && (existingProfile as any).is_deleted) {
+      const deletedAt = new Date((existingProfile as any).deleted_at);
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      
+      if (deletedAt > oneYearAgo) {
+        return { 
+          error: { 
+            message: '탈퇴 후 1년 이내에는 재가입할 수 없습니다. 남은 기간: ' + 
+              Math.ceil((deletedAt.getTime() + 365 * 24 * 60 * 60 * 1000 - Date.now()) / (1000 * 60 * 60 * 24)) + '일'
+          } 
+        };
+      }
+    }
+
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({

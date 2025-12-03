@@ -7,11 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Upload, LogOut } from 'lucide-react';
+import { Loader2, Upload, LogOut, Trash2, UserX } from 'lucide-react';
 import { VideoCard } from '@/components/VideoCard';
+import { DirectoryManager } from '@/components/DirectoryManager';
 
 interface Profile {
   id: string;
@@ -23,9 +35,9 @@ interface Profile {
 interface Video {
   id: string;
   title: string;
-  thumbnail_url: string;
-  duration: number;
-  views: number;
+  thumbnail_url: string | null;
+  duration: number | null;
+  views: number | null;
   created_at: string;
 }
 
@@ -96,7 +108,7 @@ export default function MyPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setVideos(data || []);
+      setVideos((data as Video[]) || []);
     } catch (error) {
       console.error('Error loading videos:', error);
     }
@@ -157,6 +169,46 @@ export default function MyPage() {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleDeleteVideo = async (videoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', videoId)
+        .eq('creator_id', user!.id);
+
+      if (error) throw error;
+      
+      toast.success('작품이 삭제되었습니다');
+      loadMyVideos();
+    } catch (error: any) {
+      toast.error('작품 삭제에 실패했습니다');
+      console.error('Error deleting video:', error);
+    }
+  };
+
+  const handleQuitMember = async () => {
+    try {
+      // Soft delete - set is_deleted flag and deleted_at date
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          is_deleted: true, 
+          deleted_at: new Date().toISOString() 
+        } as any)
+        .eq('id', user!.id);
+
+      if (error) throw error;
+      
+      toast.success('회원 탈퇴가 완료되었습니다. 1년 내 재가입이 불가능합니다.');
+      await signOut();
+      navigate('/');
+    } catch (error: any) {
+      toast.error('회원 탈퇴에 실패했습니다');
+      console.error('Error quitting member:', error);
+    }
   };
 
   if (loading || authLoading) {
@@ -228,6 +280,30 @@ export default function MyPage() {
                 <LogOut className="mr-2 h-4 w-4" />
                 로그 아웃
               </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full">
+                    <UserX className="mr-2 h-4 w-4" />
+                    회원 탈퇴
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      정말 탈퇴하시겠습니까? 탈퇴 후 1년 이내에는 동일 계정으로 재가입할 수 없습니다.
+                      데이터는 보존되며, 1년 후에 완전히 삭제됩니다.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleQuitMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      탈퇴하기
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
 
@@ -255,20 +331,51 @@ export default function MyPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {videos.map((video) => (
-                  <VideoCard
-                    key={video.id}
-                    video={{
-                      ...video,
-                      profiles: {
-                        name: profile?.name || '',
-                        avatar_url: profile?.avatar_url || null,
-                      }
-                    }}
-                  />
+                  <div key={video.id} className="relative group">
+                    <VideoCard
+                      video={{
+                        ...video,
+                        profiles: {
+                          name: profile?.name || '',
+                          avatar_url: profile?.avatar_url || null,
+                        }
+                      }}
+                    />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>작품 삭제</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            "{video.title}"을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteVideo(video.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            삭제하기
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 ))}
               </div>
             )}
           </div>
+        </div>
+
+        {/* Directory Section */}
+        <div className="mt-8">
+          <DirectoryManager />
         </div>
 
         {/* Favorites Section */}

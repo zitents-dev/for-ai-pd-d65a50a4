@@ -394,6 +394,7 @@ export type Database = {
           banner_url: string | null
           bio: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string | null
           hide_adult_content: boolean | null
           hide_child_content: boolean | null
@@ -401,6 +402,7 @@ export type Database = {
           hide_under19_content: boolean | null
           hide_violence_drugs_content: boolean | null
           id: string
+          is_deleted: boolean | null
           name: string | null
           name_updated_at: string | null
           show_email: boolean | null
@@ -410,6 +412,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           hide_adult_content?: boolean | null
           hide_child_content?: boolean | null
@@ -417,6 +420,7 @@ export type Database = {
           hide_under19_content?: boolean | null
           hide_violence_drugs_content?: boolean | null
           id: string
+          is_deleted?: boolean | null
           name?: string | null
           name_updated_at?: string | null
           show_email?: boolean | null
@@ -426,6 +430,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           hide_adult_content?: boolean | null
           hide_child_content?: boolean | null
@@ -433,6 +438,7 @@ export type Database = {
           hide_under19_content?: boolean | null
           hide_violence_drugs_content?: boolean | null
           id?: string
+          is_deleted?: boolean | null
           name?: string | null
           name_updated_at?: string | null
           show_email?: boolean | null

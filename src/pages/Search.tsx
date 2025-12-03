@@ -15,7 +15,7 @@ interface Video {
   title: string;
   thumbnail_url: string | null;
   duration: number | null;
-  views: number;
+  views: number | null;
   created_at: string;
   profiles: {
     name: string;
@@ -65,7 +65,7 @@ export default function Search() {
         .order("created_at", { ascending: false });
 
       if (videoError) throw videoError;
-      setVideos(videoData || []);
+      setVideos((videoData as Video[]) || []);
 
       // Search creators by name
       const { data: creatorData, error: creatorError } = await supabase
