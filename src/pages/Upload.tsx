@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -27,9 +26,6 @@ export default function Upload() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [aiSolution, setAiSolution] = useState<string>('');
   const [category, setCategory] = useState<string>('');
-  const [ageRestrictions, setAgeRestrictions] = useState<string[]>([]);
-  const [hasSexualContent, setHasSexualContent] = useState(false);
-  const [hasViolenceDrugs, setHasViolenceDrugs] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -79,7 +75,7 @@ export default function Upload() {
       // Create video record
       const { error: dbError } = await supabase
         .from('videos')
-        .insert([{
+        .insert({
           creator_id: user.id,
           title,
           description,
@@ -89,12 +85,9 @@ export default function Upload() {
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
           prompt_command: promptCommand || null,
           show_prompt: showPrompt,
-          ai_solution: aiSolution as any || null,
-          category: category as any || null,
-          age_restriction: ageRestrictions,
-          has_sexual_content: hasSexualContent,
-          has_violence_drugs: hasViolenceDrugs,
-        }]);
+          ai_solution: aiSolution || null,
+          category: category || null,
+        });
 
       if (dbError) throw dbError;
 
@@ -235,90 +228,6 @@ export default function Upload() {
                   <Label htmlFor="show-prompt" className="font-normal">
                     다른 사용자에게 프롬프트 공개
                   </Label>
-                </div>
-              </div>
-
-              <div className="space-y-4 border-t pt-4">
-                <Label className="text-base font-semibold">시청 제한 조건</Label>
-                
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">연령 제한</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="age-child"
-                        checked={ageRestrictions.includes('child')}
-                        onCheckedChange={(checked) => {
-                          setAgeRestrictions(prev =>
-                            checked
-                              ? [...prev, 'child']
-                              : prev.filter(a => a !== 'child')
-                          );
-                        }}
-                      />
-                      <Label htmlFor="age-child" className="font-normal cursor-pointer">
-                        어린이 부적절
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="age-under19"
-                        checked={ageRestrictions.includes('under_19')}
-                        onCheckedChange={(checked) => {
-                          setAgeRestrictions(prev =>
-                            checked
-                              ? [...prev, 'under_19']
-                              : prev.filter(a => a !== 'under_19')
-                          );
-                        }}
-                      />
-                      <Label htmlFor="age-under19" className="font-normal cursor-pointer">
-                        19세 미만 부적절
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="age-adult"
-                        checked={ageRestrictions.includes('adult')}
-                        onCheckedChange={(checked) => {
-                          setAgeRestrictions(prev =>
-                            checked
-                              ? [...prev, 'adult']
-                              : prev.filter(a => a !== 'adult')
-                          );
-                        }}
-                      />
-                      <Label htmlFor="age-adult" className="font-normal cursor-pointer">
-                        성인 콘텐츠
-                      </Label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">콘텐츠 유형</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sexual-content"
-                        checked={hasSexualContent}
-                        onCheckedChange={(checked) => setHasSexualContent(checked as boolean)}
-                      />
-                      <Label htmlFor="sexual-content" className="font-normal cursor-pointer">
-                        성적 표현 포함
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="violence-drugs"
-                        checked={hasViolenceDrugs}
-                        onCheckedChange={(checked) => setHasViolenceDrugs(checked as boolean)}
-                      />
-                      <Label htmlFor="violence-drugs" className="font-normal cursor-pointer">
-                        폭력/마약 등 반사회적 표현 포함
-                      </Label>
-                    </div>
-                  </div>
                 </div>
               </div>
 

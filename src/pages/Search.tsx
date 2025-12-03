@@ -17,9 +17,6 @@ interface Video {
   duration: number | null;
   views: number;
   created_at: string;
-  age_restriction?: string[];
-  has_sexual_content?: boolean;
-  has_violence_drugs?: boolean;
   profiles: {
     name: string;
     avatar_url: string | null;

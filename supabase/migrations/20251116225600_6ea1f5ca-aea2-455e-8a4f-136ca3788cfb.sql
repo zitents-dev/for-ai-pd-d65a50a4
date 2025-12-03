@@ -29,7 +29,6 @@ CREATE TABLE public.videos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   creator_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  category TEXT,
   description TEXT,
   video_url TEXT NOT NULL,
   thumbnail_url TEXT,

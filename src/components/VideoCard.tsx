@@ -1,9 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Eye, AlertTriangle } from "lucide-react";
+import { Eye } from "lucide-react";
 
 interface VideoCardProps {
   video: {
@@ -13,9 +12,6 @@ interface VideoCardProps {
     duration: number | null;
     views: number;
     created_at: string;
-    age_restriction?: string[];
-    has_sexual_content?: boolean;
-    has_violence_drugs?: boolean;
     profiles: {
       name: string;
       avatar_url: string | null;
@@ -25,28 +21,6 @@ interface VideoCardProps {
 
 export const VideoCard = ({ video }: VideoCardProps) => {
   const navigate = useNavigate();
-
-  const handleAvatarClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Get creator_id from the video data if available, otherwise extract from profiles relation
-    const creatorId = (video as any).creator_id || (video as any).profiles?.id;
-    if (creatorId) {
-      navigate(`/profile/${creatorId}`);
-    }
-  };
-
-  const hasWarnings = 
-    (video.age_restriction && video.age_restriction.length > 0) ||
-    video.has_sexual_content ||
-    video.has_violence_drugs;
-
-  const getAgeWarningText = () => {
-    if (!video.age_restriction || video.age_restriction.length === 0) return null;
-    if (video.age_restriction.includes('adult')) return '성인';
-    if (video.age_restriction.includes('under_19')) return '19+';
-    if (video.age_restriction.includes('child')) return '청소년';
-    return null;
-  };
 
   return (
     <Card 
@@ -63,25 +37,6 @@ export const VideoCard = ({ video }: VideoCardProps) => {
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black/90"></div>
         )}
-        {hasWarnings && (
-          <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-            {getAgeWarningText() && (
-              <Badge variant="destructive" className="text-xs">
-                {getAgeWarningText()}
-              </Badge>
-            )}
-            {video.has_sexual_content && (
-              <Badge variant="destructive" className="text-xs">
-                성적표현
-              </Badge>
-            )}
-            {video.has_violence_drugs && (
-              <Badge variant="destructive" className="text-xs">
-                폭력/마약
-              </Badge>
-            )}
-          </div>
-        )}
         {video.duration && (
           <span className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm">
             {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
@@ -90,10 +45,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
       </div>
       <div className="p-4">
         <div className="flex gap-3">
-          <Avatar 
-            className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={handleAvatarClick}
-          >
+          <Avatar className="w-10 h-10">
             <AvatarImage src={video.profiles.avatar_url || ""} />
             <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
           </Avatar>
@@ -101,12 +53,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
             <h3 className="font-semibold text-foreground line-clamp-2 mb-1">
               {video.title}
             </h3>
-            <p 
-              className="text-sm text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-              onClick={handleAvatarClick}
-            >
-              {video.profiles.name}
-            </p>
+            <p className="text-sm text-muted-foreground">{video.profiles.name}</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye className="w-3 h-3" />

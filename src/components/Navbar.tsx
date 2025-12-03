@@ -2,16 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NavLink } from "./NavLink";
 import { useAuth } from "@/lib/auth";
-import { Upload, User, Search, Settings } from "lucide-react";
+import { Upload, User, Search } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import logo from "@/assets/ai-pd-hub-logo.svg";
 
 export const Navbar = () => {
@@ -56,27 +49,11 @@ export const Navbar = () => {
                   새 작품
                 </NavLink>
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <User className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <NavLink to="/my-page" className="cursor-pointer w-full">
-                      <User className="w-4 h-4 mr-2" />
-                      마이 페이지
-                    </NavLink>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <NavLink to="/settings" className="cursor-pointer w-full">
-                      <Settings className="w-4 h-4 mr-2" />
-                      설정
-                    </NavLink>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button asChild variant="ghost" size="icon">
+                <NavLink to="/my-page">
+                  <User className="w-8 h-8" />
+                </NavLink>
+              </Button>
             </>
           ) : (
             <>

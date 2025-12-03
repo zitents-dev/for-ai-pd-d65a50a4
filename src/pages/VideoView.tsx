@@ -5,8 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { VideoPlayer } from "@/components/VideoPlayer";
-import { Heart, Eye, Calendar, Info, ListPlus } from "lucide-react";
+import { Heart, Eye, Calendar, Info } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -15,7 +14,6 @@ import { DislikeButton } from "@/components/DislikeButton";
 import { ReportDialog } from "@/components/ReportDialog";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
-import { AddToPlaylistDialog } from "@/components/AddToPlaylistDialog";
 import {
   Collapsible,
   CollapsibleContent,
@@ -60,7 +58,6 @@ export default function VideoView() {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [creatorBadges, setCreatorBadges] = useState<Badge[]>([]);
-  const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -69,7 +66,6 @@ export default function VideoView() {
       checkLike();
       checkDislike();
       incrementViews();
-      trackWatchHistory();
     }
   }, [id]);
 
@@ -80,7 +76,6 @@ export default function VideoView() {
         .select(`
           *,
           profiles (
-            id,
             name,
             avatar_url
           )
@@ -89,17 +84,7 @@ export default function VideoView() {
         .single();
 
       if (error) throw error;
-      
-      // Get likes and dislikes count
-      const { data: likesData } = await supabase
-        .from("likes")
-        .select("type")
-        .eq("video_id", id);
-      
-      const likes_count = likesData?.filter(l => l.type === "like").length || 0;
-      const dislikes_count = likesData?.filter(l => l.type === "dislike").length || 0;
-      
-      setVideo({ ...data, likes_count, dislikes_count });
+      setVideo(data);
       
       // Load creator badges
       if (data?.creator_id) {
@@ -193,30 +178,6 @@ export default function VideoView() {
     }
   };
 
-  const trackWatchHistory = async () => {
-    if (!user || !id) return;
-
-    try {
-      // Use upsert to either insert new record or update existing one
-      const { error } = await supabase
-        .from("watch_history")
-        .upsert(
-          {
-            user_id: user.id,
-            video_id: id,
-            watched_at: new Date().toISOString(),
-          },
-          {
-            onConflict: "user_id,video_id",
-          }
-        );
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error tracking watch history:", error);
-    }
-  };
-
   const toggleFavorite = async () => {
     if (!user) {
       toast.error("Please sign in to add favorites");
@@ -280,9 +241,11 @@ export default function VideoView() {
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Video Player */}
           <Card className="overflow-hidden">
-            <VideoPlayer 
-              videoUrl={video.video_url}
-              onTimeUpdate={trackWatchHistory}
+            <video
+              src={video.video_url}
+              controls
+              className="w-full aspect-video bg-black"
+              autoPlay
             />
           </Card>
 
@@ -324,31 +287,12 @@ export default function VideoView() {
                   <Heart className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
                   {isFavorited ? "Favorited" : "Favorite"}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (!user) {
-                      toast.error("Please sign in to add to playlist");
-                      navigate("/auth");
-                      return;
-                    }
-                    setPlaylistDialogOpen(true);
-                  }}
-                  className="gap-2"
-                >
-                  <ListPlus className="w-4 h-4" />
-                  Add to Playlist
-                </Button>
                 <ReportDialog videoId={video.id} />
               </div>
             </div>
 
             {/* Creator Info */}
-            <Card 
-              className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => navigate(`/profile/${video.creator_id}`)}
-            >
+            <Card className="p-4">
               <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={video.profiles.avatar_url || ""} />
@@ -425,13 +369,6 @@ export default function VideoView() {
           </div>
         </div>
       </div>
-
-      {/* Add to Playlist Dialog */}
-      <AddToPlaylistDialog
-        videoId={video.id}
-        open={playlistDialogOpen}
-        onOpenChange={setPlaylistDialogOpen}
-      />
     </div>
   );
 }
