@@ -48,6 +48,7 @@ export const DirectoryManager = () => {
   const [newDirDescription, setNewDirDescription] = useState("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dragOverDirectory, setDragOverDirectory] = useState<string | null>(null);
 
   useEffect(() => {
     loadDirectories();
@@ -183,6 +184,64 @@ export const DirectoryManager = () => {
     }
   };
 
+  const handleDrop = async (directoryId: string, videoId: string, videoTitle: string) => {
+    try {
+      // Check if already in directory
+      const { data: existing } = await supabase
+        .from("directory_videos")
+        .select("id")
+        .eq("video_id", videoId)
+        .eq("directory_id", directoryId)
+        .maybeSingle();
+
+      if (existing) {
+        toast.info("이미 이 디렉토리에 있습니다");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("directory_videos")
+        .insert({
+          video_id: videoId,
+          directory_id: directoryId,
+        });
+
+      if (error) throw error;
+
+      const dirName = directories.find(d => d.id === directoryId)?.name;
+      toast.success(`"${videoTitle}"을(를) "${dirName}"에 추가했습니다`);
+      
+      if (selectedDirectory === directoryId) {
+        loadDirectoryVideos(directoryId);
+      }
+    } catch (error) {
+      console.error("Error adding video to directory:", error);
+      toast.error("디렉토리에 추가하는데 실패했습니다");
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, directoryId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDirectory(directoryId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDirectory(null);
+  };
+
+  const handleDropOnDirectory = (e: React.DragEvent, directoryId: string) => {
+    e.preventDefault();
+    setDragOverDirectory(null);
+    
+    const videoId = e.dataTransfer.getData("videoId");
+    const videoTitle = e.dataTransfer.getData("videoTitle");
+    
+    if (videoId) {
+      handleDrop(directoryId, videoId, videoTitle);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -245,14 +304,19 @@ export const DirectoryManager = () => {
                 <div
                   key={dir.id}
                   className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    selectedDirectory === dir.id
+                    dragOverDirectory === dir.id
+                      ? "border-primary bg-primary/20 scale-105"
+                      : selectedDirectory === dir.id
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50"
                   }`}
                   onClick={() => setSelectedDirectory(dir.id)}
+                  onDragOver={(e) => handleDragOver(e, dir.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDropOnDirectory(e, dir.id)}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <Folder className="w-6 h-6 text-primary" />
+                    <Folder className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`} />
                     <Button
                       variant="ghost"
                       size="sm"
@@ -270,6 +334,9 @@ export const DirectoryManager = () => {
                     <p className="text-xs text-muted-foreground truncate mt-1">
                       {dir.description}
                     </p>
+                  )}
+                  {dragOverDirectory === dir.id && (
+                    <p className="text-xs text-primary mt-2 font-medium">여기에 놓으세요</p>
                   )}
                 </div>
               ))}

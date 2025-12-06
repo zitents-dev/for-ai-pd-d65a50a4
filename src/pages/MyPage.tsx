@@ -332,16 +332,27 @@ export default function MyPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {videos.map((video) => (
-                  <div key={video.id} className="relative group">
-                    <VideoCard
-                      video={{
-                        ...video,
-                        profiles: {
-                          name: profile?.name || '',
-                          avatar_url: profile?.avatar_url || null,
-                        }
-                      }}
-                    />
+                  <div 
+                    key={video.id} 
+                    className="relative group"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("videoId", video.id);
+                      e.dataTransfer.setData("videoTitle", video.title);
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                  >
+                    <div className="cursor-grab active:cursor-grabbing">
+                      <VideoCard
+                        video={{
+                          ...video,
+                          profiles: {
+                            name: profile?.name || '',
+                            avatar_url: profile?.avatar_url || null,
+                          }
+                        }}
+                      />
+                    </div>
                     <div className="absolute top-2 right-2 flex gap-2">
                       <MoveToDirectoryDropdown videoId={video.id} />
                       <AlertDialog>
