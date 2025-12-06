@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2 } from "lucide-react";
+import { Folder, Plus, Trash2, X } from "lucide-react";
 import { VideoCard } from "./VideoCard";
 
 interface Directory {
@@ -163,6 +163,26 @@ export const DirectoryManager = () => {
     }
   };
 
+  const removeVideoFromDirectory = async (videoId: string) => {
+    if (!selectedDirectory) return;
+
+    try {
+      const { error } = await supabase
+        .from("directory_videos")
+        .delete()
+        .eq("video_id", videoId)
+        .eq("directory_id", selectedDirectory);
+
+      if (error) throw error;
+
+      toast.success("디렉토리에서 제거되었습니다");
+      loadDirectoryVideos(selectedDirectory);
+    } catch (error) {
+      console.error("Error removing video from directory:", error);
+      toast.error("제거에 실패했습니다");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -271,9 +291,22 @@ export const DirectoryManager = () => {
                 이 디렉토리에 아직 작품이 없습니다
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {directoryVideos.map((video) => (
-                  <VideoCard key={video.id} video={video} />
+                  <div key={video.id} className="relative group">
+                    <VideoCard video={video} />
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeVideoFromDirectory(video.id);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             )}
