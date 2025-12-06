@@ -18,12 +18,14 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Folder, Plus, Trash2, X } from "lucide-react";
 import { VideoCard } from "./VideoCard";
+import { Badge } from "@/components/ui/badge";
 
 interface Directory {
   id: string;
   name: string;
   description: string | null;
   created_at: string;
+  video_count?: number;
 }
 
 interface Video {
@@ -66,12 +68,18 @@ export const DirectoryManager = () => {
     try {
       const { data, error } = await supabase
         .from("directories")
-        .select("*")
+        .select("*, directory_videos(count)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setDirectories(data || []);
+      
+      const directoriesWithCount = (data || []).map((dir: any) => ({
+        ...dir,
+        video_count: dir.directory_videos?.[0]?.count || 0,
+      }));
+      
+      setDirectories(directoriesWithCount);
     } catch (error) {
       console.error("Error loading directories:", error);
     }
@@ -177,6 +185,7 @@ export const DirectoryManager = () => {
       if (error) throw error;
 
       toast.success("디렉토리에서 제거되었습니다");
+      loadDirectories(); // Refresh to update video count
       loadDirectoryVideos(selectedDirectory);
     } catch (error) {
       console.error("Error removing video from directory:", error);
@@ -210,6 +219,9 @@ export const DirectoryManager = () => {
 
       const dirName = directories.find(d => d.id === directoryId)?.name;
       toast.success(`"${videoTitle}"을(를) "${dirName}"에 추가했습니다`);
+      
+      // Refresh directories to update video count
+      loadDirectories();
       
       if (selectedDirectory === directoryId) {
         loadDirectoryVideos(directoryId);
@@ -316,7 +328,14 @@ export const DirectoryManager = () => {
                   onDrop={(e) => handleDropOnDirectory(e, dir.id)}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <Folder className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`} />
+                    <div className="flex items-center gap-2">
+                      <Folder className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`} />
+                      {dir.video_count !== undefined && dir.video_count > 0 && (
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
+                          {dir.video_count}
+                        </Badge>
+                      )}
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
