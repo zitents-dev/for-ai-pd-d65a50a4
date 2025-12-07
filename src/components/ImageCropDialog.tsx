@@ -97,7 +97,7 @@ export function ImageCropDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="relative w-full h-[350px] bg-muted rounded-lg overflow-hidden">
+        <div className="relative w-full h-[350px] bg-muted rounded-lg overflow-hidden flex items-center justify-center">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -112,7 +112,13 @@ export function ImageCropDialog({
             showGrid={true}
             minZoom={0.5}
             restrictPosition={false}
+            objectFit="contain"
             style={{
+              containerStyle: {
+                width: "100%",
+                height: "100%",
+                position: "relative",
+              },
               cropAreaStyle: {
                 transform: `scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
               },
