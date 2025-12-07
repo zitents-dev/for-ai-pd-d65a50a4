@@ -28,7 +28,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera } from 'lucide-react';
+import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera, X } from 'lucide-react';
 import { VideoCard } from '@/components/VideoCard';
 import { DirectoryManager } from '@/components/DirectoryManager';
 import { MoveToDirectoryDropdown } from '@/components/MoveToDirectoryDropdown';
@@ -451,15 +451,29 @@ export default function MyPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         
-        {/* Banner Edit Button */}
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm"
-          onClick={() => bannerInputRef.current?.click()}
-        >
-          <Camera className="h-4 w-4" />
-        </Button>
+        {/* Banner Edit Buttons */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          {profile?.banner_url && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => handleSaveField('banner_url', null)}
+              title="배너 이미지 삭제"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            size="icon"
+            className="bg-background/80 backdrop-blur-sm"
+            onClick={() => bannerInputRef.current?.click()}
+            title="배너 이미지 변경"
+          >
+            <Camera className="h-4 w-4" />
+          </Button>
+        </div>
         <input
           ref={bannerInputRef}
           type="file"
@@ -481,11 +495,23 @@ export default function MyPage() {
                 <AvatarImage src={profile?.avatar_url || undefined} />
                 <AvatarFallback className="text-4xl">{name?.[0] || '?'}</AvatarFallback>
               </Avatar>
+              {profile?.avatar_url && (
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute bottom-0 left-0 h-7 w-7 rounded-full bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => handleSaveField('avatar_url', null)}
+                  title="프로필 사진 삭제"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
               <Button
                 variant="secondary"
                 size="icon"
                 className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm"
                 onClick={() => avatarInputRef.current?.click()}
+                title="프로필 사진 변경"
               >
                 <Camera className="h-3 w-3" />
               </Button>
