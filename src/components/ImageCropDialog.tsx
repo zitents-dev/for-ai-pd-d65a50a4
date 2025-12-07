@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { getCroppedImg, CroppedArea } from '@/lib/cropImage';
-import { Loader2, ZoomIn, RotateCw } from 'lucide-react';
+import { Loader2, ZoomIn, RotateCw, FlipHorizontal, FlipVertical } from 'lucide-react';
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -27,6 +27,8 @@ export function ImageCropDialog({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [flipHorizontal, setFlipHorizontal] = useState(false);
+  const [flipVertical, setFlipVertical] = useState(false);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<CroppedArea | null>(null);
   const [processing, setProcessing] = useState(false);
 
@@ -54,13 +56,15 @@ export function ImageCropDialog({
 
     setProcessing(true);
     try {
-      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation, flipHorizontal, flipVertical);
       onCropComplete(croppedBlob);
       onOpenChange(false);
       // Reset state
       setCrop({ x: 0, y: 0 });
       setZoom(1);
       setRotation(0);
+      setFlipHorizontal(false);
+      setFlipVertical(false);
     } catch (error) {
       console.error('Error cropping image:', error);
     } finally {
@@ -73,10 +77,20 @@ export function ImageCropDialog({
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setRotation(0);
+    setFlipHorizontal(false);
+    setFlipVertical(false);
   };
 
   const handleRotate90 = () => {
     setRotation((prev) => (prev + 90) % 360);
+  };
+
+  const handleFlipHorizontal = () => {
+    setFlipHorizontal((prev) => !prev);
+  };
+
+  const handleFlipVertical = () => {
+    setFlipVertical((prev) => !prev);
   };
 
   return (
@@ -99,6 +113,7 @@ export function ImageCropDialog({
             onCropComplete={handleCropComplete}
             cropShape={aspectRatio === 1 ? 'round' : 'rect'}
             showGrid={true}
+            transform={`translate(${crop.x}px, ${crop.y}px) rotate(${rotation}deg) scale(${zoom}) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`}
           />
         </div>
 
@@ -138,6 +153,32 @@ export function ImageCropDialog({
             >
               <RotateCw className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Flip Controls */}
+          <div className="flex items-center gap-4">
+            <FlipHorizontal className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Label className="text-sm text-muted-foreground w-16">반전</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={flipHorizontal ? "default" : "outline"}
+                size="sm"
+                onClick={handleFlipHorizontal}
+                className="h-8"
+              >
+                <FlipHorizontal className="h-4 w-4 mr-2" />
+                좌우
+              </Button>
+              <Button
+                variant={flipVertical ? "default" : "outline"}
+                size="sm"
+                onClick={handleFlipVertical}
+                className="h-8"
+              >
+                <FlipVertical className="h-4 w-4 mr-2" />
+                상하
+              </Button>
+            </div>
           </div>
         </div>
 

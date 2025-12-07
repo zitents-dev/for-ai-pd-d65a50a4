@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera, X } from "lucide-react";
+import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { DirectoryManager } from "@/components/DirectoryManager";
 import { MoveToDirectoryDropdown } from "@/components/MoveToDirectoryDropdown";
@@ -115,6 +115,10 @@ export default function MyPage() {
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState("");
   const [cropImageType, setCropImageType] = useState<"banner" | "avatar">("banner");
+
+  // Pagination for work list
+  const [workPage, setWorkPage] = useState(1);
+  const worksPerPage = 4;
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -711,64 +715,101 @@ export default function MyPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {videos.map((video) => (
-                  <div
-                    key={video.id}
-                    className="relative group"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("videoId", video.id);
-                      e.dataTransfer.setData("videoTitle", video.title);
-                      e.dataTransfer.effectAllowed = "move";
-                    }}
-                  >
-                    <div className="cursor-grab active:cursor-grabbing">
-                      <VideoCard
-                        video={{
-                          ...video,
-                          profiles: {
-                            name: profile?.name || "",
-                            avatar_url: profile?.avatar_url || null,
-                          },
-                        }}
-                      />
-                    </div>
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <MoveToDirectoryDropdown videoId={video.id} />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>작품 삭제</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              "{video.title}"을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>취소</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteVideo(video.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {videos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage).map((video) => (
+                    <div
+                      key={video.id}
+                      className="relative group"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("videoId", video.id);
+                        e.dataTransfer.setData("videoTitle", video.title);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                    >
+                      <div className="cursor-grab active:cursor-grabbing">
+                        <VideoCard
+                          video={{
+                            ...video,
+                            profiles: {
+                              name: profile?.name || "",
+                              avatar_url: profile?.avatar_url || null,
+                            },
+                          }}
+                        />
+                      </div>
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <MoveToDirectoryDropdown videoId={video.id} />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              삭제하기
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>작품 삭제</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                "{video.title}"을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>취소</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteVideo(video.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                삭제하기
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {videos.length > worksPerPage && (
+                  <div className="flex items-center justify-center gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setWorkPage((prev) => Math.max(1, prev - 1))}
+                      disabled={workPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.ceil(videos.length / worksPerPage) }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={workPage === page ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setWorkPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setWorkPage((prev) => Math.min(Math.ceil(videos.length / worksPerPage), prev + 1))}
+                      disabled={workPage === Math.ceil(videos.length / worksPerPage)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
