@@ -73,12 +73,12 @@ export const DirectoryManager = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
+
       const directoriesWithCount = (data || []).map((dir: any) => ({
         ...dir,
         video_count: dir.directory_videos?.[0]?.count || 0,
       }));
-      
+
       setDirectories(directoriesWithCount);
     } catch (error) {
       console.error("Error loading directories:", error);
@@ -89,7 +89,8 @@ export const DirectoryManager = () => {
     try {
       const { data, error } = await supabase
         .from("directory_videos")
-        .select(`
+        .select(
+          `
           video_id,
           videos (
             id,
@@ -103,11 +104,12 @@ export const DirectoryManager = () => {
               avatar_url
             )
           )
-        `)
+        `,
+        )
         .eq("directory_id", directoryId);
 
       if (error) throw error;
-      
+
       const videos = data?.map((item: any) => item.videos).filter(Boolean) || [];
       setDirectoryVideos(videos);
     } catch (error) {
@@ -153,10 +155,7 @@ export const DirectoryManager = () => {
     if (!confirm("정말 이 디렉토리를 삭제하시겠습니까?")) return;
 
     try {
-      const { error } = await supabase
-        .from("directories")
-        .delete()
-        .eq("id", directoryId);
+      const { error } = await supabase.from("directories").delete().eq("id", directoryId);
 
       if (error) throw error;
 
@@ -208,21 +207,19 @@ export const DirectoryManager = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from("directory_videos")
-        .insert({
-          video_id: videoId,
-          directory_id: directoryId,
-        });
+      const { error } = await supabase.from("directory_videos").insert({
+        video_id: videoId,
+        directory_id: directoryId,
+      });
 
       if (error) throw error;
 
-      const dirName = directories.find(d => d.id === directoryId)?.name;
+      const dirName = directories.find((d) => d.id === directoryId)?.name;
       toast.success(`"${videoTitle}"을(를) "${dirName}"에 추가했습니다`);
-      
+
       // Refresh directories to update video count
       loadDirectories();
-      
+
       if (selectedDirectory === directoryId) {
         loadDirectoryVideos(directoryId);
       }
@@ -245,10 +242,10 @@ export const DirectoryManager = () => {
   const handleDropOnDirectory = (e: React.DragEvent, directoryId: string) => {
     e.preventDefault();
     setDragOverDirectory(null);
-    
+
     const videoId = e.dataTransfer.getData("videoId");
     const videoTitle = e.dataTransfer.getData("videoTitle");
-    
+
     if (videoId) {
       handleDrop(directoryId, videoId, videoTitle);
     }
@@ -258,20 +255,17 @@ export const DirectoryManager = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>내 디렉토리</CardTitle>
+          <CardTitle>내 분류</CardTitle>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                새 디렉토리
+                <Plus className="w-4 h-4" />새 디렉토리
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>새 디렉토리 만들기</DialogTitle>
-                <DialogDescription>
-                  작품을 정리할 디렉토리를 만들어보세요
-                </DialogDescription>
+                <DialogDescription>작품을 정리할 디렉토리를 만들어보세요</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -319,8 +313,8 @@ export const DirectoryManager = () => {
                     dragOverDirectory === dir.id
                       ? "border-primary bg-primary/20 scale-105"
                       : selectedDirectory === dir.id
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
                   }`}
                   onClick={() => setSelectedDirectory(dir.id)}
                   onDragOver={(e) => handleDragOver(e, dir.id)}
@@ -329,7 +323,9 @@ export const DirectoryManager = () => {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Folder className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`} />
+                      <Folder
+                        className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`}
+                      />
                       {dir.video_count !== undefined && dir.video_count > 0 && (
                         <Badge variant="secondary" className="text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
                           {dir.video_count}
@@ -349,11 +345,7 @@ export const DirectoryManager = () => {
                     </Button>
                   </div>
                   <h3 className="font-semibold text-sm truncate">{dir.name}</h3>
-                  {dir.description && (
-                    <p className="text-xs text-muted-foreground truncate mt-1">
-                      {dir.description}
-                    </p>
-                  )}
+                  {dir.description && <p className="text-xs text-muted-foreground truncate mt-1">{dir.description}</p>}
                   {dragOverDirectory === dir.id && (
                     <p className="text-xs text-primary mt-2 font-medium">여기에 놓으세요</p>
                   )}
@@ -367,17 +359,13 @@ export const DirectoryManager = () => {
       {selectedDirectory && (
         <Card>
           <CardHeader>
-            <CardTitle>
-              {directories.find((d) => d.id === selectedDirectory)?.name || "디렉토리"} 작품
-            </CardTitle>
+            <CardTitle>{directories.find((d) => d.id === selectedDirectory)?.name || "디렉토리"} 작품</CardTitle>
           </CardHeader>
           <CardContent>
             {directoryVideos.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                이 디렉토리에 아직 작품이 없습니다
-              </p>
+              <p className="text-muted-foreground text-center py-8">이 디렉토리에 아직 작품이 없습니다</p>
             ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {directoryVideos.map((video) => (
                   <div key={video.id} className="relative group">
                     <VideoCard video={video} />
