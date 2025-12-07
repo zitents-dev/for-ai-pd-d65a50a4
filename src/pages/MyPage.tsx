@@ -426,7 +426,7 @@ export default function MyPage() {
           style={{
             backgroundImage: profile?.banner_url
               ? `url(${profile.banner_url})`
-              : 'linear-gradient(135deg, hsl(var(--primary)/0.3), hsl(var(--secondary)/0.5))',
+              : 'linear-gradient(135deg, hsl(217 91% 60% / 0.3), hsl(230 91% 65% / 0.5))',
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
