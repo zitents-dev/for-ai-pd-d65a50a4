@@ -111,7 +111,7 @@ export function ImageCropDialog({
             cropShape={aspectRatio === 1 ? "round" : "rect"}
             showGrid={true}
             minZoom={0.5}
-            restrictPosition={false}
+            restrictPosition={true}
             objectFit="contain"
             style={{
               containerStyle: {
@@ -192,7 +192,6 @@ export function ImageCropDialog({
               </Button>
             </div>
           </div>
-
         </div>
 
         <DialogFooter>
