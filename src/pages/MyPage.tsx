@@ -22,7 +22,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Loader2,
+  Upload,
+  LogOut,
+  Trash2,
+  UserX,
+  Pencil,
+  Eye,
+  EyeOff,
+  Camera,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { DirectoryManager } from "@/components/DirectoryManager";
 import { MoveToDirectoryDropdown } from "@/components/MoveToDirectoryDropdown";
@@ -816,6 +829,7 @@ export default function MyPage() {
 
         {/* Directory Section */}
         <div className="mt-8">
+          <h2 className="text-2xl font-bold">내 분류</h2>
           <DirectoryManager />
         </div>
 
