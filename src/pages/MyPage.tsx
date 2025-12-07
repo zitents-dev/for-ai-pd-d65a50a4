@@ -487,7 +487,7 @@ export default function MyPage() {
                     htmlFor="banner-delete-agree"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    삭제에 동의합니다
+                    위 내용을 이해하고, 삭제 합니다.
                   </label>
                 </div>
                 <AlertDialogFooter>
@@ -566,7 +566,7 @@ export default function MyPage() {
                         htmlFor="avatar-delete-agree"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        삭제에 동의합니다
+                        위 내용을 이해하고, 삭제 합니다.
                       </label>
                     </div>
                     <AlertDialogFooter>
@@ -847,7 +847,7 @@ export default function MyPage() {
                                 htmlFor={`video-delete-agree-${video.id}`}
                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                               >
-                                삭제에 동의합니다
+                                위 내용을 이해하고, 삭제 합니다.
                               </label>
                             </div>
                             <AlertDialogFooter>
@@ -970,7 +970,9 @@ export default function MyPage() {
                     variant="outline"
                     size="icon"
                     onClick={() =>
-                      setFavoritesPage((prev) => Math.min(Math.ceil(favoriteVideos.length / favoritesPerPage), prev + 1))
+                      setFavoritesPage((prev) =>
+                        Math.min(Math.ceil(favoriteVideos.length / favoritesPerPage), prev + 1),
+                      )
                     }
                     disabled={favoritesPage === Math.ceil(favoriteVideos.length / favoritesPerPage)}
                   >
