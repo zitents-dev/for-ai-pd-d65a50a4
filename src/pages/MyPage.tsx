@@ -454,15 +454,35 @@ export default function MyPage() {
         {/* Banner Edit Buttons */}
         <div className="absolute top-4 right-4 flex gap-2">
           {profile?.banner_url && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
-              onClick={() => handleSaveField('banner_url', null)}
-              title="배너 이미지 삭제"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                  title="배너 이미지 삭제"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>배너 이미지 삭제</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    배너 이미지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleSaveField('banner_url', null)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    삭제
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           <Button
             variant="secondary"
@@ -496,15 +516,35 @@ export default function MyPage() {
                 <AvatarFallback className="text-4xl">{name?.[0] || '?'}</AvatarFallback>
               </Avatar>
               {profile?.avatar_url && (
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="absolute bottom-0 left-0 h-7 w-7 rounded-full bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
-                  onClick={() => handleSaveField('avatar_url', null)}
-                  title="프로필 사진 삭제"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="absolute bottom-0 left-0 h-7 w-7 rounded-full bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                      title="프로필 사진 삭제"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>프로필 사진 삭제</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        프로필 사진을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleSaveField('avatar_url', null)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        삭제
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
               <Button
                 variant="secondary"
