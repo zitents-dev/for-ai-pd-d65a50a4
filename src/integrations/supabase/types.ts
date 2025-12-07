@@ -393,9 +393,12 @@ export type Database = {
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
+          birthday: string | null
+          country: string | null
           created_at: string | null
           deleted_at: string | null
           email: string | null
+          gender: string | null
           hide_adult_content: boolean | null
           hide_child_content: boolean | null
           hide_sexual_content: boolean | null
@@ -405,15 +408,21 @@ export type Database = {
           is_deleted: boolean | null
           name: string | null
           name_updated_at: string | null
+          show_birthday: boolean | null
+          show_country: boolean | null
           show_email: boolean | null
+          show_gender: boolean | null
         }
         Insert: {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          birthday?: string | null
+          country?: string | null
           created_at?: string | null
           deleted_at?: string | null
           email?: string | null
+          gender?: string | null
           hide_adult_content?: boolean | null
           hide_child_content?: boolean | null
           hide_sexual_content?: boolean | null
@@ -423,15 +432,21 @@ export type Database = {
           is_deleted?: boolean | null
           name?: string | null
           name_updated_at?: string | null
+          show_birthday?: boolean | null
+          show_country?: boolean | null
           show_email?: boolean | null
+          show_gender?: boolean | null
         }
         Update: {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
+          birthday?: string | null
+          country?: string | null
           created_at?: string | null
           deleted_at?: string | null
           email?: string | null
+          gender?: string | null
           hide_adult_content?: boolean | null
           hide_child_content?: boolean | null
           hide_sexual_content?: boolean | null
@@ -441,7 +456,10 @@ export type Database = {
           is_deleted?: boolean | null
           name?: string | null
           name_updated_at?: string | null
+          show_birthday?: boolean | null
+          show_country?: boolean | null
           show_email?: boolean | null
+          show_gender?: boolean | null
         }
         Relationships: []
       }
