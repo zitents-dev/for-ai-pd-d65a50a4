@@ -121,7 +121,7 @@ export function ImageCropDialog({
             <Label className="text-sm text-muted-foreground w-16">확대</Label>
             <Slider
               value={[zoom]}
-              min={0.3}
+              min={0.5}
               max={3}
               step={0.1}
               onValueChange={(value) => setZoom(value[0])}
