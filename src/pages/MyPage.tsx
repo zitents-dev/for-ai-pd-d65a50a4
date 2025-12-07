@@ -1,12 +1,12 @@
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Navbar } from '@/components/Navbar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,23 +17,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera, X } from 'lucide-react';
-import { VideoCard } from '@/components/VideoCard';
-import { DirectoryManager } from '@/components/DirectoryManager';
-import { MoveToDirectoryDropdown } from '@/components/MoveToDirectoryDropdown';
-import { BadgeDisplay } from '@/components/BadgeDisplay';
-import { ImageCropDialog } from '@/components/ImageCropDialog';
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera, X } from "lucide-react";
+import { VideoCard } from "@/components/VideoCard";
+import { DirectoryManager } from "@/components/DirectoryManager";
+import { MoveToDirectoryDropdown } from "@/components/MoveToDirectoryDropdown";
+import { BadgeDisplay } from "@/components/BadgeDisplay";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 
 interface Profile {
   id: string;
@@ -52,7 +46,7 @@ interface Profile {
 }
 
 interface UserBadge {
-  badge_type: 'best' | 'official';
+  badge_type: "best" | "official";
 }
 
 interface Video {
@@ -77,15 +71,12 @@ interface FavoriteVideo {
   };
 }
 
-const countries = [
-  '한국', '미국', '일본', '중국', '영국', '독일', '프랑스', '캐나다', '호주', '기타'
-];
+const countries = ["대한민국", "미국", "일본", "중국", "영국", "독일", "프랑스", "캐나다", "호주", "기타"];
 
 const genders = [
-  { value: 'male', label: '남성' },
-  { value: 'female', label: '여성' },
-  { value: 'other', label: '기타' },
-  { value: 'prefer_not_to_say', label: '밝히고 싶지 않음' },
+  { value: "male", label: "남성" },
+  { value: "female", label: "여성" },
+  { value: "other", label: "임의" },
 ];
 
 export default function MyPage() {
@@ -97,21 +88,21 @@ export default function MyPage() {
   const [favoriteVideos, setFavoriteVideos] = useState<FavoriteVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Editable fields
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [email, setEmail] = useState('');
-  const [birthday, setBirthday] = useState('');
-  const [gender, setGender] = useState('');
-  const [country, setCountry] = useState('');
-  
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [email, setEmail] = useState("");
+  const [birthday, setBirthday] = useState("");
+  const [gender, setGender] = useState("");
+  const [country, setCountry] = useState("");
+
   // Visibility settings
   const [showEmail, setShowEmail] = useState(false);
   const [showBirthday, setShowBirthday] = useState(false);
   const [showGender, setShowGender] = useState(false);
   const [showCountry, setShowCountry] = useState(false);
-  
+
   // Edit modes
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
@@ -122,15 +113,15 @@ export default function MyPage() {
 
   // Image crop dialog state
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
-  const [cropImageSrc, setCropImageSrc] = useState('');
-  const [cropImageType, setCropImageType] = useState<'banner' | 'avatar'>('banner');
+  const [cropImageSrc, setCropImageSrc] = useState("");
+  const [cropImageType, setCropImageType] = useState<"banner" | "avatar">("banner");
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/auth');
+      navigate("/auth");
     }
   }, [user, authLoading, navigate]);
 
@@ -145,27 +136,23 @@ export default function MyPage() {
 
   const loadProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user!.id)
-        .single();
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
 
       if (error) throw error;
-      
+
       setProfile(data as Profile);
-      setName(data.name || '');
-      setBio(data.bio || '');
-      setEmail(data.email || '');
-      setBirthday(data.birthday || '');
-      setGender(data.gender || '');
-      setCountry(data.country || '');
+      setName(data.name || "");
+      setBio(data.bio || "");
+      setEmail(data.email || "");
+      setBirthday(data.birthday || "");
+      setGender(data.gender || "");
+      setCountry(data.country || "");
       setShowEmail(data.show_email || false);
       setShowBirthday(data.show_birthday || false);
       setShowGender(data.show_gender || false);
       setShowCountry(data.show_country || false);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error("Error loading profile:", error);
     } finally {
       setLoading(false);
     }
@@ -173,38 +160,36 @@ export default function MyPage() {
 
   const loadBadges = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_badges')
-        .select('badge_type')
-        .eq('user_id', user!.id);
+      const { data, error } = await supabase.from("user_badges").select("badge_type").eq("user_id", user!.id);
 
       if (error) throw error;
       setBadges((data as UserBadge[]) || []);
     } catch (error) {
-      console.error('Error loading badges:', error);
+      console.error("Error loading badges:", error);
     }
   };
 
   const loadMyVideos = async () => {
     try {
       const { data, error } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('creator_id', user!.id)
-        .order('created_at', { ascending: false });
+        .from("videos")
+        .select("*")
+        .eq("creator_id", user!.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setVideos((data as Video[]) || []);
     } catch (error) {
-      console.error('Error loading videos:', error);
+      console.error("Error loading videos:", error);
     }
   };
 
   const loadFavorites = async () => {
     try {
       const { data, error } = await supabase
-        .from('favorites')
-        .select(`
+        .from("favorites")
+        .select(
+          `
           video_id,
           videos (
             id,
@@ -218,16 +203,17 @@ export default function MyPage() {
               avatar_url
             )
           )
-        `)
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
+        `,
+        )
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
+
       const formattedFavorites = data?.map((item: any) => item.videos).filter(Boolean) || [];
       setFavoriteVideos(formattedFavorites);
     } catch (error) {
-      console.error('Error loading favorites:', error);
+      console.error("Error loading favorites:", error);
     }
   };
 
@@ -235,12 +221,12 @@ export default function MyPage() {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ [field]: value })
-        .eq('id', user!.id);
+        .eq("id", user!.id);
 
       if (error) throw error;
-      toast.success('저장되었습니다');
+      toast.success("저장되었습니다");
       loadProfile();
     } catch (error: any) {
       toast.error(error.message);
@@ -249,7 +235,7 @@ export default function MyPage() {
     }
   };
 
-  const handleImageSelect = (file: File, type: 'banner' | 'avatar') => {
+  const handleImageSelect = (file: File, type: "banner" | "avatar") => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
@@ -264,26 +250,24 @@ export default function MyPage() {
     if (!user) return;
 
     const fileName = `${user.id}-${cropImageType}-${Date.now()}.jpg`;
-    const bucket = 'thumbnails';
+    const bucket = "thumbnails";
 
     try {
       setSaving(true);
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, croppedBlob, { 
-          upsert: true,
-          contentType: 'image/jpeg'
-        });
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, croppedBlob, {
+        upsert: true,
+        contentType: "image/jpeg",
+      });
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-      
-      const field = cropImageType === 'banner' ? 'banner_url' : 'avatar_url';
+
+      const field = cropImageType === "banner" ? "banner_url" : "avatar_url";
       await handleSaveField(field, urlData.publicUrl);
-      toast.success('이미지가 저장되었습니다');
+      toast.success("이미지가 저장되었습니다");
     } catch (error: any) {
-      toast.error('이미지 업로드 실패');
+      toast.error("이미지 업로드 실패");
       console.error(error);
     } finally {
       setSaving(false);
@@ -292,59 +276,55 @@ export default function MyPage() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate("/");
   };
 
   const handleDeleteVideo = async (videoId: string) => {
     try {
-      const { error } = await supabase
-        .from('videos')
-        .delete()
-        .eq('id', videoId)
-        .eq('creator_id', user!.id);
+      const { error } = await supabase.from("videos").delete().eq("id", videoId).eq("creator_id", user!.id);
 
       if (error) throw error;
-      
-      toast.success('작품이 삭제되었습니다');
+
+      toast.success("작품이 삭제되었습니다");
       loadMyVideos();
     } catch (error: any) {
-      toast.error('작품 삭제에 실패했습니다');
-      console.error('Error deleting video:', error);
+      toast.error("작품 삭제에 실패했습니다");
+      console.error("Error deleting video:", error);
     }
   };
 
   const handleQuitMember = async () => {
     try {
       const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          is_deleted: true, 
-          deleted_at: new Date().toISOString() 
+        .from("profiles")
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
         } as any)
-        .eq('id', user!.id);
+        .eq("id", user!.id);
 
       if (error) throw error;
-      
-      toast.success('회원 탈퇴가 완료되었습니다. 1년 내 재가입이 불가능합니다.');
+
+      toast.success("회원 탈퇴가 완료되었습니다. 1년 내 재가입이 불가능합니다.");
       await signOut();
-      navigate('/');
+      navigate("/");
     } catch (error: any) {
-      toast.error('회원 탈퇴에 실패했습니다');
-      console.error('Error quitting member:', error);
+      toast.error("회원 탈퇴에 실패했습니다");
+      console.error("Error quitting member:", error);
     }
   };
 
-  const EditableField = ({ 
-    label, 
-    value, 
-    setValue, 
+  const EditableField = ({
+    label,
+    value,
+    setValue,
     fieldName,
-    isEditing, 
+    isEditing,
     setIsEditing,
     showField,
     setShowField,
     showFieldName,
-    type = 'text',
+    type = "text",
     options,
   }: {
     label: string;
@@ -356,7 +336,7 @@ export default function MyPage() {
     showField?: boolean;
     setShowField?: (v: boolean) => void;
     showFieldName?: string;
-    type?: 'text' | 'date' | 'select';
+    type?: "text" | "date" | "select";
     options?: { value: string; label: string }[];
   }) => (
     <div className="flex items-center justify-between py-2 border-b border-border/50">
@@ -364,24 +344,21 @@ export default function MyPage() {
         <Label className="text-xs text-muted-foreground">{label}</Label>
         {isEditing ? (
           <div className="flex items-center gap-2 mt-1">
-            {type === 'select' && options ? (
+            {type === "select" && options ? (
               <Select value={value} onValueChange={setValue}>
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
-                  {options.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  {options.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             ) : (
-              <Input
-                type={type}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                className="h-8"
-              />
+              <Input type={type} value={value} onChange={(e) => setValue(e.target.value)} className="h-8" />
             )}
             <Button
               size="sm"
@@ -392,11 +369,11 @@ export default function MyPage() {
               }}
               disabled={saving}
             >
-              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : '저장'}
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "저장"}
             </Button>
           </div>
         ) : (
-          <p className="text-sm">{value || '-'}</p>
+          <p className="text-sm">{value || "-"}</p>
         )}
       </div>
       <div className="flex items-center gap-1">
@@ -410,17 +387,16 @@ export default function MyPage() {
               setShowField(newValue);
               handleSaveField(showFieldName, newValue);
             }}
-            title={showField ? '공개 중' : '비공개'}
+            title={showField ? "공개 중" : "비공개"}
           >
-            {showField ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+            {showField ? (
+              <Eye className="h-4 w-4 text-primary" />
+            ) : (
+              <EyeOff className="h-4 w-4 text-muted-foreground" />
+            )}
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => setIsEditing(!isEditing)}
-        >
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsEditing(!isEditing)}>
           <Pencil className="h-4 w-4" />
         </Button>
       </div>
@@ -438,7 +414,7 @@ export default function MyPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       {/* Hero Banner */}
       <div className="relative w-full h-64 md:h-80 overflow-hidden">
         <div
@@ -446,11 +422,11 @@ export default function MyPage() {
           style={{
             backgroundImage: profile?.banner_url
               ? `url(${profile.banner_url})`
-              : 'linear-gradient(135deg, hsl(217 91% 60% / 0.3), hsl(230 91% 65% / 0.5))',
+              : "linear-gradient(135deg, hsl(217 91% 60% / 0.3), hsl(230 91% 65% / 0.5))",
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        
+
         {/* Banner Edit Buttons */}
         <div className="absolute top-4 right-4 flex gap-2">
           {profile?.banner_url && (
@@ -475,7 +451,7 @@ export default function MyPage() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>취소</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => handleSaveField('banner_url', null)}
+                    onClick={() => handleSaveField("banner_url", null)}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     삭제
@@ -501,11 +477,11 @@ export default function MyPage() {
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) handleImageSelect(file, 'banner');
-            e.target.value = '';
+            if (file) handleImageSelect(file, "banner");
+            e.target.value = "";
           }}
         />
-        
+
         {/* Profile Info on Banner */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="container max-w-6xl mx-auto flex items-end gap-6">
@@ -513,7 +489,7 @@ export default function MyPage() {
             <div className="relative">
               <Avatar className="h-28 w-28 md:h-36 md:w-36 border-4 border-background shadow-xl">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-4xl">{name?.[0] || '?'}</AvatarFallback>
+                <AvatarFallback className="text-4xl">{name?.[0] || "?"}</AvatarFallback>
               </Avatar>
               {profile?.avatar_url && (
                 <AlertDialog>
@@ -537,7 +513,7 @@ export default function MyPage() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>취소</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => handleSaveField('avatar_url', null)}
+                        onClick={() => handleSaveField("avatar_url", null)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         삭제
@@ -562,12 +538,12 @@ export default function MyPage() {
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImageSelect(file, 'avatar');
-                  e.target.value = '';
+                  if (file) handleImageSelect(file, "avatar");
+                  e.target.value = "";
                 }}
               />
             </div>
-            
+
             {/* Name & Badge */}
             <div className="flex-1 pb-2 bg-background/60 backdrop-blur-sm rounded-lg px-4 py-3">
               <div className="flex items-center gap-3">
@@ -581,7 +557,7 @@ export default function MyPage() {
                     <Button
                       size="sm"
                       onClick={() => {
-                        handleSaveField('name', name);
+                        handleSaveField("name", name);
                         setEditingName(false);
                       }}
                       disabled={saving}
@@ -591,13 +567,8 @@ export default function MyPage() {
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">{name || '이름 없음'}</h1>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => setEditingName(true)}
-                    >
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">{name || "이름 없음"}</h1>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingName(true)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                   </>
@@ -612,7 +583,7 @@ export default function MyPage() {
           </div>
         </div>
       </div>
-      
+
       <div className="container px-4 py-8 max-w-6xl mx-auto">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Profile Card - Private Info */}
@@ -629,7 +600,7 @@ export default function MyPage() {
                 isEditing={editingBio}
                 setIsEditing={setEditingBio}
               />
-              
+
               <EditableField
                 label="이메일"
                 value={email}
@@ -641,7 +612,7 @@ export default function MyPage() {
                 setShowField={setShowEmail}
                 showFieldName="show_email"
               />
-              
+
               <EditableField
                 label="생년월일"
                 value={birthday}
@@ -654,7 +625,7 @@ export default function MyPage() {
                 showFieldName="show_birthday"
                 type="date"
               />
-              
+
               <EditableField
                 label="성별"
                 value={gender}
@@ -668,9 +639,9 @@ export default function MyPage() {
                 type="select"
                 options={genders}
               />
-              
+
               <EditableField
-                label="국가"
+                label="거주 국가"
                 value={country}
                 setValue={setCountry}
                 fieldName="country"
@@ -680,15 +651,11 @@ export default function MyPage() {
                 setShowField={setShowCountry}
                 showFieldName="show_country"
                 type="select"
-                options={countries.map(c => ({ value: c, label: c }))}
+                options={countries.map((c) => ({ value: c, label: c }))}
               />
 
               <div className="pt-4 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleSignOut}
-                >
+                <Button variant="outline" className="w-full" onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   로그 아웃
                 </Button>
@@ -704,13 +671,16 @@ export default function MyPage() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
                       <AlertDialogDescription>
-                        정말 탈퇴하시겠습니까? 탈퇴 후 1년 이내에는 동일 계정으로 재가입할 수 없습니다.
-                        데이터는 보존되며, 1년 후에 완전히 삭제됩니다.
+                        정말 탈퇴하시겠습니까? 탈퇴 후 1년 이내에는 동일 계정으로 재가입할 수 없습니다. 데이터는
+                        보존되며, 1년 후에 완전히 삭제됩니다.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>취소</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleQuitMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <AlertDialogAction
+                        onClick={handleQuitMember}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
                         탈퇴하기
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -726,8 +696,7 @@ export default function MyPage() {
               <h2 className="text-2xl font-bold">내 작품</h2>
               <Button asChild>
                 <a href="/upload">
-                  <Upload className="mr-2 h-4 w-4" />
-                  새 작품
+                  <Upload className="mr-2 h-4 w-4" />새 작품
                 </a>
               </Button>
             </div>
@@ -744,8 +713,8 @@ export default function MyPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {videos.map((video) => (
-                  <div 
-                    key={video.id} 
+                  <div
+                    key={video.id}
                     className="relative group"
                     draggable
                     onDragStart={(e) => {
@@ -759,9 +728,9 @@ export default function MyPage() {
                         video={{
                           ...video,
                           profiles: {
-                            name: profile?.name || '',
+                            name: profile?.name || "",
                             avatar_url: profile?.avatar_url || null,
-                          }
+                          },
                         }}
                       />
                     </div>
@@ -787,7 +756,10 @@ export default function MyPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>취소</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteVideo(video.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            <AlertDialogAction
+                              onClick={() => handleDeleteVideo(video.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
                               삭제하기
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -809,7 +781,7 @@ export default function MyPage() {
         {/* Favorites Section */}
         <div className="mt-8 space-y-6">
           <h2 className="text-2xl font-bold">즐겨찾기</h2>
-          
+
           {favoriteVideos.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
@@ -831,9 +803,9 @@ export default function MyPage() {
         open={cropDialogOpen}
         onOpenChange={setCropDialogOpen}
         imageSrc={cropImageSrc}
-        aspectRatio={cropImageType === 'avatar' ? 1 : 16 / 6}
+        aspectRatio={cropImageType === "avatar" ? 1 : 16 / 6}
         onCropComplete={handleCroppedImage}
-        title={cropImageType === 'avatar' ? '프로필 사진 편집' : '배너 이미지 편집'}
+        title={cropImageType === "avatar" ? "프로필 사진 편집" : "배너 이미지 편집"}
       />
     </div>
   );
