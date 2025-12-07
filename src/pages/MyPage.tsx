@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -18,19 +18,40 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Upload, LogOut, Trash2, UserX } from 'lucide-react';
+import { Loader2, Upload, LogOut, Trash2, UserX, Pencil, Eye, EyeOff, Camera } from 'lucide-react';
 import { VideoCard } from '@/components/VideoCard';
 import { DirectoryManager } from '@/components/DirectoryManager';
 import { MoveToDirectoryDropdown } from '@/components/MoveToDirectoryDropdown';
+import { BadgeDisplay } from '@/components/BadgeDisplay';
 
 interface Profile {
   id: string;
   name: string;
   bio: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
+  email: string | null;
+  birthday: string | null;
+  gender: string | null;
+  country: string | null;
+  show_email: boolean;
+  show_birthday: boolean;
+  show_gender: boolean;
+  show_country: boolean;
+}
+
+interface UserBadge {
+  badge_type: 'best' | 'official';
 }
 
 interface Video {
@@ -55,16 +76,51 @@ interface FavoriteVideo {
   };
 }
 
+const countries = [
+  '한국', '미국', '일본', '중국', '영국', '독일', '프랑스', '캐나다', '호주', '기타'
+];
+
+const genders = [
+  { value: 'male', label: '남성' },
+  { value: 'female', label: '여성' },
+  { value: 'other', label: '기타' },
+  { value: 'prefer_not_to_say', label: '밝히고 싶지 않음' },
+];
+
 export default function MyPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [badges, setBadges] = useState<UserBadge[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [favoriteVideos, setFavoriteVideos] = useState<FavoriteVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Editable fields
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [email, setEmail] = useState('');
+  const [birthday, setBirthday] = useState('');
+  const [gender, setGender] = useState('');
+  const [country, setCountry] = useState('');
+  
+  // Visibility settings
+  const [showEmail, setShowEmail] = useState(false);
+  const [showBirthday, setShowBirthday] = useState(false);
+  const [showGender, setShowGender] = useState(false);
+  const [showCountry, setShowCountry] = useState(false);
+  
+  // Edit modes
+  const [editingName, setEditingName] = useState(false);
+  const [editingBio, setEditingBio] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [editingBirthday, setEditingBirthday] = useState(false);
+  const [editingGender, setEditingGender] = useState(false);
+  const [editingCountry, setEditingCountry] = useState(false);
+
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -75,6 +131,7 @@ export default function MyPage() {
   useEffect(() => {
     if (user) {
       loadProfile();
+      loadBadges();
       loadMyVideos();
       loadFavorites();
     }
@@ -90,13 +147,35 @@ export default function MyPage() {
 
       if (error) throw error;
       
-      setProfile(data);
-      setName(data.name);
+      setProfile(data as Profile);
+      setName(data.name || '');
       setBio(data.bio || '');
+      setEmail(data.email || '');
+      setBirthday(data.birthday || '');
+      setGender(data.gender || '');
+      setCountry(data.country || '');
+      setShowEmail(data.show_email || false);
+      setShowBirthday(data.show_birthday || false);
+      setShowGender(data.show_gender || false);
+      setShowCountry(data.show_country || false);
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBadges = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select('badge_type')
+        .eq('user_id', user!.id);
+
+      if (error) throw error;
+      setBadges((data as UserBadge[]) || []);
+    } catch (error) {
+      console.error('Error loading badges:', error);
     }
   };
 
@@ -146,22 +225,46 @@ export default function MyPage() {
     }
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveField = async (field: string, value: any) => {
     setSaving(true);
-
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ name, bio })
+        .update({ [field]: value })
         .eq('id', user!.id);
 
       if (error) throw error;
-      
-      toast.success('Profile updated successfully!');
+      toast.success('저장되었습니다');
       loadProfile();
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (file: File, type: 'banner' | 'avatar') => {
+    if (!file) return;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user!.id}-${type}-${Date.now()}.${fileExt}`;
+    const bucket = type === 'banner' ? 'thumbnails' : 'thumbnails';
+
+    try {
+      setSaving(true);
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      
+      const field = type === 'banner' ? 'banner_url' : 'avatar_url';
+      await handleSaveField(field, urlData.publicUrl);
+    } catch (error: any) {
+      toast.error('이미지 업로드 실패');
+      console.error(error);
     } finally {
       setSaving(false);
     }
@@ -192,7 +295,6 @@ export default function MyPage() {
 
   const handleQuitMember = async () => {
     try {
-      // Soft delete - set is_deleted flag and deleted_at date
       const { error } = await supabase
         .from('profiles')
         .update({ 
@@ -212,6 +314,99 @@ export default function MyPage() {
     }
   };
 
+  const EditableField = ({ 
+    label, 
+    value, 
+    setValue, 
+    fieldName,
+    isEditing, 
+    setIsEditing,
+    showField,
+    setShowField,
+    showFieldName,
+    type = 'text',
+    options,
+  }: {
+    label: string;
+    value: string;
+    setValue: (v: string) => void;
+    fieldName: string;
+    isEditing: boolean;
+    setIsEditing: (v: boolean) => void;
+    showField?: boolean;
+    setShowField?: (v: boolean) => void;
+    showFieldName?: string;
+    type?: 'text' | 'date' | 'select';
+    options?: { value: string; label: string }[];
+  }) => (
+    <div className="flex items-center justify-between py-2 border-b border-border/50">
+      <div className="flex-1">
+        <Label className="text-xs text-muted-foreground">{label}</Label>
+        {isEditing ? (
+          <div className="flex items-center gap-2 mt-1">
+            {type === 'select' && options ? (
+              <Select value={value} onValueChange={setValue}>
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                type={type}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="h-8"
+              />
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                handleSaveField(fieldName, value || null);
+                setIsEditing(false);
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : '저장'}
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm">{value || '-'}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        {showField !== undefined && setShowField && showFieldName && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => {
+              const newValue = !showField;
+              setShowField(newValue);
+              handleSaveField(showFieldName, newValue);
+            }}
+            title={showField ? '공개 중' : '비공개'}
+          >
+            {showField ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => setIsEditing(!isEditing)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -224,87 +419,216 @@ export default function MyPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       
+      {/* Hero Banner */}
+      <div className="relative w-full h-64 md:h-80 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: profile?.banner_url
+              ? `url(${profile.banner_url})`
+              : 'linear-gradient(135deg, hsl(var(--primary)/0.3), hsl(var(--secondary)/0.5))',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        
+        {/* Banner Edit Button */}
+        <Button
+          variant="secondary"
+          size="icon"
+          className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm"
+          onClick={() => bannerInputRef.current?.click()}
+        >
+          <Camera className="h-4 w-4" />
+        </Button>
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleImageUpload(file, 'banner');
+          }}
+        />
+        
+        {/* Profile Info on Banner */}
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="container max-w-6xl mx-auto flex items-end gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              <Avatar className="h-28 w-28 md:h-36 md:w-36 border-4 border-background shadow-xl">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="text-4xl">{name?.[0] || '?'}</AvatarFallback>
+              </Avatar>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                <Camera className="h-3 w-3" />
+              </Button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file, 'avatar');
+                }}
+              />
+            </div>
+            
+            {/* Name & Badge */}
+            <div className="flex-1 pb-2 bg-background/60 backdrop-blur-sm rounded-lg px-4 py-3">
+              <div className="flex items-center gap-3">
+                {editingName ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="h-10 text-2xl font-bold bg-background/80"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        handleSaveField('name', name);
+                        setEditingName(false);
+                      }}
+                      disabled={saving}
+                    >
+                      저장
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">{name || '이름 없음'}</h1>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setEditingName(true)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              {badges.length > 0 && (
+                <div className="mt-2">
+                  <BadgeDisplay badges={badges} size="md" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <div className="container px-4 py-8 max-w-6xl mx-auto">
         <div className="grid gap-8 md:grid-cols-3">
-          {/* Profile Card */}
+          {/* Profile Card - Private Info */}
           <Card className="md:col-span-1">
             <CardHeader>
-              <CardTitle>프로필</CardTitle>
+              <CardTitle>프로필 정보</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="text-2xl">{name[0]}</AvatarFallback>
-                </Avatar>
-              </div>
+            <CardContent className="space-y-1">
+              <EditableField
+                label="소개"
+                value={bio}
+                setValue={setBio}
+                fieldName="bio"
+                isEditing={editingBio}
+                setIsEditing={setEditingBio}
+              />
+              
+              <EditableField
+                label="이메일"
+                value={email}
+                setValue={setEmail}
+                fieldName="email"
+                isEditing={editingEmail}
+                setIsEditing={setEditingEmail}
+                showField={showEmail}
+                setShowField={setShowEmail}
+                showFieldName="show_email"
+              />
+              
+              <EditableField
+                label="생년월일"
+                value={birthday}
+                setValue={setBirthday}
+                fieldName="birthday"
+                isEditing={editingBirthday}
+                setIsEditing={setEditingBirthday}
+                showField={showBirthday}
+                setShowField={setShowBirthday}
+                showFieldName="show_birthday"
+                type="date"
+              />
+              
+              <EditableField
+                label="성별"
+                value={gender}
+                setValue={setGender}
+                fieldName="gender"
+                isEditing={editingGender}
+                setIsEditing={setEditingGender}
+                showField={showGender}
+                setShowField={setShowGender}
+                showFieldName="show_gender"
+                type="select"
+                options={genders}
+              />
+              
+              <EditableField
+                label="국가"
+                value={country}
+                setValue={setCountry}
+                fieldName="country"
+                isEditing={editingCountry}
+                setIsEditing={setEditingCountry}
+                showField={showCountry}
+                setShowField={setShowCountry}
+                showFieldName="show_country"
+                type="select"
+                options={countries.map(c => ({ value: c, label: c }))}
+              />
 
-              <form onSubmit={handleSaveProfile} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">이름</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">소개</Label>
-                  <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="당신을 소개하세요!"
-                    rows={4}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={saving}>
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      저장중...
-                    </>
-                  ) : (
-                    '저장하기'
-                  )}
+              <div className="pt-4 space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  로그 아웃
                 </Button>
-              </form>
 
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleSignOut}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                로그 아웃
-              </Button>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full">
-                    <UserX className="mr-2 h-4 w-4" />
-                    회원 탈퇴
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      정말 탈퇴하시겠습니까? 탈퇴 후 1년 이내에는 동일 계정으로 재가입할 수 없습니다.
-                      데이터는 보존되며, 1년 후에 완전히 삭제됩니다.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>취소</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleQuitMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      탈퇴하기
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full">
+                      <UserX className="mr-2 h-4 w-4" />
+                      회원 탈퇴
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        정말 탈퇴하시겠습니까? 탈퇴 후 1년 이내에는 동일 계정으로 재가입할 수 없습니다.
+                        데이터는 보존되며, 1년 후에 완전히 삭제됩니다.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleQuitMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        탈퇴하기
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </CardContent>
           </Card>
 
