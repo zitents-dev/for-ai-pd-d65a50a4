@@ -145,6 +145,11 @@ export default function MyPage() {
   const [avatarDeleteAgreed, setAvatarDeleteAgreed] = useState(false);
   const [videoDeleteAgreed, setVideoDeleteAgreed] = useState<Record<string, boolean>>({});
 
+  // Batch delete state
+  const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+  const [batchDeleteAgreed, setBatchDeleteAgreed] = useState(false);
+
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -321,6 +326,56 @@ export default function MyPage() {
       console.error("Error deleting video:", error);
     }
   };
+
+  const handleBatchDelete = async () => {
+    try {
+      const videoIds = Array.from(selectedVideos);
+      const { error } = await supabase
+        .from("videos")
+        .delete()
+        .in("id", videoIds)
+        .eq("creator_id", user!.id);
+
+      if (error) throw error;
+
+      toast.success(`${videoIds.length}개의 작품이 삭제되었습니다`);
+      setSelectedVideos(new Set());
+      setBatchDeleteDialogOpen(false);
+      setBatchDeleteAgreed(false);
+      loadMyVideos();
+    } catch (error: any) {
+      toast.error("작품 삭제에 실패했습니다");
+      console.error("Error batch deleting videos:", error);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const currentPageVideos = videos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
+    const allSelected = currentPageVideos.every((v) => selectedVideos.has(v.id));
+
+    if (allSelected) {
+      const newSelected = new Set(selectedVideos);
+      currentPageVideos.forEach((v) => newSelected.delete(v.id));
+      setSelectedVideos(newSelected);
+    } else {
+      const newSelected = new Set(selectedVideos);
+      currentPageVideos.forEach((v) => newSelected.add(v.id));
+      setSelectedVideos(newSelected);
+    }
+  };
+
+  const handleToggleVideoSelect = (videoId: string) => {
+    const newSelected = new Set(selectedVideos);
+    if (newSelected.has(videoId)) {
+      newSelected.delete(videoId);
+    } else {
+      newSelected.add(videoId);
+    }
+    setSelectedVideos(newSelected);
+  };
+
+  const currentPageVideos = videos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
+  const allCurrentPageSelected = currentPageVideos.length > 0 && currentPageVideos.every((v) => selectedVideos.has(v.id));
 
   const handleQuitMember = async () => {
     try {
@@ -774,11 +829,54 @@ export default function MyPage() {
           <div className="md:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">내 작품</h2>
-              <Button asChild>
-                <a href="/upload">
-                  <Upload className="mr-2 h-4 w-4" />새 작품
-                </a>
-              </Button>
+              <div className="flex items-center gap-2">
+                {selectedVideos.size > 0 && (
+                  <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {selectedVideos.size}개 삭제
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>선택한 작품 삭제</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          선택한 {selectedVideos.size}개의 작품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="flex items-center space-x-2 py-4">
+                        <Checkbox
+                          id="batch-delete-agree"
+                          checked={batchDeleteAgreed}
+                          onCheckedChange={(checked) => setBatchDeleteAgreed(checked === true)}
+                        />
+                        <label
+                          htmlFor="batch-delete-agree"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          위 내용을 이해하고, 삭제 합니다.
+                        </label>
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setBatchDeleteAgreed(false)}>취소</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleBatchDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          disabled={!batchDeleteAgreed}
+                        >
+                          삭제하기
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                <Button asChild>
+                  <a href="/upload">
+                    <Upload className="mr-2 h-4 w-4" />새 작품
+                  </a>
+                </Button>
+              </div>
             </div>
 
             {videos.length === 0 ? (
@@ -792,11 +890,26 @@ export default function MyPage() {
               </Card>
             ) : (
               <>
+                {/* Select All Checkbox */}
+                <div className="flex items-center gap-2 pb-2">
+                  <Checkbox
+                    id="select-all-videos"
+                    checked={allCurrentPageSelected}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <label
+                    htmlFor="select-all-videos"
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    현재 페이지 전체 선택
+                  </label>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {videos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage).map((video) => (
+                  {currentPageVideos.map((video) => (
                     <div
                       key={video.id}
-                      className="relative group"
+                      className={`relative group ${selectedVideos.has(video.id) ? "ring-2 ring-primary rounded-lg" : ""}`}
                       draggable
                       onDragStart={(e) => {
                         e.dataTransfer.setData("videoId", video.id);
@@ -804,6 +917,14 @@ export default function MyPage() {
                         e.dataTransfer.effectAllowed = "move";
                       }}
                     >
+                      {/* Selection Checkbox */}
+                      <div className="absolute top-2 left-2 z-10">
+                        <Checkbox
+                          checked={selectedVideos.has(video.id)}
+                          onCheckedChange={() => handleToggleVideoSelect(video.id)}
+                          className="bg-background/80 backdrop-blur-sm"
+                        />
+                      </div>
                       <div className="cursor-grab active:cursor-grabbing">
                         <VideoCard
                           video={{
