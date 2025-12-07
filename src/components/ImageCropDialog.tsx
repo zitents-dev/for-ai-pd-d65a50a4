@@ -131,11 +131,12 @@ export function ImageCropDialog({
             />
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
               onClick={handleRotate90}
-              className="shrink-0"
+              className="shrink-0 h-8 w-8"
+              title="90° 회전"
             >
-              90°
+              <RotateCw className="h-4 w-4" />
             </Button>
           </div>
         </div>
