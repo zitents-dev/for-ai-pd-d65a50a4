@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { getCroppedImg, CroppedArea } from '@/lib/cropImage';
-import { Loader2, ZoomIn } from 'lucide-react';
+import { Loader2, ZoomIn, RotateCw } from 'lucide-react';
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -26,6 +26,7 @@ export function ImageCropDialog({
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<CroppedArea | null>(null);
   const [processing, setProcessing] = useState(false);
 
@@ -35,6 +36,10 @@ export function ImageCropDialog({
 
   const onZoomChange = useCallback((zoom: number) => {
     setZoom(zoom);
+  }, []);
+
+  const onRotationChange = useCallback((rotation: number) => {
+    setRotation(rotation);
   }, []);
 
   const handleCropComplete = useCallback(
@@ -49,12 +54,13 @@ export function ImageCropDialog({
 
     setProcessing(true);
     try {
-      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
+      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
       onCropComplete(croppedBlob);
       onOpenChange(false);
       // Reset state
       setCrop({ x: 0, y: 0 });
       setZoom(1);
+      setRotation(0);
     } catch (error) {
       console.error('Error cropping image:', error);
     } finally {
@@ -66,6 +72,11 @@ export function ImageCropDialog({
     onOpenChange(false);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
+    setRotation(0);
+  };
+
+  const handleRotate90 = () => {
+    setRotation((prev) => (prev + 90) % 360);
   };
 
   return (
@@ -80,26 +91,53 @@ export function ImageCropDialog({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
+            rotation={rotation}
             aspect={aspectRatio}
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
+            onRotationChange={onRotationChange}
             onCropComplete={handleCropComplete}
             cropShape={aspectRatio === 1 ? 'round' : 'rect'}
             showGrid={true}
           />
         </div>
 
-        <div className="flex items-center gap-4 px-4">
-          <ZoomIn className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm text-muted-foreground whitespace-nowrap">확대/축소</Label>
-          <Slider
-            value={[zoom]}
-            min={1}
-            max={3}
-            step={0.1}
-            onValueChange={(value) => setZoom(value[0])}
-            className="flex-1"
-          />
+        <div className="space-y-4 px-1">
+          {/* Zoom Control */}
+          <div className="flex items-center gap-4">
+            <ZoomIn className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Label className="text-sm text-muted-foreground w-16">확대</Label>
+            <Slider
+              value={[zoom]}
+              min={1}
+              max={3}
+              step={0.1}
+              onValueChange={(value) => setZoom(value[0])}
+              className="flex-1"
+            />
+          </div>
+
+          {/* Rotation Control */}
+          <div className="flex items-center gap-4">
+            <RotateCw className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Label className="text-sm text-muted-foreground w-16">회전</Label>
+            <Slider
+              value={[rotation]}
+              min={0}
+              max={360}
+              step={1}
+              onValueChange={(value) => setRotation(value[0])}
+              className="flex-1"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRotate90}
+              className="shrink-0"
+            >
+              90°
+            </Button>
+          </div>
         </div>
 
         <DialogFooter>

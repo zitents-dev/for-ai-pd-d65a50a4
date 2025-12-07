@@ -14,9 +14,22 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
+export function getRadianAngle(degreeValue: number): number {
+  return (degreeValue * Math.PI) / 180;
+}
+
+export function rotateSize(width: number, height: number, rotation: number) {
+  const rotRad = getRadianAngle(rotation);
+  return {
+    width: Math.abs(Math.cos(rotRad) * width) + Math.abs(Math.sin(rotRad) * height),
+    height: Math.abs(Math.sin(rotRad) * width) + Math.abs(Math.cos(rotRad) * height),
+  };
+}
+
 export async function getCroppedImg(
   imageSrc: string,
   pixelCrop: CroppedArea,
+  rotation: number = 0,
   outputType: string = 'image/jpeg'
 ): Promise<Blob> {
   const image = await createImage(imageSrc);
@@ -27,11 +40,41 @@ export async function getCroppedImg(
     throw new Error('Could not get canvas context');
   }
 
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  const rotRad = getRadianAngle(rotation);
 
-  ctx.drawImage(
-    image,
+  // Calculate bounding box of the rotated image
+  const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
+    image.width,
+    image.height,
+    rotation
+  );
+
+  // Set canvas size to match the bounding box
+  canvas.width = bBoxWidth;
+  canvas.height = bBoxHeight;
+
+  // Translate canvas context to center and rotate
+  ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
+  ctx.rotate(rotRad);
+  ctx.translate(-image.width / 2, -image.height / 2);
+
+  // Draw rotated image
+  ctx.drawImage(image, 0, 0);
+
+  // Create a new canvas for the cropped area
+  const croppedCanvas = document.createElement('canvas');
+  const croppedCtx = croppedCanvas.getContext('2d');
+
+  if (!croppedCtx) {
+    throw new Error('Could not get canvas context');
+  }
+
+  croppedCanvas.width = pixelCrop.width;
+  croppedCanvas.height = pixelCrop.height;
+
+  // Draw the cropped area from the rotated canvas
+  croppedCtx.drawImage(
+    canvas,
     pixelCrop.x,
     pixelCrop.y,
     pixelCrop.width,
@@ -43,7 +86,7 @@ export async function getCroppedImg(
   );
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
+    croppedCanvas.toBlob(
       (blob) => {
         if (blob) {
           resolve(blob);
