@@ -329,96 +329,94 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {directories
-                  .slice((directoryPage - 1) * itemsPerPage, directoryPage * itemsPerPage)
-                  .map((dir) => (
-                    <div
-                      key={dir.id}
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        dragOverDirectory === dir.id
-                          ? "border-primary bg-primary/20 scale-105"
-                          : selectedDirectory === dir.id
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => setSelectedDirectory(dir.id)}
-                      onDragOver={(e) => handleDragOver(e, dir.id)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDropOnDirectory(e, dir.id)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Folder
-                            className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`}
-                          />
-                          {dir.video_count !== undefined && dir.video_count > 0 && (
-                            <Badge variant="secondary" className="text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
-                              {dir.video_count}
-                            </Badge>
-                          )}
-                        </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>디렉토리 삭제</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                "{dir.name}" 디렉토리를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <div className="flex items-center space-x-2 py-4">
-                              <Checkbox
-                                id={`dir-delete-agree-${dir.id}`}
-                                checked={deleteAgreed[dir.id] || false}
-                                onCheckedChange={(checked) =>
-                                  setDeleteAgreed((prev) => ({ ...prev, [dir.id]: checked === true }))
-                                }
-                              />
-                              <label
-                                htmlFor={`dir-delete-agree-${dir.id}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                              >
-                                삭제에 동의합니다
-                              </label>
-                            </div>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel
-                                onClick={() => setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }))}
-                              >
-                                취소
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => {
-                                  deleteDirectory(dir.id);
-                                  setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }));
-                                }}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                disabled={!deleteAgreed[dir.id]}
-                              >
-                                삭제
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                {directories.slice((directoryPage - 1) * itemsPerPage, directoryPage * itemsPerPage).map((dir) => (
+                  <div
+                    key={dir.id}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      dragOverDirectory === dir.id
+                        ? "border-primary bg-primary/20 scale-105"
+                        : selectedDirectory === dir.id
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedDirectory(dir.id)}
+                    onDragOver={(e) => handleDragOver(e, dir.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDropOnDirectory(e, dir.id)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Folder
+                          className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`}
+                        />
+                        {dir.video_count !== undefined && dir.video_count > 0 && (
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
+                            {dir.video_count}
+                          </Badge>
+                        )}
                       </div>
-                      <h3 className="font-semibold text-sm truncate">{dir.name}</h3>
-                      {dir.description && (
-                        <p className="text-xs text-muted-foreground truncate mt-1">{dir.description}</p>
-                      )}
-                      {dragOverDirectory === dir.id && (
-                        <p className="text-xs text-primary mt-2 font-medium">여기에 놓으세요</p>
-                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>디렉토리 삭제</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              "{dir.name}" 디렉토리를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <div className="flex items-center space-x-2 py-4">
+                            <Checkbox
+                              id={`dir-delete-agree-${dir.id}`}
+                              checked={deleteAgreed[dir.id] || false}
+                              onCheckedChange={(checked) =>
+                                setDeleteAgreed((prev) => ({ ...prev, [dir.id]: checked === true }))
+                              }
+                            />
+                            <label
+                              htmlFor={`dir-delete-agree-${dir.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              삭제에 동의합니다
+                            </label>
+                          </div>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel
+                              onClick={() => setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }))}
+                            >
+                              취소
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                deleteDirectory(dir.id);
+                                setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }));
+                              }}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              disabled={!deleteAgreed[dir.id]}
+                            >
+                              삭제
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
-                  ))}
+                    <h3 className="font-semibold text-sm truncate">{dir.name}</h3>
+                    {dir.description && (
+                      <p className="text-xs text-muted-foreground truncate mt-1">{dir.description}</p>
+                    )}
+                    {dragOverDirectory === dir.id && (
+                      <p className="text-xs text-primary mt-2 font-medium">여기에 놓으세요</p>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {/* Directory Pagination */}
@@ -510,7 +508,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                                 htmlFor={`video-remove-agree-${video.id}`}
                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                               >
-                                제거에 동의합니다
+                                위 내용을 이해하고, 제거 합니다.
                               </label>
                             </div>
                             <AlertDialogFooter>
