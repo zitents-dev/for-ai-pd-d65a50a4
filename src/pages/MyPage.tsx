@@ -18,6 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,6 +134,16 @@ export default function MyPage() {
   // Pagination for work list
   const [workPage, setWorkPage] = useState(1);
   const worksPerPage = 4;
+
+  // Pagination for favorites
+  const [favoritesPage, setFavoritesPage] = useState(1);
+  const favoritesPerPage = 4;
+
+  // Checkbox states for delete confirmations
+  const [quitMemberAgreed, setQuitMemberAgreed] = useState(false);
+  const [bannerDeleteAgreed, setBannerDeleteAgreed] = useState(false);
+  const [avatarDeleteAgreed, setAvatarDeleteAgreed] = useState(false);
+  const [videoDeleteAgreed, setVideoDeleteAgreed] = useState<Record<string, boolean>>({});
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -465,11 +477,28 @@ export default function MyPage() {
                     배너 이미지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="flex items-center space-x-2 py-4">
+                  <Checkbox
+                    id="banner-delete-agree"
+                    checked={bannerDeleteAgreed}
+                    onCheckedChange={(checked) => setBannerDeleteAgreed(checked === true)}
+                  />
+                  <label
+                    htmlFor="banner-delete-agree"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    삭제에 동의합니다
+                  </label>
+                </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogCancel onClick={() => setBannerDeleteAgreed(false)}>취소</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => handleSaveField("banner_url", null)}
+                    onClick={() => {
+                      handleSaveField("banner_url", null);
+                      setBannerDeleteAgreed(false);
+                    }}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={!bannerDeleteAgreed}
                   >
                     삭제
                   </AlertDialogAction>
@@ -527,11 +556,28 @@ export default function MyPage() {
                         프로필 사진을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
+                    <div className="flex items-center space-x-2 py-4">
+                      <Checkbox
+                        id="avatar-delete-agree"
+                        checked={avatarDeleteAgreed}
+                        onCheckedChange={(checked) => setAvatarDeleteAgreed(checked === true)}
+                      />
+                      <label
+                        htmlFor="avatar-delete-agree"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        삭제에 동의합니다
+                      </label>
+                    </div>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogCancel onClick={() => setAvatarDeleteAgreed(false)}>취소</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => handleSaveField("avatar_url", null)}
+                        onClick={() => {
+                          handleSaveField("avatar_url", null);
+                          setAvatarDeleteAgreed(false);
+                        }}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={!avatarDeleteAgreed}
                       >
                         삭제
                       </AlertDialogAction>
@@ -692,11 +738,28 @@ export default function MyPage() {
                         보존되며, 1년 후에 완전히 삭제됩니다.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
+                    <div className="flex items-center space-x-2 py-4">
+                      <Checkbox
+                        id="quit-member-agree"
+                        checked={quitMemberAgreed}
+                        onCheckedChange={(checked) => setQuitMemberAgreed(checked === true)}
+                      />
+                      <label
+                        htmlFor="quit-member-agree"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        위 내용을 이해하고 탈퇴에 동의합니다
+                      </label>
+                    </div>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogCancel onClick={() => setQuitMemberAgreed(false)}>취소</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={handleQuitMember}
+                        onClick={() => {
+                          handleQuitMember();
+                          setQuitMemberAgreed(false);
+                        }}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={!quitMemberAgreed}
                       >
                         탈퇴하기
                       </AlertDialogAction>
@@ -772,11 +835,34 @@ export default function MyPage() {
                                 "{video.title}"을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
+                            <div className="flex items-center space-x-2 py-4">
+                              <Checkbox
+                                id={`video-delete-agree-${video.id}`}
+                                checked={videoDeleteAgreed[video.id] || false}
+                                onCheckedChange={(checked) =>
+                                  setVideoDeleteAgreed((prev) => ({ ...prev, [video.id]: checked === true }))
+                                }
+                              />
+                              <label
+                                htmlFor={`video-delete-agree-${video.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                삭제에 동의합니다
+                              </label>
+                            </div>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>취소</AlertDialogCancel>
+                              <AlertDialogCancel
+                                onClick={() => setVideoDeleteAgreed((prev) => ({ ...prev, [video.id]: false }))}
+                              >
+                                취소
+                              </AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDeleteVideo(video.id)}
+                                onClick={() => {
+                                  handleDeleteVideo(video.id);
+                                  setVideoDeleteAgreed((prev) => ({ ...prev, [video.id]: false }));
+                                }}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                disabled={!videoDeleteAgreed[video.id]}
                               >
                                 삭제하기
                               </AlertDialogAction>
@@ -829,10 +915,10 @@ export default function MyPage() {
 
         {/* Directory Section */}
         <div className="mt-8">
-          <DirectoryManager />
+          <DirectoryManager itemsPerPage={4} />
         </div>
 
-        <hr></hr>
+        <Separator className="my-8" />
 
         {/* Favorites Section */}
         <div className="mt-8 space-y-6">
@@ -845,11 +931,54 @@ export default function MyPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {favoriteVideos.map((video) => (
-                <VideoCard key={video.id} video={video} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {favoriteVideos
+                  .slice((favoritesPage - 1) * favoritesPerPage, favoritesPage * favoritesPerPage)
+                  .map((video) => (
+                    <VideoCard key={video.id} video={video} />
+                  ))}
+              </div>
+
+              {/* Favorites Pagination */}
+              {favoriteVideos.length > favoritesPerPage && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setFavoritesPage((prev) => Math.max(1, prev - 1))}
+                    disabled={favoritesPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.ceil(favoriteVideos.length / favoritesPerPage) }, (_, i) => i + 1).map(
+                      (page) => (
+                        <Button
+                          key={page}
+                          variant={favoritesPage === page ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setFavoritesPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      ),
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      setFavoritesPage((prev) => Math.min(Math.ceil(favoriteVideos.length / favoritesPerPage), prev + 1))
+                    }
+                    disabled={favoritesPage === Math.ceil(favoriteVideos.length / favoritesPerPage)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

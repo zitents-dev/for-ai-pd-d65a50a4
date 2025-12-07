@@ -110,7 +110,16 @@ export function ImageCropDialog({
             onCropComplete={handleCropComplete}
             cropShape={aspectRatio === 1 ? "round" : "rect"}
             showGrid={true}
-            transform={`translate(${crop.x}px, ${crop.y}px) rotate(${rotation}deg) scale(${zoom}) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`}
+            minZoom={0.5}
+            restrictPosition={false}
+            style={{
+              cropAreaStyle: {
+                transform: `scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
+              },
+              mediaStyle: {
+                transform: `scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
+              },
+            }}
           />
         </div>
 
