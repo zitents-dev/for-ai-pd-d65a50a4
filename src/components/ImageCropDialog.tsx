@@ -5,7 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { getCroppedImg, CroppedArea } from "@/lib/cropImage";
-import { Loader2, ZoomIn, RotateCw, FlipHorizontal, FlipVertical } from "lucide-react";
+import { Loader2, ZoomIn, RotateCw, FlipHorizontal, FlipVertical, RatioIcon } from "lucide-react";
+
+interface AspectRatioPreset {
+  label: string;
+  value: number;
+}
+
+const ASPECT_RATIO_PRESETS: AspectRatioPreset[] = [
+  { label: "1:1", value: 1 },
+  { label: "16:9", value: 16 / 9 },
+  { label: "4:3", value: 4 / 3 },
+  { label: "3:2", value: 3 / 2 },
+  { label: "9:16", value: 9 / 16 },
+];
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -20,7 +33,7 @@ export function ImageCropDialog({
   open,
   onOpenChange,
   imageSrc,
-  aspectRatio,
+  aspectRatio: initialAspectRatio,
   onCropComplete,
   title = "이미지 편집",
 }: ImageCropDialogProps) {
@@ -31,6 +44,7 @@ export function ImageCropDialog({
   const [flipVertical, setFlipVertical] = useState(false);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<CroppedArea | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState(initialAspectRatio);
 
   const onCropChange = useCallback((crop: { x: number; y: number }) => {
     setCrop(crop);
@@ -62,6 +76,7 @@ export function ImageCropDialog({
       setRotation(0);
       setFlipHorizontal(false);
       setFlipVertical(false);
+      setAspectRatio(initialAspectRatio);
     } catch (error) {
       console.error("Error cropping image:", error);
     } finally {
@@ -76,6 +91,7 @@ export function ImageCropDialog({
     setRotation(0);
     setFlipHorizontal(false);
     setFlipVertical(false);
+    setAspectRatio(initialAspectRatio);
   };
 
   const handleRotate90 = () => {
@@ -190,6 +206,25 @@ export function ImageCropDialog({
                 <FlipVertical className="h-4 w-4 mr-2" />
                 상하
               </Button>
+            </div>
+          </div>
+
+          {/* Aspect Ratio Presets */}
+          <div className="flex items-center gap-4">
+            <RatioIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Label className="text-sm text-muted-foreground w-16">비율</Label>
+            <div className="flex gap-2 flex-wrap">
+              {ASPECT_RATIO_PRESETS.map((preset) => (
+                <Button
+                  key={preset.label}
+                  variant={Math.abs(aspectRatio - preset.value) < 0.01 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setAspectRatio(preset.value)}
+                  className="h-8"
+                >
+                  {preset.label}
+                </Button>
+              ))}
             </div>
           </div>
         </div>
