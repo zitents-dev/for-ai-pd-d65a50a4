@@ -11,7 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Upload as UploadIcon } from 'lucide-react';
+import { Loader2, Upload as UploadIcon, Image as ImageIcon } from 'lucide-react';
+import { ImageCropDialog } from '@/components/ImageCropDialog';
 
 export default function Upload() {
   const { user, loading: authLoading } = useAuth();
@@ -21,17 +22,36 @@ export default function Upload() {
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [promptCommand, setPromptCommand] = useState('');
   const [showPrompt, setShowPrompt] = useState(false);
   const [aiSolution, setAiSolution] = useState<string>('');
   const [category, setCategory] = useState<string>('');
+
+  // Crop dialog state
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  const handleThumbnailSelect = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCroppedThumbnail = (croppedBlob: Blob) => {
+    setThumbnailBlob(croppedBlob);
+    setThumbnailPreview(URL.createObjectURL(croppedBlob));
+  };
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,11 +74,11 @@ export default function Upload() {
 
       // Upload thumbnail if provided
       let thumbnailUrl = '';
-      if (thumbnailFile) {
-        const thumbPath = `${user.id}/${Date.now()}-${thumbnailFile.name}`;
+      if (thumbnailBlob) {
+        const thumbPath = `${user.id}/${Date.now()}-thumbnail.jpg`;
         const { error: thumbError } = await supabase.storage
           .from('thumbnails')
-          .upload(thumbPath, thumbnailFile);
+          .upload(thumbPath, thumbnailBlob, { contentType: 'image/jpeg' });
 
         if (thumbError) throw thumbError;
 
@@ -135,12 +155,28 @@ export default function Upload() {
 
               <div className="space-y-2">
                 <Label htmlFor="thumbnail">썸네일 (Optional)</Label>
-                <Input
-                  id="thumbnail"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
-                />
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="thumbnail"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleThumbnailSelect(file);
+                      e.target.value = '';
+                    }}
+                    className="flex-1"
+                  />
+                  {thumbnailPreview && (
+                    <div className="relative h-16 w-28 rounded-md overflow-hidden border border-border">
+                      <img 
+                        src={thumbnailPreview} 
+                        alt="Thumbnail preview" 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -248,6 +284,16 @@ export default function Upload() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Image Crop Dialog */}
+      <ImageCropDialog
+        open={cropDialogOpen}
+        onOpenChange={setCropDialogOpen}
+        imageSrc={cropImageSrc}
+        aspectRatio={16 / 9}
+        onCropComplete={handleCroppedThumbnail}
+        title="썸네일 이미지 편집"
+      />
     </div>
   );
 }

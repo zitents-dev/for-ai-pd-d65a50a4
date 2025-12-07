@@ -33,6 +33,7 @@ import { VideoCard } from '@/components/VideoCard';
 import { DirectoryManager } from '@/components/DirectoryManager';
 import { MoveToDirectoryDropdown } from '@/components/MoveToDirectoryDropdown';
 import { BadgeDisplay } from '@/components/BadgeDisplay';
+import { ImageCropDialog } from '@/components/ImageCropDialog';
 
 interface Profile {
   id: string;
@@ -118,6 +119,11 @@ export default function MyPage() {
   const [editingBirthday, setEditingBirthday] = useState(false);
   const [editingGender, setEditingGender] = useState(false);
   const [editingCountry, setEditingCountry] = useState(false);
+
+  // Image crop dialog state
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
+  const [cropImageType, setCropImageType] = useState<'banner' | 'avatar'>('banner');
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -243,25 +249,39 @@ export default function MyPage() {
     }
   };
 
-  const handleImageUpload = async (file: File, type: 'banner' | 'avatar') => {
+  const handleImageSelect = (file: File, type: 'banner' | 'avatar') => {
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropImageType(type);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user!.id}-${type}-${Date.now()}.${fileExt}`;
-    const bucket = type === 'banner' ? 'thumbnails' : 'thumbnails';
+  const handleCroppedImage = async (croppedBlob: Blob) => {
+    if (!user) return;
+
+    const fileName = `${user.id}-${cropImageType}-${Date.now()}.jpg`;
+    const bucket = 'thumbnails';
 
     try {
       setSaving(true);
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, croppedBlob, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
       
-      const field = type === 'banner' ? 'banner_url' : 'avatar_url';
+      const field = cropImageType === 'banner' ? 'banner_url' : 'avatar_url';
       await handleSaveField(field, urlData.publicUrl);
+      toast.success('이미지가 저장되었습니다');
     } catch (error: any) {
       toast.error('이미지 업로드 실패');
       console.error(error);
@@ -447,7 +467,8 @@ export default function MyPage() {
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) handleImageUpload(file, 'banner');
+            if (file) handleImageSelect(file, 'banner');
+            e.target.value = '';
           }}
         />
         
@@ -475,7 +496,8 @@ export default function MyPage() {
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImageUpload(file, 'avatar');
+                  if (file) handleImageSelect(file, 'avatar');
+                  e.target.value = '';
                 }}
               />
             </div>
@@ -737,6 +759,16 @@ export default function MyPage() {
           )}
         </div>
       </div>
+
+      {/* Image Crop Dialog */}
+      <ImageCropDialog
+        open={cropDialogOpen}
+        onOpenChange={setCropDialogOpen}
+        imageSrc={cropImageSrc}
+        aspectRatio={cropImageType === 'avatar' ? 1 : 16 / 6}
+        onCropComplete={handleCroppedImage}
+        title={cropImageType === 'avatar' ? '프로필 사진 편집' : '배너 이미지 편집'}
+      />
     </div>
   );
 }
