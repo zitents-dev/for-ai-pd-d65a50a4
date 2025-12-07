@@ -364,6 +364,19 @@ export default function MyPage() {
     }
   };
 
+  const handleSelectAllPages = () => {
+    const allVideosSelected = videos.length > 0 && videos.every((v) => selectedVideos.has(v.id));
+
+    if (allVideosSelected) {
+      setSelectedVideos(new Set());
+    } else {
+      const newSelected = new Set(videos.map((v) => v.id));
+      setSelectedVideos(newSelected);
+    }
+  };
+
+  const allVideosSelected = videos.length > 0 && videos.every((v) => selectedVideos.has(v.id));
+
   const handleToggleVideoSelect = (videoId: string) => {
     const newSelected = new Set(selectedVideos);
     if (newSelected.has(videoId)) {
@@ -890,19 +903,36 @@ export default function MyPage() {
               </Card>
             ) : (
               <>
-                {/* Select All Checkbox */}
-                <div className="flex items-center gap-2 pb-2">
-                  <Checkbox
-                    id="select-all-videos"
-                    checked={allCurrentPageSelected}
-                    onCheckedChange={handleSelectAll}
-                  />
-                  <label
-                    htmlFor="select-all-videos"
-                    className="text-sm font-medium leading-none cursor-pointer"
-                  >
-                    현재 페이지 전체 선택
-                  </label>
+                {/* Select All Checkboxes */}
+                <div className="flex items-center gap-6 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="select-all-videos"
+                      checked={allCurrentPageSelected}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    <label
+                      htmlFor="select-all-videos"
+                      className="text-sm font-medium leading-none cursor-pointer"
+                    >
+                      현재 페이지 전체 선택
+                    </label>
+                  </div>
+                  {videos.length > worksPerPage && (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="select-all-pages"
+                        checked={allVideosSelected}
+                        onCheckedChange={handleSelectAllPages}
+                      />
+                      <label
+                        htmlFor="select-all-pages"
+                        className="text-sm font-medium leading-none cursor-pointer"
+                      >
+                        모든 페이지 전체 선택 ({videos.length}개)
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
