@@ -1,11 +1,11 @@
-import { useState, useCallback } from "react";
-import Cropper from "react-easy-crop";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import { getCroppedImg, CroppedArea } from "@/lib/cropImage";
-import { Loader2, ZoomIn, RotateCw, FlipHorizontal, FlipVertical } from "lucide-react";
+import { useState, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { getCroppedImg, CroppedArea } from '@/lib/cropImage';
+import { Loader2, ZoomIn, RotateCw, FlipHorizontal, FlipVertical } from 'lucide-react';
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -22,7 +22,7 @@ export function ImageCropDialog({
   imageSrc,
   aspectRatio,
   onCropComplete,
-  title = "이미지 편집",
+  title = '이미지 편집',
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -44,9 +44,12 @@ export function ImageCropDialog({
     setRotation(rotation);
   }, []);
 
-  const handleCropComplete = useCallback((_: any, croppedAreaPixels: CroppedArea) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const handleCropComplete = useCallback(
+    (_: any, croppedAreaPixels: CroppedArea) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
 
   const handleSave = async () => {
     if (!croppedAreaPixels) return;
@@ -63,7 +66,7 @@ export function ImageCropDialog({
       setFlipHorizontal(false);
       setFlipVertical(false);
     } catch (error) {
-      console.error("Error cropping image:", error);
+      console.error('Error cropping image:', error);
     } finally {
       setProcessing(false);
     }
@@ -97,7 +100,7 @@ export function ImageCropDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="relative w-full h-[350px] bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+        <div className="relative w-full h-[350px] bg-muted rounded-lg overflow-hidden">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -108,24 +111,9 @@ export function ImageCropDialog({
             onZoomChange={onZoomChange}
             onRotationChange={onRotationChange}
             onCropComplete={handleCropComplete}
-            cropShape={aspectRatio === 1 ? "round" : "rect"}
+            cropShape={aspectRatio === 1 ? 'round' : 'rect'}
             showGrid={true}
-            minZoom={0.5}
-            restrictPosition={false}
-            objectFit="contain"
-            style={{
-              containerStyle: {
-                width: "100%",
-                height: "100%",
-                position: "relative",
-              },
-              cropAreaStyle: {
-                transform: `scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
-              },
-              mediaStyle: {
-                transform: `scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
-              },
-            }}
+            transform={`translate(${crop.x}px, ${crop.y}px) rotate(${rotation}deg) scale(${zoom}) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`}
           />
         </div>
 
@@ -136,7 +124,7 @@ export function ImageCropDialog({
             <Label className="text-sm text-muted-foreground w-16">확대</Label>
             <Slider
               value={[zoom]}
-              min={0.5}
+              min={1}
               max={3}
               step={0.1}
               onValueChange={(value) => setZoom(value[0])}
@@ -192,7 +180,6 @@ export function ImageCropDialog({
               </Button>
             </div>
           </div>
-
         </div>
 
         <DialogFooter>
@@ -206,7 +193,7 @@ export function ImageCropDialog({
                 처리 중...
               </>
             ) : (
-              "적용"
+              '적용'
             )}
           </Button>
         </DialogFooter>
