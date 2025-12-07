@@ -829,10 +829,10 @@ export default function MyPage() {
 
         {/* Directory Section */}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold">내 분류</h2>
-
           <DirectoryManager />
         </div>
+
+        <hr></hr>
 
         {/* Favorites Section */}
         <div className="mt-8 space-y-6">
