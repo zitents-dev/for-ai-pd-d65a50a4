@@ -139,7 +139,7 @@ export default function Upload() {
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="video">동영상 파일 (*필수)</Label>
+                <Label htmlFor="video">동영상 파일 *(필수)</Label>
                 <Input
                   id="video"
                   type="file"
@@ -151,7 +151,7 @@ export default function Upload() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="thumbnail">썸네일 (Optional)</Label>
+                <Label htmlFor="thumbnail">썸네일 (선택)</Label>
                 <div className="flex items-center gap-4">
                   <Input
                     id="thumbnail"
@@ -173,7 +173,7 @@ export default function Upload() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="title">제목 *</Label>
+                <Label htmlFor="title">제목 *(필수)</Label>
                 <Input
                   id="title"
                   value={title}
@@ -205,7 +205,7 @@ export default function Upload() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">카테고리 *</Label>
+                <Label htmlFor="category">카테고리 *(필수)</Label>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger id="category">
                     <SelectValue placeholder="카테고리 선택" />
@@ -223,7 +223,7 @@ export default function Upload() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ai_solution">AI 솔루션 *</Label>
+                <Label htmlFor="ai_solution">AI 솔루션 *(필수)</Label>
                 <Select value={aiSolution} onValueChange={setAiSolution}>
                   <SelectTrigger id="ai_solution">
                     <SelectValue placeholder="사용한 AI 솔루션 선택" />
