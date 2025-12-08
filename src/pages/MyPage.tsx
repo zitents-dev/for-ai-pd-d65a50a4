@@ -478,6 +478,7 @@ export default function MyPage() {
     showFieldName,
     type = "text",
     options,
+    isTextarea = false,
   }: {
     label: string;
     value: string;
@@ -490,6 +491,7 @@ export default function MyPage() {
     showFieldName?: string;
     type?: "text" | "date" | "select";
     options?: { value: string; label: string }[];
+    isTextarea?: boolean;
   }) => (
     <div className="flex items-center justify-between py-2 border-b border-border/50">
       <div className="flex-1">
@@ -509,6 +511,18 @@ export default function MyPage() {
                   ))}
                 </SelectContent>
               </Select>
+            ) : isTextarea ? (
+              <Textarea 
+                value={value} 
+                onChange={(e) => setValue(e.target.value)} 
+                className="min-h-[80px] resize-none"
+                autoFocus
+                onFocus={(e) => {
+                  const val = e.target.value;
+                  e.target.value = '';
+                  e.target.value = val;
+                }}
+              />
             ) : (
               <Input type={type} value={value} onChange={(e) => setValue(e.target.value)} className="h-8" />
             )}
@@ -525,7 +539,7 @@ export default function MyPage() {
             </Button>
           </div>
         ) : (
-          <p className="text-sm">{value || "-"}</p>
+          <p className="text-sm whitespace-pre-wrap">{value || "-"}</p>
         )}
       </div>
       <div className="flex items-center gap-1">
@@ -779,15 +793,6 @@ export default function MyPage() {
             </CardHeader>
             <CardContent className="space-y-1">
               <EditableField
-                label="소개"
-                value={bio}
-                setValue={setBio}
-                fieldName="bio"
-                isEditing={editingBio}
-                setIsEditing={setEditingBio}
-              />
-
-              <EditableField
                 label="이메일"
                 value={email}
                 setValue={setEmail}
@@ -839,6 +844,18 @@ export default function MyPage() {
                 type="select"
                 options={countries.map((c) => ({ value: c, label: c }))}
               />
+
+              <div className="pt-4">
+                <EditableField
+                  label="코멘트"
+                  value={bio}
+                  setValue={setBio}
+                  fieldName="bio"
+                  isEditing={editingBio}
+                  setIsEditing={setEditingBio}
+                  isTextarea
+                />
+              </div>
 
               <div className="pt-4 space-y-2">
                 <Button variant="outline" className="w-full" onClick={handleSignOut}>

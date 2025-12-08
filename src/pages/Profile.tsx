@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { Loader2, Calendar, MapPin, Mail, User, Users, UserPlus, UserCheck } from 'lucide-react';
+import { Loader2, Calendar, MapPin, Mail, User, Users, UserPlus, UserCheck, Cake } from 'lucide-react';
 import { VideoCard } from '@/components/VideoCard';
 import { BadgeDisplay } from '@/components/BadgeDisplay';
 import { toast } from 'sonner';
@@ -278,9 +278,6 @@ export default function Profile() {
                     </Button>
                   )}
                 </div>
-                {profile.bio && (
-                  <p className="text-muted-foreground mt-2 max-w-2xl">{profile.bio}</p>
-                )}
               </div>
             </div>
           </div>
@@ -289,6 +286,12 @@ export default function Profile() {
           <Card className="mb-8">
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {profile.created_at && (
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>가입일: {formatDate(profile.created_at)}</span>
+                  </div>
+                )}
                 {profile.show_email && profile.email && (
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Mail className="h-4 w-4" />
@@ -297,7 +300,7 @@ export default function Profile() {
                 )}
                 {profile.show_birthday && profile.birthday && (
                   <div className="flex items-center gap-3 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
+                    <Cake className="h-4 w-4" />
                     <span>{formatDate(profile.birthday)}</span>
                   </div>
                 )}
@@ -313,13 +316,13 @@ export default function Profile() {
                     <span>{profile.country}</span>
                   </div>
                 )}
-                {profile.created_at && (
-                  <div className="flex items-center gap-3 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>가입일: {formatDate(profile.created_at)}</span>
-                  </div>
-                )}
               </div>
+              {profile.bio && (
+                <div className="mt-6 pt-4 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-1">코멘트</p>
+                  <p className="text-foreground">{profile.bio}</p>
+                </div>
+              )}
               {!profile.show_email && !profile.show_birthday && !profile.show_gender && !profile.show_country && (
                 <p className="text-muted-foreground text-center py-4">
                   공개된 프로필 정보가 없습니다.
