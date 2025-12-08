@@ -38,6 +38,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  UserMinus,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { DirectoryManager } from "@/components/DirectoryManager";
@@ -1198,9 +1199,9 @@ export default function MyPage() {
                   .slice((subscriptionsPage - 1) * subscriptionsPerPage, subscriptionsPage * subscriptionsPerPage)
                   .map((creator) => (
                     <Card key={creator.id} className="hover:bg-accent/50 transition-colors">
-                      <a href={`/profile/${creator.id}`}>
-                        <CardContent className="p-4 flex items-center gap-4">
-                          <Avatar className="h-14 w-14">
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <a href={`/profile/${creator.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                          <Avatar className="h-14 w-14 shrink-0">
                             <AvatarImage src={creator.avatar_url || undefined} />
                             <AvatarFallback>{(creator.name || "?")[0]}</AvatarFallback>
                           </Avatar>
@@ -1210,8 +1211,32 @@ export default function MyPage() {
                               <p className="text-sm text-muted-foreground line-clamp-2">{creator.bio}</p>
                             )}
                           </div>
-                        </CardContent>
-                      </a>
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            try {
+                              const { error } = await supabase
+                                .from("subscriptions")
+                                .delete()
+                                .eq("subscriber_id", user!.id)
+                                .eq("creator_id", creator.id);
+                              if (error) throw error;
+                              toast.success("구독이 취소되었습니다");
+                              loadSubscriptions();
+                            } catch (error) {
+                              toast.error("구독 취소에 실패했습니다");
+                              console.error("Error unsubscribing:", error);
+                            }
+                          }}
+                          title="구독 취소"
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      </CardContent>
                     </Card>
                   ))}
               </div>
