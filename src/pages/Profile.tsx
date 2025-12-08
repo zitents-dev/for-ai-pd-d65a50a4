@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Calendar, MapPin, Mail, User, Users } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { Loader2, Calendar, MapPin, Mail, User, Users, UserPlus, UserCheck } from 'lucide-react';
 import { VideoCard } from '@/components/VideoCard';
 import { BadgeDisplay } from '@/components/BadgeDisplay';
+import { toast } from 'sonner';
 
 interface Profile {
   id: string;
@@ -48,12 +51,16 @@ const genderLabels: Record<string, string> = {
 
 export default function Profile() {
   const { userId } = useParams<{ userId: string }>();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [subscriberCount, setSubscriberCount] = useState(0);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  const isOwnProfile = user?.id === userId;
 
   useEffect(() => {
     if (userId) {
@@ -63,6 +70,59 @@ export default function Profile() {
       fetchSubscriberCount();
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (userId && user && !isOwnProfile) {
+      checkSubscription();
+    }
+  }, [userId, user]);
+
+  const checkSubscription = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('subscriber_id', user.id)
+        .eq('creator_id', userId)
+        .maybeSingle();
+      setIsSubscribed(!!data);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  };
+
+  const toggleSubscription = async () => {
+    if (!user) {
+      toast.error('구독하려면 로그인이 필요합니다');
+      return;
+    }
+
+    try {
+      if (isSubscribed) {
+        const { error } = await supabase
+          .from('subscriptions')
+          .delete()
+          .eq('subscriber_id', user.id)
+          .eq('creator_id', userId);
+        if (error) throw error;
+        setIsSubscribed(false);
+        setSubscriberCount((prev) => prev - 1);
+        toast.success('구독이 취소되었습니다');
+      } else {
+        const { error } = await supabase
+          .from('subscriptions')
+          .insert({ subscriber_id: user.id, creator_id: userId });
+        if (error) throw error;
+        setIsSubscribed(true);
+        setSubscriberCount((prev) => prev + 1);
+        toast.success('구독했습니다');
+      }
+    } catch (error) {
+      toast.error('오류가 발생했습니다');
+      console.error('Error toggling subscription:', error);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -193,9 +253,30 @@ export default function Profile() {
                   <h1 className="text-2xl md:text-3xl font-bold">{name}</h1>
                   <BadgeDisplay badges={badges} />
                 </div>
-                <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>구독자 {subscriberCount.toLocaleString()}명</span>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>구독자 {subscriberCount.toLocaleString()}명</span>
+                  </div>
+                  {!isOwnProfile && (
+                    <Button
+                      variant={isSubscribed ? "secondary" : "default"}
+                      size="sm"
+                      onClick={toggleSubscription}
+                    >
+                      {isSubscribed ? (
+                        <>
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          구독 중
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          구독
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
                 {profile.bio && (
                   <p className="text-muted-foreground mt-2 max-w-2xl">{profile.bio}</p>
