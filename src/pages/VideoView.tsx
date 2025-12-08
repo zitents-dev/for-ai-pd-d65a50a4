@@ -5,7 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Eye, Calendar, Info } from "lucide-react";
+import { Heart, Eye, Calendar, Info, UserPlus, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -58,6 +58,8 @@ export default function VideoView() {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [creatorBadges, setCreatorBadges] = useState<Badge[]>([]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -68,6 +70,13 @@ export default function VideoView() {
       incrementViews();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (video?.creator_id) {
+      checkSubscription();
+      loadSubscriberCount();
+    }
+  }, [video?.creator_id, user]);
 
   const loadVideo = async () => {
     try {
@@ -175,6 +184,74 @@ export default function VideoView() {
       }
     } catch (error) {
       console.error("Error incrementing views:", error);
+    }
+  };
+
+  const checkSubscription = async () => {
+    if (!user || !video?.creator_id) return;
+
+    try {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("subscriber_id", user.id)
+        .eq("creator_id", video.creator_id)
+        .maybeSingle();
+
+      setIsSubscribed(!!data);
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+    }
+  };
+
+  const loadSubscriberCount = async () => {
+    if (!video?.creator_id) return;
+
+    try {
+      const { count } = await supabase
+        .from("subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("creator_id", video.creator_id);
+
+      setSubscriberCount(count || 0);
+    } catch (error) {
+      console.error("Error loading subscriber count:", error);
+    }
+  };
+
+  const toggleSubscription = async () => {
+    if (!user) {
+      toast.error("Please sign in to subscribe");
+      navigate("/auth");
+      return;
+    }
+
+    if (user.id === video?.creator_id) {
+      toast.error("You cannot subscribe to yourself");
+      return;
+    }
+
+    try {
+      if (isSubscribed) {
+        await supabase
+          .from("subscriptions")
+          .delete()
+          .eq("subscriber_id", user.id)
+          .eq("creator_id", video?.creator_id);
+        setIsSubscribed(false);
+        setSubscriberCount((prev) => Math.max(0, prev - 1));
+        toast.success("구독 취소되었습니다");
+      } else {
+        await supabase
+          .from("subscriptions")
+          .insert({ subscriber_id: user.id, creator_id: video?.creator_id });
+        setIsSubscribed(true);
+        setSubscriberCount((prev) => prev + 1);
+        toast.success("구독되었습니다");
+      }
+    } catch (error) {
+      console.error("Error toggling subscription:", error);
+      toast.error("Failed to update subscription");
     }
   };
 
@@ -294,16 +371,47 @@ export default function VideoView() {
             {/* Creator Info */}
             <Card className="p-4">
               <div className="flex items-center gap-3">
-                <Avatar className="w-12 h-12">
+                <Avatar 
+                  className="w-12 h-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                  onClick={() => navigate(`/profile/${video.creator_id}`)}
+                >
                   <AvatarImage src={video.profiles.avatar_url || ""} />
                   <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground">{video.profiles.name}</h3>
+                    <h3 
+                      className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => navigate(`/profile/${video.creator_id}`)}
+                    >
+                      {video.profiles.name}
+                    </h3>
                     <BadgeDisplay badges={creatorBadges} size="sm" />
                   </div>
+                  <p className="text-sm text-muted-foreground">
+                    구독자 {subscriberCount.toLocaleString()}명
+                  </p>
                 </div>
+                {user?.id !== video.creator_id && (
+                  <Button
+                    variant={isSubscribed ? "secondary" : "default"}
+                    size="sm"
+                    onClick={toggleSubscription}
+                    className="gap-2"
+                  >
+                    {isSubscribed ? (
+                      <>
+                        <UserCheck className="w-4 h-4" />
+                        구독중
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        구독
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </Card>
 
