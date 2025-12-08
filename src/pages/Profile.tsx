@@ -38,11 +38,6 @@ interface Video {
   created_at: string;
 }
 
-interface Subscriber {
-  id: string;
-  name: string | null;
-  avatar_url: string | null;
-}
 
 const genderLabels: Record<string, string> = {
   male: '남성',
@@ -57,7 +52,6 @@ export default function Profile() {
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [subscriberCount, setSubscriberCount] = useState(0);
-  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -66,7 +60,7 @@ export default function Profile() {
       fetchProfile();
       fetchBadges();
       fetchVideos();
-      fetchSubscribers();
+      fetchSubscriberCount();
     }
   }, [userId]);
 
@@ -122,39 +116,17 @@ export default function Profile() {
     }
   };
 
-  const fetchSubscribers = async () => {
+  const fetchSubscriberCount = async () => {
     try {
-      // Get count
-      const { count, error: countError } = await supabase
+      const { count, error } = await supabase
         .from('subscriptions')
         .select('*', { count: 'exact', head: true })
         .eq('creator_id', userId);
 
-      if (countError) throw countError;
-      setSubscriberCount(count || 0);
-
-      // Get subscriber profiles
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('subscriber_id')
-        .eq('creator_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
       if (error) throw error;
-
-      if (data && data.length > 0) {
-        const subscriberIds = data.map(s => s.subscriber_id);
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, name, avatar_url')
-          .in('id', subscriberIds);
-
-        if (profilesError) throw profilesError;
-        setSubscribers(profiles || []);
-      }
+      setSubscriberCount(count || 0);
     } catch (error) {
-      console.error('Error fetching subscribers:', error);
+      console.error('Error fetching subscriber count:', error);
     }
   };
 
@@ -275,36 +247,6 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* Subscribers */}
-          {subscribers.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">구독자 ({subscriberCount})</h2>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-wrap gap-4">
-                    {subscribers.map((subscriber) => (
-                      <Link
-                        key={subscriber.id}
-                        to={`/profile/${subscriber.id}`}
-                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={subscriber.avatar_url || undefined} />
-                          <AvatarFallback>{(subscriber.name || '?')[0]}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{subscriber.name || '익명'}</span>
-                      </Link>
-                    ))}
-                    {subscriberCount > 20 && (
-                      <div className="flex items-center text-muted-foreground text-sm">
-                        외 {subscriberCount - 20}명
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
 
           {/* Videos */}
           <div>
