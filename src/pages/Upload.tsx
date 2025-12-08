@@ -1,41 +1,41 @@
-mport { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Navbar } from '@/components/Navbar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { useAuth } from '@/lib/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Loader2, Upload as UploadIcon, Image as ImageIcon } from 'lucide-react';
-import { ImageCropDialog } from '@/components/ImageCropDialog';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2, Upload as UploadIcon, Image as ImageIcon } from "lucide-react";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 
 export default function Upload() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [tags, setTags] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-  const [promptCommand, setPromptCommand] = useState('');
+  const [promptCommand, setPromptCommand] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
-  const [aiSolution, setAiSolution] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
+  const [aiSolution, setAiSolution] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
 
   // Crop dialog state
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
-  const [cropImageSrc, setCropImageSrc] = useState('');
+  const [cropImageSrc, setCropImageSrc] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/auth');
+      navigate("/auth");
     }
   }, [user, authLoading, navigate]);
 
@@ -62,30 +62,28 @@ export default function Upload() {
     try {
       // Upload video
       const videoPath = `${user.id}/${Date.now()}-${videoFile.name}`;
-      const { error: videoError } = await supabase.storage
-        .from('videos')
-        .upload(videoPath, videoFile);
+      const { error: videoError } = await supabase.storage.from("videos").upload(videoPath, videoFile);
 
       if (videoError) throw videoError;
 
-      const { data: { publicUrl: videoUrl } } = supabase.storage
-        .from('videos')
-        .getPublicUrl(videoPath);
+      const {
+        data: { publicUrl: videoUrl },
+      } = supabase.storage.from("videos").getPublicUrl(videoPath);
 
       // Upload thumbnail if provided
-      let thumbnailUrl = '';
+      let thumbnailUrl = "";
       if (thumbnailBlob) {
         const thumbPath = `${user.id}/${Date.now()}-thumbnail.jpg`;
         const { error: thumbError } = await supabase.storage
-          .from('thumbnails')
-          .upload(thumbPath, thumbnailBlob, { contentType: 'image/jpeg' });
+          .from("thumbnails")
+          .upload(thumbPath, thumbnailBlob, { contentType: "image/jpeg" });
 
         if (thumbError) throw thumbError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('thumbnails')
-          .getPublicUrl(thumbPath);
-        
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("thumbnails").getPublicUrl(thumbPath);
+
         thumbnailUrl = publicUrl;
       }
 
@@ -93,26 +91,27 @@ export default function Upload() {
       const duration = 60; // placeholder
 
       // Create video record
-      const { error: dbError } = await supabase
-        .from('videos')
-        .insert({
-          creator_id: user.id,
-          title,
-          description,
-          video_url: videoUrl,
-          thumbnail_url: thumbnailUrl,
-          duration,
-          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-          prompt_command: promptCommand || null,
-          show_prompt: showPrompt,
-          ai_solution: aiSolution as any || null,
-          category: category as any || null,
-        } as any);
+      const { error: dbError } = await supabase.from("videos").insert({
+        creator_id: user.id,
+        title,
+        description,
+        video_url: videoUrl,
+        thumbnail_url: thumbnailUrl,
+        duration,
+        tags: tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        prompt_command: promptCommand || null,
+        show_prompt: showPrompt,
+        ai_solution: (aiSolution as any) || null,
+        category: (category as any) || null,
+      } as any);
 
       if (dbError) throw dbError;
 
-      toast.success('Video uploaded successfully!');
-      navigate('/my-page');
+      toast.success("Video uploaded successfully!");
+      navigate("/my-page");
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -131,7 +130,7 @@ export default function Upload() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="container px-4 py-8 max-w-2xl mx-auto">
         <Card>
           <CardHeader>
@@ -148,9 +147,7 @@ export default function Upload() {
                   onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
                   required
                 />
-                <p className="text-sm text-muted-foreground">
-                  최대 3분, 포맷: MP4
-                </p>
+                <p className="text-sm text-muted-foreground">최대 3분, 포맷: MP4</p>
               </div>
 
               <div className="space-y-2">
@@ -163,17 +160,13 @@ export default function Upload() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) handleThumbnailSelect(file);
-                      e.target.value = '';
+                      e.target.value = "";
                     }}
                     className="flex-1"
                   />
                   {thumbnailPreview && (
                     <div className="relative h-16 w-28 rounded-md overflow-hidden border border-border">
-                      <img 
-                        src={thumbnailPreview} 
-                        alt="Thumbnail preview" 
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={thumbnailPreview} alt="Thumbnail preview" className="h-full w-full object-cover" />
                     </div>
                   )}
                 </div>
@@ -256,11 +249,7 @@ export default function Upload() {
                   rows={3}
                 />
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="show-prompt"
-                    checked={showPrompt}
-                    onCheckedChange={setShowPrompt}
-                  />
+                  <Switch id="show-prompt" checked={showPrompt} onCheckedChange={setShowPrompt} />
                   <Label htmlFor="show-prompt" className="font-normal">
                     다른 사용자에게 프롬프트 공개
                   </Label>
