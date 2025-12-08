@@ -93,6 +93,7 @@ interface SubscribedCreator {
   name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  subscriber_count: number;
 }
 
 const countries = ["대한민국", "미국", "일본", "중국", "영국", "독일", "프랑스", "캐나다", "호주", "기타"];
@@ -284,7 +285,19 @@ export default function MyPage() {
           .in("id", creatorIds);
 
         if (profilesError) throw profilesError;
-        setSubscriptions(profiles || []);
+
+        // Fetch subscriber counts for each creator
+        const creatorsWithCounts = await Promise.all(
+          (profiles || []).map(async (profile) => {
+            const { count } = await supabase
+              .from("subscriptions")
+              .select("*", { count: "exact", head: true })
+              .eq("creator_id", profile.id);
+            return { ...profile, subscriber_count: count || 0 };
+          })
+        );
+
+        setSubscriptions(creatorsWithCounts);
       } else {
         setSubscriptions([]);
       }
@@ -1207,8 +1220,11 @@ export default function MyPage() {
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{creator.name || "익명"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              구독자 {creator.subscriber_count.toLocaleString()}명
+                            </p>
                             {creator.bio && (
-                              <p className="text-sm text-muted-foreground line-clamp-2">{creator.bio}</p>
+                              <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{creator.bio}</p>
                             )}
                           </div>
                         </a>
