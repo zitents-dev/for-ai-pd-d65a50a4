@@ -526,6 +526,56 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: string
+          subscriber_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: string
+          subscriber_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: string
+          subscriber_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "subscriptions_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           awarded_at: string | null
