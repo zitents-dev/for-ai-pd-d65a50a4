@@ -37,6 +37,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { DirectoryManager } from "@/components/DirectoryManager";
@@ -86,6 +87,13 @@ interface FavoriteVideo {
   };
 }
 
+interface SubscribedCreator {
+  id: string;
+  name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+}
+
 const countries = ["대한민국", "미국", "일본", "중국", "영국", "독일", "프랑스", "캐나다", "호주", "기타"];
 
 const genders = [
@@ -101,6 +109,7 @@ export default function MyPage() {
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [favoriteVideos, setFavoriteVideos] = useState<FavoriteVideo[]>([]);
+  const [subscriptions, setSubscriptions] = useState<SubscribedCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -139,6 +148,10 @@ export default function MyPage() {
   const [favoritesPage, setFavoritesPage] = useState(1);
   const favoritesPerPage = 4;
 
+  // Pagination for subscriptions
+  const [subscriptionsPage, setSubscriptionsPage] = useState(1);
+  const subscriptionsPerPage = 8;
+
   // Checkbox states for delete confirmations
   const [quitMemberAgreed, setQuitMemberAgreed] = useState(false);
   const [bannerDeleteAgreed, setBannerDeleteAgreed] = useState(false);
@@ -165,6 +178,7 @@ export default function MyPage() {
       loadBadges();
       loadMyVideos();
       loadFavorites();
+      loadSubscriptions();
     }
   }, [user]);
 
@@ -248,6 +262,33 @@ export default function MyPage() {
       setFavoriteVideos(formattedFavorites);
     } catch (error) {
       console.error("Error loading favorites:", error);
+    }
+  };
+
+  const loadSubscriptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("creator_id")
+        .eq("subscriber_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const creatorIds = data.map((s) => s.creator_id);
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, name, avatar_url, bio")
+          .in("id", creatorIds);
+
+        if (profilesError) throw profilesError;
+        setSubscriptions(profiles || []);
+      } else {
+        setSubscriptions([]);
+      }
+    } catch (error) {
+      console.error("Error loading subscriptions:", error);
     }
   };
 
@@ -1126,6 +1167,90 @@ export default function MyPage() {
                       )
                     }
                     disabled={favoritesPage === Math.ceil(favoriteVideos.length / favoritesPerPage)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <Separator className="my-8" />
+
+        {/* Subscriptions Section */}
+        <div className="mt-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            <h2 className="text-2xl font-bold">구독 중인 크리에이터</h2>
+          </div>
+
+          {subscriptions.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground">구독 중인 크리에이터가 없습니다</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {subscriptions
+                  .slice((subscriptionsPage - 1) * subscriptionsPerPage, subscriptionsPage * subscriptionsPerPage)
+                  .map((creator) => (
+                    <Card key={creator.id} className="hover:bg-accent/50 transition-colors">
+                      <a href={`/profile/${creator.id}`}>
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <Avatar className="h-14 w-14">
+                            <AvatarImage src={creator.avatar_url || undefined} />
+                            <AvatarFallback>{(creator.name || "?")[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{creator.name || "익명"}</p>
+                            {creator.bio && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">{creator.bio}</p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </a>
+                    </Card>
+                  ))}
+              </div>
+
+              {/* Subscriptions Pagination */}
+              {subscriptions.length > subscriptionsPerPage && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setSubscriptionsPage((prev) => Math.max(1, prev - 1))}
+                    disabled={subscriptionsPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.ceil(subscriptions.length / subscriptionsPerPage) }, (_, i) => i + 1).map(
+                      (page) => (
+                        <Button
+                          key={page}
+                          variant={subscriptionsPage === page ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setSubscriptionsPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      ),
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      setSubscriptionsPage((prev) =>
+                        Math.min(Math.ceil(subscriptions.length / subscriptionsPerPage), prev + 1),
+                      )
+                    }
+                    disabled={subscriptionsPage === Math.ceil(subscriptions.length / subscriptionsPerPage)}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
