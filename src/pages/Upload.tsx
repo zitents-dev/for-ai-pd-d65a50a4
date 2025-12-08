@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+mport { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -140,7 +140,7 @@ export default function Upload() {
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="video">Video File *</Label>
+                <Label htmlFor="video">동영상 파일 (*필수)</Label>
                 <Input
                   id="video"
                   type="file"
