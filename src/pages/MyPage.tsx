@@ -294,7 +294,7 @@ export default function MyPage() {
               .select("*", { count: "exact", head: true })
               .eq("creator_id", profile.id);
             return { ...profile, subscriber_count: count || 0 };
-          })
+          }),
         );
 
         setSubscriptions(creatorsWithCounts);
@@ -385,11 +385,7 @@ export default function MyPage() {
   const handleBatchDelete = async () => {
     try {
       const videoIds = Array.from(selectedVideos);
-      const { error } = await supabase
-        .from("videos")
-        .delete()
-        .in("id", videoIds)
-        .eq("creator_id", user!.id);
+      const { error } = await supabase.from("videos").delete().in("id", videoIds).eq("creator_id", user!.id);
 
       if (error) throw error;
 
@@ -443,7 +439,8 @@ export default function MyPage() {
   };
 
   const currentPageVideos = videos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
-  const allCurrentPageSelected = currentPageVideos.length > 0 && currentPageVideos.every((v) => selectedVideos.has(v.id));
+  const allCurrentPageSelected =
+    currentPageVideos.length > 0 && currentPageVideos.every((v) => selectedVideos.has(v.id));
 
   const handleQuitMember = async () => {
     try {
@@ -512,14 +509,14 @@ export default function MyPage() {
                 </SelectContent>
               </Select>
             ) : isTextarea ? (
-              <Textarea 
-                value={value} 
-                onChange={(e) => setValue(e.target.value)} 
+              <Textarea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
                 className="min-h-[80px] resize-none"
                 autoFocus
                 onFocus={(e) => {
                   const val = e.target.value;
-                  e.target.value = '';
+                  e.target.value = "";
                   e.target.value = val;
                 }}
               />
@@ -862,50 +859,6 @@ export default function MyPage() {
                   <LogOut className="mr-2 h-4 w-4" />
                   로그 아웃
                 </Button>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="w-full">
-                      <UserX className="mr-2 h-4 w-4" />
-                      회원 탈퇴
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        정말 탈퇴하시겠습니까? 탈퇴 후 1년 이내에는 동일 계정으로 재가입할 수 없습니다. 데이터는
-                        보존되며, 1년 후에 완전히 삭제됩니다.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="flex items-center space-x-2 py-4">
-                      <Checkbox
-                        id="quit-member-agree"
-                        checked={quitMemberAgreed}
-                        onCheckedChange={(checked) => setQuitMemberAgreed(checked === true)}
-                      />
-                      <label
-                        htmlFor="quit-member-agree"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        위 내용을 이해하고 탈퇴에 동의합니다
-                      </label>
-                    </div>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setQuitMemberAgreed(false)}>취소</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          handleQuitMember();
-                          setQuitMemberAgreed(false);
-                        }}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        disabled={!quitMemberAgreed}
-                      >
-                        탈퇴하기
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             </CardContent>
           </Card>
@@ -983,10 +936,7 @@ export default function MyPage() {
                       checked={allCurrentPageSelected}
                       onCheckedChange={handleSelectAll}
                     />
-                    <label
-                      htmlFor="select-all-videos"
-                      className="text-sm font-medium leading-none cursor-pointer"
-                    >
+                    <label htmlFor="select-all-videos" className="text-sm font-medium leading-none cursor-pointer">
                       현재 페이지 전체 선택
                     </label>
                   </div>
@@ -997,10 +947,7 @@ export default function MyPage() {
                         checked={allVideosSelected}
                         onCheckedChange={handleSelectAllPages}
                       />
-                      <label
-                        htmlFor="select-all-pages"
-                        className="text-sm font-medium leading-none cursor-pointer"
-                      >
+                      <label htmlFor="select-all-pages" className="text-sm font-medium leading-none cursor-pointer">
                         모든 페이지 전체 선택 ({videos.length}개)
                       </label>
                     </div>
@@ -1286,19 +1233,20 @@ export default function MyPage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.ceil(subscriptions.length / subscriptionsPerPage) }, (_, i) => i + 1).map(
-                      (page) => (
-                        <Button
-                          key={page}
-                          variant={subscriptionsPage === page ? "default" : "outline"}
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setSubscriptionsPage(page)}
-                        >
-                          {page}
-                        </Button>
-                      ),
-                    )}
+                    {Array.from(
+                      { length: Math.ceil(subscriptions.length / subscriptionsPerPage) },
+                      (_, i) => i + 1,
+                    ).map((page) => (
+                      <Button
+                        key={page}
+                        variant={subscriptionsPage === page ? "default" : "outline"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSubscriptionsPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    ))}
                   </div>
                   <Button
                     variant="outline"
