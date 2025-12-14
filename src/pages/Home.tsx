@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { VideoRow, VideoCategory } from "@/components/VideoRow";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -423,6 +424,7 @@ export default function Home() {
           </div>
         )}
       </div>
+      <BackToTopButton />
     </div>
   );
 }
