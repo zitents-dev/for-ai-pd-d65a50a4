@@ -1,15 +1,23 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface VideoCardSkeletonProps {
   count?: number;
+  variant?: "row" | "grid";
 }
 
-export const VideoCardSkeleton = ({ count = 1 }: VideoCardSkeletonProps) => {
+export const VideoCardSkeleton = ({ count = 1, variant = "row" }: VideoCardSkeletonProps) => {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="flex-shrink-0 w-72 animate-fade-in">
+        <div 
+          key={index} 
+          className={cn(
+            "animate-fade-in",
+            variant === "row" ? "flex-shrink-0 w-72" : "w-full"
+          )}
+        >
           <Card className="overflow-hidden">
             {/* Thumbnail skeleton */}
             <Skeleton className="aspect-video w-full" />

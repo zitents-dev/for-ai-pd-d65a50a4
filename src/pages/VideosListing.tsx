@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
+import { VideoCardSkeleton } from "@/components/VideoCardSkeleton";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -58,6 +59,7 @@ export default function VideosListing() {
   const { section } = useParams<{ section: SectionType }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,13 +233,30 @@ export default function VideosListing() {
     setHasMore(true);
   };
 
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      loadVideos(nextPage, category, true);
+  // Infinite scroll with intersection observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          const nextPage = page + 1;
+          setPage(nextPage);
+          loadVideos(nextPage, category, true);
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
-  };
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasMore, loadingMore, loading, page, category, loadVideos]);
 
   if (!section || !SECTION_TITLES[section as SectionType]) {
     navigate("/");
@@ -294,25 +313,19 @@ export default function VideosListing() {
               ))}
             </div>
 
-            {/* Load More */}
-            {hasMore && (
-              <div className="flex justify-center mt-8">
-                <Button 
-                  variant="outline" 
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                >
-                  {loadingMore ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Loading...
-                    </>
-                  ) : (
-                    "Load More"
-                  )}
-                </Button>
-              </div>
-            )}
+            {/* Infinite scroll trigger */}
+            <div ref={loadMoreRef} className="w-full py-4">
+              {loadingMore && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <VideoCardSkeleton count={4} variant="grid" />
+                </div>
+              )}
+              {!hasMore && videos.length > 0 && (
+                <p className="text-center text-muted-foreground py-4">
+                  No more videos to load
+                </p>
+              )}
+            </div>
           </>
         )}
       </div>
