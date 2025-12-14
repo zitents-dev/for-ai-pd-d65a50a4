@@ -1,4 +1,4 @@
-import { BadgeCheck, Bulb, Orbit, Moon, Sun, Star, Crown, Trophy } from "lucide-react";
+import { BadgeCheck, Lightbulb, Orbit, Moon, Sun, Star, Crown, Trophy } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +64,7 @@ const badgeConfig: Record<
     iconColor: "text-white",
   },
   mentor: {
-    icon: Bulb,
+    icon: Lightbulb,
     label: "멘토",
     bgColor: "bg-green-600",
     iconColor: "text-white",
