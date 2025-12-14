@@ -9,8 +9,7 @@ import { Heart, Eye, Calendar, Info, UserPlus, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { LikeButton } from "@/components/LikeButton";
-import { DislikeButton } from "@/components/DislikeButton";
+import { LikeDislikeButtons } from "@/components/LikeDislikeButtons";
 import { ReportDialog } from "@/components/ReportDialog";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
@@ -45,7 +44,7 @@ interface Video {
 }
 
 interface Badge {
-  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "gold" | "silver" | "bronze" | "buffer";
+  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "mentor" | "gold" | "silver" | "bronze" | "buffer";
   award_year?: number | null;
 }
 
@@ -363,18 +362,13 @@ export default function VideoView() {
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <div className="flex gap-2">
-                  <LikeButton 
-                    videoId={video.id} 
-                    initialLiked={isLiked} 
-                    initialLikesCount={video.likes_count || 0} 
-                  />
-                  <DislikeButton
-                    videoId={video.id}
-                    initialDisliked={isDisliked}
-                    initialDislikesCount={video.dislikes_count || 0}
-                  />
-                </div>
+                <LikeDislikeButtons
+                  videoId={video.id}
+                  initialLiked={isLiked}
+                  initialDisliked={isDisliked}
+                  initialLikesCount={video.likes_count || 0}
+                  initialDislikesCount={video.dislikes_count || 0}
+                />
                 <Button
                   variant={isFavorited ? "default" : "outline"}
                   size="sm"

@@ -2,7 +2,7 @@ import { BadgeCheck, Crown, Trophy, Orbit, Moon, Sun, Star } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-type BadgeType = "official" | "amateur" | "semi_pro" | "pro" | "director" | "gold" | "silver" | "bronze" | "buffer";
+type BadgeType = "official" | "amateur" | "semi_pro" | "pro" | "director" | "mentor" | "gold" | "silver" | "bronze" | "buffer";
 
 interface BadgeItem {
   badge_type: BadgeType;
@@ -53,6 +53,12 @@ const badgeConfig: Record<
     bgColor: "bg-red-500",
     iconColor: "text-white",
   },
+  mentor: {
+    icon: BadgeCheck,
+    label: "멘토",
+    bgColor: "bg-purple-600",
+    iconColor: "text-white",
+  },
   gold: {
     icon: Crown,
     label: "Top1",
@@ -79,7 +85,7 @@ const badgeConfig: Record<
   },
 };
 
-const premiumBadges: BadgeType[] = ["pro", "director", "gold", "silver", "bronze"];
+const premiumBadges: BadgeType[] = ["pro", "director", "mentor", "gold", "silver", "bronze"];
 
 export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
   if (!badges || badges.length === 0) return null;
