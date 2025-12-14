@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
-import { VideoRow, VideoCategory } from "@/components/VideoRow";
+import { VideoRow, VideoCategory, SectionType } from "@/components/VideoRow";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -347,6 +347,7 @@ export default function Home() {
             hasMore={mentorHasMore}
             selectedCategory={mentorCategory}
             onCategoryChange={handleMentorCategoryChange}
+            sectionType="mentor"
             onLoadMore={() => {
               if (!mentorLoading && mentorHasMore) {
                 const nextPage = mentorPage + 1;
@@ -364,6 +365,7 @@ export default function Home() {
             hasMore={recentHasMore}
             selectedCategory={recentCategory}
             onCategoryChange={handleRecentCategoryChange}
+            sectionType="recent"
             onLoadMore={() => {
               if (!recentLoading && recentHasMore) {
                 const nextPage = recentPage + 1;
@@ -381,6 +383,7 @@ export default function Home() {
             hasMore={popularHasMore}
             selectedCategory={popularCategory}
             onCategoryChange={handlePopularCategoryChange}
+            sectionType="popular"
             onLoadMore={() => {
               if (!popularLoading && popularHasMore) {
                 const nextPage = popularPage + 1;
@@ -399,6 +402,7 @@ export default function Home() {
               hasMore={subscriberHasMore}
               selectedCategory={subscriberCategory}
               onCategoryChange={handleSubscriberCategoryChange}
+              sectionType="subscriptions"
               onLoadMore={() => {
                 if (!subscriberLoading && subscriberHasMore) {
                   const nextPage = subscriberPage + 1;
