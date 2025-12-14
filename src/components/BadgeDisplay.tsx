@@ -1,4 +1,4 @@
-import { ShieldCheck, Medal, Trophy, Orbit, Moon, Sun, Star } from "lucide-react";
+import { ShieldCheck, Award, Trophy, Orbit, Moon, Sun, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -54,19 +54,19 @@ const badgeConfig: Record<
     iconColor: "text-white",
   },
   gold: {
-    icon: Medal,
+    icon: Award,
     label: "Top1",
     bgColor: "bg-gradient-to-br from-yellow-300 to-yellow-600",
     iconColor: "text-yellow-900",
   },
   silver: {
-    icon: Medal,
+    icon: Award,
     label: "Top2",
     bgColor: "bg-gradient-to-br from-gray-200 to-gray-400",
     iconColor: "text-gray-700",
   },
   bronze: {
-    icon: Medal,
+    icon: Award,
     label: "Top3",
     bgColor: "bg-gradient-to-br from-orange-300 to-orange-600",
     iconColor: "text-orange-900",
