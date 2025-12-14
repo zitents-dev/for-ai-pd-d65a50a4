@@ -29,7 +29,8 @@ interface Profile {
 }
 
 interface UserBadge {
-  badge_type: 'best' | 'official';
+  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "gold" | "silver" | "bronze" | "buffer";
+  award_year?: number | null;
 }
 
 interface Video {
@@ -151,7 +152,7 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from('user_badges')
-        .select('badge_type')
+        .select('badge_type, award_year')
         .eq('user_id', userId);
 
       if (error) throw error;
