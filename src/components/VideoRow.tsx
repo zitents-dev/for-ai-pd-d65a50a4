@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { VideoCard } from "./VideoCard";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface Video {
 }
 
 export type VideoCategory = "all" | "education" | "commercial" | "fiction" | "podcast" | "entertainment" | "tutorial" | "other";
+export type SectionType = "mentor" | "recent" | "popular" | "subscriptions";
 
 const CATEGORIES: { value: VideoCategory; label: string }[] = [
   { value: "all", label: "All" },
@@ -47,18 +49,21 @@ interface VideoRowProps {
   selectedCategory?: VideoCategory;
   onCategoryChange?: (category: VideoCategory) => void;
   showCategoryFilter?: boolean;
+  sectionType?: SectionType;
 }
 
 export const VideoRow = ({ 
   title, 
-  videos, 
+  videos,
   loading, 
   onLoadMore, 
   hasMore,
   selectedCategory = "all",
   onCategoryChange,
   showCategoryFilter = true,
+  sectionType,
 }: VideoRowProps) => {
+  const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -122,20 +127,31 @@ export const VideoRow = ({
     <section className="mb-8">
       <div className="flex items-center justify-between px-4 mb-4">
         <h2 className="text-xl font-bold text-foreground">{title}</h2>
-        {showCategoryFilter && onCategoryChange && (
-          <Select value={selectedCategory} onValueChange={(value) => onCategoryChange(value as VideoCategory)}>
-            <SelectTrigger className="w-36 bg-background border-border">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border z-50">
-              {CATEGORIES.map((cat) => (
-                <SelectItem key={cat.value} value={cat.value}>
-                  {cat.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <div className="flex items-center gap-2">
+          {showCategoryFilter && onCategoryChange && (
+            <Select value={selectedCategory} onValueChange={(value) => onCategoryChange(value as VideoCategory)}>
+              <SelectTrigger className="w-36 bg-background border-border">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {sectionType && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate(`/videos/${sectionType}`)}
+            >
+              View All
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="relative group">
