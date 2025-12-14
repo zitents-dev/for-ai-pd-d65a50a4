@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -315,6 +316,7 @@ export default function VideosListing() {
           </>
         )}
       </div>
+      <BackToTopButton />
     </div>
   );
 }
