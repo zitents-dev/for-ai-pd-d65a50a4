@@ -126,10 +126,13 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
               <TooltipTrigger asChild>
                 <div
                   className={cn(
-                    "rounded-full flex items-center justify-center cursor-default shadow-sm transition-transform hover:scale-110",
+                    "rounded-full flex items-center justify-center cursor-default shadow-sm",
+                    "animate-in fade-in-0 zoom-in-50 duration-300",
+                    "transition-all hover:scale-125 hover:shadow-md hover:-translate-y-0.5",
                     sizeClasses[size],
                     config.bgColor
                   )}
+                  style={{ animationDelay: `${index * 75}ms`, animationFillMode: 'backwards' }}
                 >
                   <Icon className={cn(iconSizeClasses[size], config.iconColor)} />
                 </div>
