@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
@@ -32,6 +32,7 @@ interface Creator {
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [videos, setVideos] = useState<Video[]>([]);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -145,11 +146,15 @@ export default function Search() {
                 {creators.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {creators.map((creator) => (
-                      <Card key={creator.id} className="p-4">
+                      <Card 
+                        key={creator.id} 
+                        className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => navigate(`/profile/${creator.id}`)}
+                      >
                         <div className="flex items-center gap-4">
                           <Avatar className="w-16 h-16">
                             <AvatarImage src={creator.avatar_url || ""} />
-                            <AvatarFallback>{creator.name[0]}</AvatarFallback>
+                            <AvatarFallback>{creator.name?.[0] || "?"}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <h3 className="font-semibold text-foreground">{creator.name}</h3>
