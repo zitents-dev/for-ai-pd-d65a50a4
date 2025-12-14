@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
-import { VideoRow } from "@/components/VideoRow";
+import { VideoRow, VideoCategory } from "@/components/VideoRow";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -31,24 +31,28 @@ export default function Home() {
   const [mentorLoading, setMentorLoading] = useState(true);
   const [mentorPage, setMentorPage] = useState(0);
   const [mentorHasMore, setMentorHasMore] = useState(true);
+  const [mentorCategory, setMentorCategory] = useState<VideoCategory>("all");
 
   // Recent videos
   const [recentVideos, setRecentVideos] = useState<Video[]>([]);
   const [recentLoading, setRecentLoading] = useState(true);
   const [recentPage, setRecentPage] = useState(0);
   const [recentHasMore, setRecentHasMore] = useState(true);
+  const [recentCategory, setRecentCategory] = useState<VideoCategory>("all");
 
   // Popular videos
   const [popularVideos, setPopularVideos] = useState<Video[]>([]);
   const [popularLoading, setPopularLoading] = useState(true);
   const [popularPage, setPopularPage] = useState(0);
   const [popularHasMore, setPopularHasMore] = useState(true);
+  const [popularCategory, setPopularCategory] = useState<VideoCategory>("all");
 
   // Subscriber videos
   const [subscriberVideos, setSubscriberVideos] = useState<Video[]>([]);
   const [subscriberLoading, setSubscriberLoading] = useState(false);
   const [subscriberPage, setSubscriberPage] = useState(0);
   const [subscriberHasMore, setSubscriberHasMore] = useState(true);
+  const [subscriberCategory, setSubscriberCategory] = useState<VideoCategory>("all");
 
   // Helper to add like counts to videos
   const addLikeCounts = async (videos: any[]): Promise<Video[]> => {
@@ -82,8 +86,7 @@ export default function Home() {
   };
 
   // Load mentor videos (from users with mentor badge)
-  const loadMentorVideos = useCallback(async (page: number) => {
-    if (page > 0 && !mentorHasMore) return;
+  const loadMentorVideos = useCallback(async (page: number, category: VideoCategory) => {
     setMentorLoading(true);
     
     try {
@@ -101,15 +104,20 @@ export default function Home() {
 
       const mentorIds = mentorBadges.map(b => b.user_id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("videos")
         .select(`
           id, title, thumbnail_url, duration, views, created_at,
           profiles (name, avatar_url)
         `)
         .in("creator_id", mentorIds)
-        .order("created_at", { ascending: false })
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .order("created_at", { ascending: false });
+
+      if (category !== "all") {
+        query = query.eq("category", category as any);
+      }
+
+      const { data, error } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
       if (error) throw error;
 
@@ -127,22 +135,26 @@ export default function Home() {
     } finally {
       setMentorLoading(false);
     }
-  }, [mentorHasMore]);
+  }, []);
 
   // Load recent videos
-  const loadRecentVideos = useCallback(async (page: number) => {
-    if (page > 0 && !recentHasMore) return;
+  const loadRecentVideos = useCallback(async (page: number, category: VideoCategory) => {
     setRecentLoading(true);
     
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("videos")
         .select(`
           id, title, thumbnail_url, duration, views, created_at,
           profiles (name, avatar_url)
         `)
-        .order("created_at", { ascending: false })
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .order("created_at", { ascending: false });
+
+      if (category !== "all") {
+        query = query.eq("category", category as any);
+      }
+
+      const { data, error } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
       if (error) throw error;
 
@@ -160,20 +172,23 @@ export default function Home() {
     } finally {
       setRecentLoading(false);
     }
-  }, [recentHasMore]);
+  }, []);
 
   // Load popular videos (sorted by likes)
-  const loadPopularVideos = useCallback(async (page: number) => {
-    if (page > 0 && !popularHasMore) return;
+  const loadPopularVideos = useCallback(async (page: number, category: VideoCategory) => {
     setPopularLoading(true);
     
     try {
-      // Use trending_videos_view which has likes_count
-      const { data, error } = await supabase
+      let query = supabase
         .from("trending_videos_view")
         .select("*")
-        .order("likes_count", { ascending: false, nullsFirst: false })
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .order("likes_count", { ascending: false, nullsFirst: false });
+
+      if (category !== "all") {
+        query = query.eq("category", category as any);
+      }
+
+      const { data, error } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
       if (error) throw error;
 
@@ -205,11 +220,10 @@ export default function Home() {
     } finally {
       setPopularLoading(false);
     }
-  }, [popularHasMore]);
+  }, []);
 
   // Load subscriber videos (only for signed-in users)
-  const loadSubscriberVideos = useCallback(async (page: number) => {
-    if (!user || (page > 0 && !subscriberHasMore)) return;
+  const loadSubscriberVideos = useCallback(async (page: number, category: VideoCategory, userId: string) => {
     setSubscriberLoading(true);
     
     try {
@@ -217,25 +231,31 @@ export default function Home() {
       const { data: subscriptions } = await supabase
         .from("subscriptions")
         .select("creator_id")
-        .eq("subscriber_id", user.id);
+        .eq("subscriber_id", userId);
 
       if (!subscriptions || subscriptions.length === 0) {
         setSubscriberHasMore(false);
         setSubscriberLoading(false);
+        setSubscriberVideos([]);
         return;
       }
 
       const creatorIds = subscriptions.map(s => s.creator_id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("videos")
         .select(`
           id, title, thumbnail_url, duration, views, created_at,
           profiles (name, avatar_url)
         `)
         .in("creator_id", creatorIds)
-        .order("created_at", { ascending: false })
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .order("created_at", { ascending: false });
+
+      if (category !== "all") {
+        query = query.eq("category", category as any);
+      }
+
+      const { data, error } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
       if (error) throw error;
 
@@ -253,23 +273,54 @@ export default function Home() {
     } finally {
       setSubscriberLoading(false);
     }
-  }, [user, subscriberHasMore]);
+  }, []);
 
   // Initial load
   useEffect(() => {
-    loadMentorVideos(0);
-    loadRecentVideos(0);
-    loadPopularVideos(0);
-  }, []);
+    loadMentorVideos(0, mentorCategory);
+  }, [mentorCategory]);
 
-  // Load subscriber videos when user signs in
+  useEffect(() => {
+    loadRecentVideos(0, recentCategory);
+  }, [recentCategory]);
+
+  useEffect(() => {
+    loadPopularVideos(0, popularCategory);
+  }, [popularCategory]);
+
+  // Load subscriber videos when user signs in or category changes
   useEffect(() => {
     if (user) {
-      loadSubscriberVideos(0);
+      loadSubscriberVideos(0, subscriberCategory, user.id);
     } else {
       setSubscriberVideos([]);
     }
-  }, [user]);
+  }, [user, subscriberCategory]);
+
+  // Category change handlers
+  const handleMentorCategoryChange = (category: VideoCategory) => {
+    setMentorCategory(category);
+    setMentorPage(0);
+    setMentorHasMore(true);
+  };
+
+  const handleRecentCategoryChange = (category: VideoCategory) => {
+    setRecentCategory(category);
+    setRecentPage(0);
+    setRecentHasMore(true);
+  };
+
+  const handlePopularCategoryChange = (category: VideoCategory) => {
+    setPopularCategory(category);
+    setPopularPage(0);
+    setPopularHasMore(true);
+  };
+
+  const handleSubscriberCategoryChange = (category: VideoCategory) => {
+    setSubscriberCategory(category);
+    setSubscriberPage(0);
+    setSubscriberHasMore(true);
+  };
 
   const initialLoading = mentorLoading && recentLoading && popularLoading && 
     mentorVideos.length === 0 && recentVideos.length === 0 && popularVideos.length === 0;
@@ -294,12 +345,13 @@ export default function Home() {
             videos={mentorVideos}
             loading={mentorLoading}
             hasMore={mentorHasMore}
+            selectedCategory={mentorCategory}
+            onCategoryChange={handleMentorCategoryChange}
             onLoadMore={() => {
-              if (!mentorLoading) {
-                setMentorPage(p => {
-                  loadMentorVideos(p + 1);
-                  return p + 1;
-                });
+              if (!mentorLoading && mentorHasMore) {
+                const nextPage = mentorPage + 1;
+                setMentorPage(nextPage);
+                loadMentorVideos(nextPage, mentorCategory);
               }
             }}
           />
@@ -310,12 +362,13 @@ export default function Home() {
             videos={recentVideos}
             loading={recentLoading}
             hasMore={recentHasMore}
+            selectedCategory={recentCategory}
+            onCategoryChange={handleRecentCategoryChange}
             onLoadMore={() => {
-              if (!recentLoading) {
-                setRecentPage(p => {
-                  loadRecentVideos(p + 1);
-                  return p + 1;
-                });
+              if (!recentLoading && recentHasMore) {
+                const nextPage = recentPage + 1;
+                setRecentPage(nextPage);
+                loadRecentVideos(nextPage, recentCategory);
               }
             }}
           />
@@ -326,12 +379,13 @@ export default function Home() {
             videos={popularVideos}
             loading={popularLoading}
             hasMore={popularHasMore}
+            selectedCategory={popularCategory}
+            onCategoryChange={handlePopularCategoryChange}
             onLoadMore={() => {
-              if (!popularLoading) {
-                setPopularPage(p => {
-                  loadPopularVideos(p + 1);
-                  return p + 1;
-                });
+              if (!popularLoading && popularHasMore) {
+                const nextPage = popularPage + 1;
+                setPopularPage(nextPage);
+                loadPopularVideos(nextPage, popularCategory);
               }
             }}
           />
@@ -343,12 +397,13 @@ export default function Home() {
               videos={subscriberVideos}
               loading={subscriberLoading}
               hasMore={subscriberHasMore}
+              selectedCategory={subscriberCategory}
+              onCategoryChange={handleSubscriberCategoryChange}
               onLoadMore={() => {
-                if (!subscriberLoading) {
-                  setSubscriberPage(p => {
-                    loadSubscriberVideos(p + 1);
-                    return p + 1;
-                  });
+                if (!subscriberLoading && subscriberHasMore) {
+                  const nextPage = subscriberPage + 1;
+                  setSubscriberPage(nextPage);
+                  loadSubscriberVideos(nextPage, subscriberCategory, user.id);
                 }
               }}
             />
@@ -356,7 +411,8 @@ export default function Home() {
 
           {/* Empty state */}
           {mentorVideos.length === 0 && recentVideos.length === 0 && 
-           popularVideos.length === 0 && subscriberVideos.length === 0 && (
+           popularVideos.length === 0 && subscriberVideos.length === 0 && 
+           !mentorLoading && !recentLoading && !popularLoading && (
             <div className="text-center py-24">
               <p className="text-muted-foreground text-lg">No videos yet. Be the first to upload!</p>
             </div>

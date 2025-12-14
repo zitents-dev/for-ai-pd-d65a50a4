@@ -2,6 +2,13 @@ import { useRef, useState, useEffect } from "react";
 import { VideoCard } from "./VideoCard";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Video {
   id: string;
@@ -18,15 +25,40 @@ interface Video {
   };
 }
 
+export type VideoCategory = "all" | "education" | "commercial" | "fiction" | "podcast" | "entertainment" | "tutorial" | "other";
+
+const CATEGORIES: { value: VideoCategory; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "education", label: "Education" },
+  { value: "commercial", label: "Commercial" },
+  { value: "fiction", label: "Fiction" },
+  { value: "podcast", label: "Podcast" },
+  { value: "entertainment", label: "Entertainment" },
+  { value: "tutorial", label: "Tutorial" },
+  { value: "other", label: "Other" },
+];
+
 interface VideoRowProps {
   title: string;
   videos: Video[];
   loading?: boolean;
   onLoadMore?: () => void;
   hasMore?: boolean;
+  selectedCategory?: VideoCategory;
+  onCategoryChange?: (category: VideoCategory) => void;
+  showCategoryFilter?: boolean;
 }
 
-export const VideoRow = ({ title, videos, loading, onLoadMore, hasMore }: VideoRowProps) => {
+export const VideoRow = ({ 
+  title, 
+  videos, 
+  loading, 
+  onLoadMore, 
+  hasMore,
+  selectedCategory = "all",
+  onCategoryChange,
+  showCategoryFilter = true,
+}: VideoRowProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -76,11 +108,36 @@ export const VideoRow = ({ title, videos, loading, onLoadMore, hasMore }: VideoR
     }
   };
 
-  if (videos.length === 0 && !loading) return null;
+  // Reset scroll position when category changes
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.scrollLeft = 0;
+    }
+  }, [selectedCategory]);
+
+  const showEmptyState = videos.length === 0 && !loading;
 
   return (
     <section className="mb-8">
-      <h2 className="text-xl font-bold text-foreground mb-4 px-4">{title}</h2>
+      <div className="flex items-center justify-between px-4 mb-4">
+        <h2 className="text-xl font-bold text-foreground">{title}</h2>
+        {showCategoryFilter && onCategoryChange && (
+          <Select value={selectedCategory} onValueChange={(value) => onCategoryChange(value as VideoCategory)}>
+            <SelectTrigger className="w-36 bg-background border-border">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border-border z-50">
+              {CATEGORIES.map((cat) => (
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+      
       <div className="relative group">
         {/* Left scroll button */}
         {canScrollLeft && (
@@ -100,20 +157,28 @@ export const VideoRow = ({ title, videos, loading, onLoadMore, hasMore }: VideoR
           className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 scroll-smooth"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {videos.map((video) => (
-            <div key={video.id} className="flex-shrink-0 w-72">
-              <VideoCard video={video} />
+          {showEmptyState ? (
+            <div className="flex-shrink-0 w-full text-center py-8 text-muted-foreground">
+              No videos found in this category
             </div>
-          ))}
-          {loading && (
-            <div className="flex-shrink-0 w-72 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+          ) : (
+            <>
+              {videos.map((video) => (
+                <div key={video.id} className="flex-shrink-0 w-72">
+                  <VideoCard video={video} />
+                </div>
+              ))}
+              {loading && (
+                <div className="flex-shrink-0 w-72 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {/* Right scroll button */}
-        {(canScrollRight || hasMore) && (
+        {(canScrollRight || hasMore) && !showEmptyState && (
           <Button
             variant="secondary"
             size="icon"
