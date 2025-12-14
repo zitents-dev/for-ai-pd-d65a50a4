@@ -138,10 +138,9 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
                   style={{ animationDelay: `${index * 75}ms`, animationFillMode: 'backwards' }}
                 >
                   {isPremium && (
-                    <div 
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 animate-shimmer"
-                      style={{ backgroundSize: '200% 100%' }}
-                    />
+                    <div className="absolute inset-0 overflow-hidden">
+                      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                    </div>
                   )}
                   <Icon className={cn(iconSizeClasses[size], config.iconColor, "relative z-10")} />
                 </div>
