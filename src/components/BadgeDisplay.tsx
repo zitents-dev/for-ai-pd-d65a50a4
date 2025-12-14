@@ -1,4 +1,4 @@
-import { ShieldCheck, Medal, Trophy, Orbit, Moon, Eclipse, Sun } from "lucide-react";
+import { ShieldCheck, Medal, Trophy, Orbit, Moon, Sun, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
