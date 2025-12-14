@@ -29,6 +29,7 @@ interface Creator {
   avatar_url: string | null;
   bio: string | null;
   subscriberCount?: number;
+  videoCount?: number;
 }
 
 export default function Search() {
@@ -77,14 +78,20 @@ export default function Search() {
 
       if (creatorError) throw creatorError;
       
-      // Fetch subscriber counts for each creator
+      // Fetch subscriber counts and video counts for each creator
       const creatorsWithCounts = await Promise.all(
         (creatorData || []).map(async (creator) => {
-          const { count } = await supabase
-            .from("subscriptions")
-            .select("*", { count: "exact", head: true })
-            .eq("creator_id", creator.id);
-          return { ...creator, subscriberCount: count || 0 };
+          const [{ count: subscriberCount }, { count: videoCount }] = await Promise.all([
+            supabase
+              .from("subscriptions")
+              .select("*", { count: "exact", head: true })
+              .eq("creator_id", creator.id),
+            supabase
+              .from("videos")
+              .select("*", { count: "exact", head: true })
+              .eq("creator_id", creator.id)
+          ]);
+          return { ...creator, subscriberCount: subscriberCount || 0, videoCount: videoCount || 0 };
         })
       );
       setCreators(creatorsWithCounts);
@@ -170,9 +177,15 @@ export default function Search() {
                           </Avatar>
                           <div className="flex-1">
                             <h3 className="font-semibold text-foreground">{creator.name}</h3>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Users className="w-3.5 h-3.5" />
-                              <span>구독자 {creator.subscriberCount?.toLocaleString() || 0}명</span>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" />
+                                <span>구독자 {creator.subscriberCount?.toLocaleString() || 0}명</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Video className="w-3.5 h-3.5" />
+                                <span>작품 {creator.videoCount?.toLocaleString() || 0}개</span>
+                              </div>
                             </div>
                             {creator.bio && (
                               <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
