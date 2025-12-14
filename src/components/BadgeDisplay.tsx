@@ -97,8 +97,29 @@ const badgeConfig: Record<
 
 const premiumBadges: BadgeType[] = ["pro", "director", "gold", "silver", "bronze"];
 
+// Define the display order for badges
+const badgeOrder: BadgeType[] = [
+  "official",
+  "mentor",
+  "amateur",
+  "semi_pro",
+  "pro",
+  "director",
+  "gold",
+  "silver",
+  "bronze",
+  "buffer",
+];
+
 export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
   if (!badges || badges.length === 0) return null;
+
+  // Sort badges according to the defined order
+  const sortedBadges = [...badges].sort((a, b) => {
+    const indexA = badgeOrder.indexOf(a.badge_type);
+    const indexB = badgeOrder.indexOf(b.badge_type);
+    return indexA - indexB;
+  });
 
   const sizeClasses = {
     sm: "w-5 h-5",
@@ -115,7 +136,7 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex items-center gap-1 flex-wrap">
-        {badges.map((badge, index) => {
+        {sortedBadges.map((badge, index) => {
           const config = badgeConfig[badge.badge_type];
           if (!config) return null;
 
