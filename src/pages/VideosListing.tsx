@@ -5,6 +5,8 @@ import { VideoCard } from "@/components/VideoCard";
 import { VideoCardSkeleton } from "@/components/VideoCardSkeleton";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
+import { PullToRefreshIndicator } from "@/components/PullToRefresh";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -234,6 +236,18 @@ export default function VideosListing() {
     setHasMore(true);
   };
 
+  // Pull to refresh
+  const handleRefresh = useCallback(async () => {
+    setPage(0);
+    setHasMore(true);
+    await loadVideos(0, category, false);
+  }, [category, loadVideos]);
+
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    isEnabled: !loading,
+  });
+
   // Infinite scroll with intersection observer
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -266,6 +280,7 @@ export default function VideosListing() {
 
   return (
     <div className="min-h-screen relative">
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-25 -z-10"
         style={{ backgroundImage: `url(${heroBg})` }}
