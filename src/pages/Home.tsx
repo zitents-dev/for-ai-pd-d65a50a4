@@ -14,6 +14,8 @@ interface Video {
   views: number | null;
   created_at: string;
   category?: string | null;
+  likes_count?: number;
+  dislikes_count?: number;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -67,7 +69,38 @@ export default function Home() {
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
-      setVideos((data as Video[]) || []);
+
+      // Load like/dislike counts for all videos
+      if (data && data.length > 0) {
+        const videoIds = data.map(v => v.id);
+        const { data: likesData } = await supabase
+          .from("likes")
+          .select("video_id, type")
+          .in("video_id", videoIds);
+
+        const likeCounts: Record<string, { likes: number; dislikes: number }> = {};
+        videoIds.forEach(id => {
+          likeCounts[id] = { likes: 0, dislikes: 0 };
+        });
+        
+        likesData?.forEach(like => {
+          if (like.type === "like") {
+            likeCounts[like.video_id].likes++;
+          } else if (like.type === "dislike") {
+            likeCounts[like.video_id].dislikes++;
+          }
+        });
+
+        const videosWithCounts = data.map(video => ({
+          ...video,
+          likes_count: likeCounts[video.id]?.likes || 0,
+          dislikes_count: likeCounts[video.id]?.dislikes || 0,
+        }));
+
+        setVideos(videosWithCounts as Video[]);
+      } else {
+        setVideos([]);
+      }
     } catch (error) {
       console.error("Error loading videos:", error);
     } finally {
