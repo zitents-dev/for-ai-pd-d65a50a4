@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
-import { VideoRow, VideoCategory, SectionType } from "@/components/VideoRow";
+import { VideoRow, VideoCategory } from "@/components/VideoRow";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import heroBg from "@/assets/hero-bg.jpg";
 
@@ -322,8 +321,11 @@ export default function Home() {
     setSubscriberHasMore(true);
   };
 
-  const initialLoading = mentorLoading && recentLoading && popularLoading && 
-    mentorVideos.length === 0 && recentVideos.length === 0 && popularVideos.length === 0;
+  // Track initial loading state for each section
+  const mentorInitialLoading = mentorLoading && mentorVideos.length === 0;
+  const recentInitialLoading = recentLoading && recentVideos.length === 0;
+  const popularInitialLoading = popularLoading && popularVideos.length === 0;
+  const subscriberInitialLoading = subscriberLoading && subscriberVideos.length === 0;
 
   return (
     <div className="min-h-screen relative">
@@ -333,96 +335,94 @@ export default function Home() {
       />
       <Navbar />
       
-      {initialLoading ? (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <div className="py-6">
-          {/* Mentor Videos */}
+      <div className="py-6">
+        {/* Mentor Videos */}
+        <VideoRow
+          title="🎓 Mentor Videos"
+          videos={mentorVideos}
+          loading={mentorLoading && mentorVideos.length > 0}
+          initialLoading={mentorInitialLoading}
+          hasMore={mentorHasMore}
+          selectedCategory={mentorCategory}
+          onCategoryChange={handleMentorCategoryChange}
+          sectionType="mentor"
+          onLoadMore={() => {
+            if (!mentorLoading && mentorHasMore) {
+              const nextPage = mentorPage + 1;
+              setMentorPage(nextPage);
+              loadMentorVideos(nextPage, mentorCategory);
+            }
+          }}
+        />
+
+        {/* Recent Videos */}
+        <VideoRow
+          title="🕐 Recent Videos"
+          videos={recentVideos}
+          loading={recentLoading && recentVideos.length > 0}
+          initialLoading={recentInitialLoading}
+          hasMore={recentHasMore}
+          selectedCategory={recentCategory}
+          onCategoryChange={handleRecentCategoryChange}
+          sectionType="recent"
+          onLoadMore={() => {
+            if (!recentLoading && recentHasMore) {
+              const nextPage = recentPage + 1;
+              setRecentPage(nextPage);
+              loadRecentVideos(nextPage, recentCategory);
+            }
+          }}
+        />
+
+        {/* Popular Videos */}
+        <VideoRow
+          title="🔥 Popular Videos"
+          videos={popularVideos}
+          loading={popularLoading && popularVideos.length > 0}
+          initialLoading={popularInitialLoading}
+          hasMore={popularHasMore}
+          selectedCategory={popularCategory}
+          onCategoryChange={handlePopularCategoryChange}
+          sectionType="popular"
+          onLoadMore={() => {
+            if (!popularLoading && popularHasMore) {
+              const nextPage = popularPage + 1;
+              setPopularPage(nextPage);
+              loadPopularVideos(nextPage, popularCategory);
+            }
+          }}
+        />
+
+        {/* Subscriber Videos (only for signed-in users) */}
+        {user && (
           <VideoRow
-            title="🎓 Mentor Videos"
-            videos={mentorVideos}
-            loading={mentorLoading}
-            hasMore={mentorHasMore}
-            selectedCategory={mentorCategory}
-            onCategoryChange={handleMentorCategoryChange}
-            sectionType="mentor"
+            title="📺 From Your Subscriptions"
+            videos={subscriberVideos}
+            loading={subscriberLoading && subscriberVideos.length > 0}
+            initialLoading={subscriberInitialLoading}
+            hasMore={subscriberHasMore}
+            selectedCategory={subscriberCategory}
+            onCategoryChange={handleSubscriberCategoryChange}
+            sectionType="subscriptions"
             onLoadMore={() => {
-              if (!mentorLoading && mentorHasMore) {
-                const nextPage = mentorPage + 1;
-                setMentorPage(nextPage);
-                loadMentorVideos(nextPage, mentorCategory);
+              if (!subscriberLoading && subscriberHasMore) {
+                const nextPage = subscriberPage + 1;
+                setSubscriberPage(nextPage);
+                loadSubscriberVideos(nextPage, subscriberCategory, user.id);
               }
             }}
           />
+        )}
 
-          {/* Recent Videos */}
-          <VideoRow
-            title="🕐 Recent Videos"
-            videos={recentVideos}
-            loading={recentLoading}
-            hasMore={recentHasMore}
-            selectedCategory={recentCategory}
-            onCategoryChange={handleRecentCategoryChange}
-            sectionType="recent"
-            onLoadMore={() => {
-              if (!recentLoading && recentHasMore) {
-                const nextPage = recentPage + 1;
-                setRecentPage(nextPage);
-                loadRecentVideos(nextPage, recentCategory);
-              }
-            }}
-          />
-
-          {/* Popular Videos */}
-          <VideoRow
-            title="🔥 Popular Videos"
-            videos={popularVideos}
-            loading={popularLoading}
-            hasMore={popularHasMore}
-            selectedCategory={popularCategory}
-            onCategoryChange={handlePopularCategoryChange}
-            sectionType="popular"
-            onLoadMore={() => {
-              if (!popularLoading && popularHasMore) {
-                const nextPage = popularPage + 1;
-                setPopularPage(nextPage);
-                loadPopularVideos(nextPage, popularCategory);
-              }
-            }}
-          />
-
-          {/* Subscriber Videos (only for signed-in users) */}
-          {user && (
-            <VideoRow
-              title="📺 From Your Subscriptions"
-              videos={subscriberVideos}
-              loading={subscriberLoading}
-              hasMore={subscriberHasMore}
-              selectedCategory={subscriberCategory}
-              onCategoryChange={handleSubscriberCategoryChange}
-              sectionType="subscriptions"
-              onLoadMore={() => {
-                if (!subscriberLoading && subscriberHasMore) {
-                  const nextPage = subscriberPage + 1;
-                  setSubscriberPage(nextPage);
-                  loadSubscriberVideos(nextPage, subscriberCategory, user.id);
-                }
-              }}
-            />
-          )}
-
-          {/* Empty state */}
-          {mentorVideos.length === 0 && recentVideos.length === 0 && 
-           popularVideos.length === 0 && subscriberVideos.length === 0 && 
-           !mentorLoading && !recentLoading && !popularLoading && (
-            <div className="text-center py-24">
-              <p className="text-muted-foreground text-lg">No videos yet. Be the first to upload!</p>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Empty state */}
+        {mentorVideos.length === 0 && recentVideos.length === 0 && 
+         popularVideos.length === 0 && subscriberVideos.length === 0 && 
+         !mentorLoading && !recentLoading && !popularLoading && (
+          <div className="text-center py-24">
+            <p className="text-muted-foreground text-lg">No videos yet. Be the first to upload!</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

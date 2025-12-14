@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { VideoCard } from "./VideoCard";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { VideoCardSkeleton } from "./VideoCardSkeleton";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -44,6 +45,7 @@ interface VideoRowProps {
   title: string;
   videos: Video[];
   loading?: boolean;
+  initialLoading?: boolean;
   onLoadMore?: () => void;
   hasMore?: boolean;
   selectedCategory?: VideoCategory;
@@ -56,6 +58,7 @@ export const VideoRow = ({
   title, 
   videos,
   loading, 
+  initialLoading,
   onLoadMore, 
   hasMore,
   selectedCategory = "all",
@@ -173,7 +176,9 @@ export const VideoRow = ({
           className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 scroll-smooth"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {showEmptyState ? (
+          {initialLoading ? (
+            <VideoCardSkeleton count={5} />
+          ) : showEmptyState ? (
             <div className="flex-shrink-0 w-full text-center py-8 text-muted-foreground">
               No videos found in this category
             </div>
@@ -184,11 +189,7 @@ export const VideoRow = ({
                   <VideoCard video={video} />
                 </div>
               ))}
-              {loading && (
-                <div className="flex-shrink-0 w-72 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              )}
+              {loading && <VideoCardSkeleton count={2} />}
             </>
           )}
         </div>
