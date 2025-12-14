@@ -1,22 +1,8 @@
 import { ShieldCheck, Medal, Trophy, Star } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-type BadgeType =
-  | "official"
-  | "amateur"
-  | "semi_pro"
-  | "pro"
-  | "director"
-  | "gold"
-  | "silver"
-  | "bronze"
-  | "buffer";
+type BadgeType = "official" | "amateur" | "semi_pro" | "pro" | "director" | "gold" | "silver" | "bronze" | "buffer";
 
 interface BadgeItem {
   badge_type: BadgeType;
@@ -39,7 +25,7 @@ const badgeConfig: Record<
 > = {
   official: {
     icon: ShieldCheck,
-    label: "공식 인증",
+    label: "공식식",
     bgColor: "bg-blue-500",
     iconColor: "text-white",
   },
@@ -69,25 +55,25 @@ const badgeConfig: Record<
   },
   gold: {
     icon: Medal,
-    label: "Gold",
+    label: "Top1",
     bgColor: "bg-gradient-to-br from-yellow-300 to-yellow-600",
     iconColor: "text-yellow-900",
   },
   silver: {
     icon: Medal,
-    label: "Silver",
+    label: "Top2",
     bgColor: "bg-gradient-to-br from-gray-200 to-gray-400",
     iconColor: "text-gray-700",
   },
   bronze: {
     icon: Medal,
-    label: "Bronze",
+    label: "Top3",
     bgColor: "bg-gradient-to-br from-orange-300 to-orange-600",
     iconColor: "text-orange-900",
   },
   buffer: {
     icon: Trophy,
-    label: "버퍼 뱃지",
+    label: "buffer",
     bgColor: "bg-purple-500",
     iconColor: "text-white",
   },
@@ -120,9 +106,7 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
           const Icon = config.icon;
           const isAward = ["gold", "silver", "bronze"].includes(badge.badge_type);
           const isPremium = premiumBadges.includes(badge.badge_type);
-          const tooltipLabel = isAward && badge.award_year
-            ? `${badge.award_year} ${config.label}`
-            : config.label;
+          const tooltipLabel = isAward && badge.award_year ? `${badge.award_year} ${config.label}` : config.label;
 
           return (
             <Tooltip key={index}>
@@ -133,9 +117,9 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
                     "animate-in fade-in-0 zoom-in-50 duration-300",
                     "transition-all hover:scale-125 hover:shadow-md hover:-translate-y-0.5",
                     sizeClasses[size],
-                    config.bgColor
+                    config.bgColor,
                   )}
-                  style={{ animationDelay: `${index * 75}ms`, animationFillMode: 'backwards' }}
+                  style={{ animationDelay: `${index * 75}ms`, animationFillMode: "backwards" }}
                 >
                   {isPremium && (
                     <div className="absolute inset-0 overflow-hidden">
