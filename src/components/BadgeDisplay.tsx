@@ -1,4 +1,4 @@
-import { ShieldCheck, Award, Trophy, Orbit, Moon, Sun, Star } from "lucide-react";
+import { BadgeCheck, Crown, Trophy, Orbit, Moon, Sun, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -17,14 +17,14 @@ interface BadgeDisplayProps {
 const badgeConfig: Record<
   BadgeType,
   {
-    icon: typeof ShieldCheck;
+    icon: typeof BadgeCheck;
     label: string;
     bgColor: string;
     iconColor: string;
   }
 > = {
   official: {
-    icon: ShieldCheck,
+    icon: BadgeCheck,
     label: "공식인증",
     bgColor: "bg-blue-500",
     iconColor: "text-white",
@@ -54,19 +54,19 @@ const badgeConfig: Record<
     iconColor: "text-white",
   },
   gold: {
-    icon: Award,
+    icon: Crown,
     label: "Top1",
     bgColor: "bg-gradient-to-br from-yellow-300 to-yellow-600",
     iconColor: "text-yellow-900",
   },
   silver: {
-    icon: Award,
+    icon: Crown,
     label: "Top2",
     bgColor: "bg-gradient-to-br from-gray-200 to-gray-400",
     iconColor: "text-gray-700",
   },
   bronze: {
-    icon: Award,
+    icon: Crown,
     label: "Top3",
     bgColor: "bg-gradient-to-br from-orange-300 to-orange-600",
     iconColor: "text-orange-900",
