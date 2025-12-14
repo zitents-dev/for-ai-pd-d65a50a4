@@ -1022,6 +1022,7 @@ export type Database = {
         | "semi_pro"
         | "pro"
         | "director"
+        | "mentor"
         | "gold"
         | "silver"
         | "bronze"
@@ -1168,6 +1169,7 @@ export const Constants = {
         "semi_pro",
         "pro",
         "director",
+        "mentor",
         "gold",
         "silver",
         "bronze",
