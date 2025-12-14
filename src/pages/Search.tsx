@@ -6,7 +6,7 @@ import { VideoCard } from "@/components/VideoCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search as SearchIcon, Video, User } from "lucide-react";
+import { Search as SearchIcon, Video, User, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 
@@ -28,6 +28,7 @@ interface Creator {
   name: string;
   avatar_url: string | null;
   bio: string | null;
+  subscriberCount?: number;
 }
 
 export default function Search() {
@@ -75,7 +76,18 @@ export default function Search() {
         .ilike("name", `%${searchQuery}%`);
 
       if (creatorError) throw creatorError;
-      setCreators(creatorData || []);
+      
+      // Fetch subscriber counts for each creator
+      const creatorsWithCounts = await Promise.all(
+        (creatorData || []).map(async (creator) => {
+          const { count } = await supabase
+            .from("subscriptions")
+            .select("*", { count: "exact", head: true })
+            .eq("creator_id", creator.id);
+          return { ...creator, subscriberCount: count || 0 };
+        })
+      );
+      setCreators(creatorsWithCounts);
     } catch (error) {
       console.error("Error searching:", error);
     } finally {
@@ -158,8 +170,12 @@ export default function Search() {
                           </Avatar>
                           <div className="flex-1">
                             <h3 className="font-semibold text-foreground">{creator.name}</h3>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Users className="w-3.5 h-3.5" />
+                              <span>구독자 {creator.subscriberCount?.toLocaleString() || 0}명</span>
+                            </div>
                             {creator.bio && (
-                              <p className="text-sm text-muted-foreground line-clamp-2">
+                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                                 {creator.bio}
                               </p>
                             )}
