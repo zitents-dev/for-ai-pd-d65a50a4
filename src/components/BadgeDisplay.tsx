@@ -117,18 +117,9 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
 
           const Icon = config.icon;
           const isAward = ["gold", "silver", "bronze"].includes(badge.badge_type);
-          const isSpecial = ["pro", "director", "gold", "silver", "bronze"].includes(badge.badge_type);
           const tooltipLabel = isAward && badge.award_year
             ? `${badge.award_year} ${config.label}`
             : config.label;
-
-          const glowColors: Record<string, string> = {
-            pro: "shadow-orange-400/60",
-            director: "shadow-red-400/60",
-            gold: "shadow-yellow-400/60",
-            silver: "shadow-gray-300/60",
-            bronze: "shadow-orange-400/60",
-          };
 
           return (
             <Tooltip key={index}>
@@ -138,8 +129,6 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
                     "rounded-full flex items-center justify-center cursor-default shadow-sm",
                     "animate-in fade-in-0 zoom-in-50 duration-300",
                     "transition-all hover:scale-125 hover:shadow-md hover:-translate-y-0.5",
-                    isSpecial && "animate-pulse-glow",
-                    isSpecial && glowColors[badge.badge_type],
                     sizeClasses[size],
                     config.bgColor
                   )}
