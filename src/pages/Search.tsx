@@ -17,6 +17,8 @@ interface Video {
   duration: number | null;
   views: number | null;
   created_at: string;
+  likes_count?: number;
+  dislikes_count?: number;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -68,7 +70,38 @@ export default function Search() {
         .order("created_at", { ascending: false });
 
       if (videoError) throw videoError;
-      setVideos((videoData as Video[]) || []);
+
+      // Load like/dislike counts for videos
+      if (videoData && videoData.length > 0) {
+        const videoIds = videoData.map(v => v.id);
+        const { data: likesData } = await supabase
+          .from("likes")
+          .select("video_id, type")
+          .in("video_id", videoIds);
+
+        const likeCounts: Record<string, { likes: number; dislikes: number }> = {};
+        videoIds.forEach(id => {
+          likeCounts[id] = { likes: 0, dislikes: 0 };
+        });
+        
+        likesData?.forEach(like => {
+          if (like.type === "like") {
+            likeCounts[like.video_id].likes++;
+          } else if (like.type === "dislike") {
+            likeCounts[like.video_id].dislikes++;
+          }
+        });
+
+        const videosWithCounts = videoData.map(video => ({
+          ...video,
+          likes_count: likeCounts[video.id]?.likes || 0,
+          dislikes_count: likeCounts[video.id]?.dislikes || 0,
+        }));
+
+        setVideos(videosWithCounts as Video[]);
+      } else {
+        setVideos([]);
+      }
 
       // Search creators by name
       const { data: creatorData, error: creatorError } = await supabase

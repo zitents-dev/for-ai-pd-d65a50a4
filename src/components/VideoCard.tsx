@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Eye } from "lucide-react";
+import { Eye, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface VideoCardProps {
   video: {
@@ -12,6 +12,8 @@ interface VideoCardProps {
     duration: number | null;
     views: number;
     created_at: string;
+    likes_count?: number;
+    dislikes_count?: number;
     profiles: {
       name: string;
       avatar_url: string | null;
@@ -59,6 +61,19 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                 <Eye className="w-3 h-3" />
                 {video.views.toLocaleString()}
               </span>
+              {(video.likes_count !== undefined || video.dislikes_count !== undefined) && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="w-3 h-3" />
+                    {(video.likes_count || 0).toLocaleString()}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsDown className="w-3 h-3" />
+                    {(video.dislikes_count || 0).toLocaleString()}
+                  </span>
+                </>
+              )}
               <span>•</span>
               <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
             </div>

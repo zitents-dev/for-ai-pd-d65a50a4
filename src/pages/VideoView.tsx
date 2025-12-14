@@ -94,7 +94,26 @@ export default function VideoView() {
         .single();
 
       if (error) throw error;
-      setVideo(data as Video);
+      
+      // Load like and dislike counts
+      const [likesResult, dislikesResult] = await Promise.all([
+        supabase
+          .from("likes")
+          .select("*", { count: "exact", head: true })
+          .eq("video_id", id)
+          .eq("type", "like"),
+        supabase
+          .from("likes")
+          .select("*", { count: "exact", head: true })
+          .eq("video_id", id)
+          .eq("type", "dislike"),
+      ]);
+
+      setVideo({
+        ...data,
+        likes_count: likesResult.count || 0,
+        dislikes_count: dislikesResult.count || 0,
+      } as Video);
       
       // Load creator badges
       if (data?.creator_id) {
