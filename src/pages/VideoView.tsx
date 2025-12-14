@@ -45,7 +45,8 @@ interface Video {
 }
 
 interface Badge {
-  badge_type: "best" | "official";
+  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "gold" | "silver" | "bronze" | "buffer";
+  award_year?: number | null;
 }
 
 export default function VideoView() {
@@ -99,7 +100,7 @@ export default function VideoView() {
       if (data?.creator_id) {
         const { data: badges } = await supabase
           .from("user_badges")
-          .select("badge_type")
+          .select("badge_type, award_year")
           .eq("user_id", data.creator_id);
         
         setCreatorBadges(badges || []);

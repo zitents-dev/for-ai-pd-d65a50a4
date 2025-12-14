@@ -578,6 +578,7 @@ export type Database = {
       }
       user_badges: {
         Row: {
+          award_year: number | null
           awarded_at: string | null
           awarded_by: string | null
           badge_type: Database["public"]["Enums"]["badge_type"]
@@ -585,6 +586,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          award_year?: number | null
           awarded_at?: string | null
           awarded_by?: string | null
           badge_type: Database["public"]["Enums"]["badge_type"]
@@ -592,6 +594,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          award_year?: number | null
           awarded_at?: string | null
           awarded_by?: string | null
           badge_type?: Database["public"]["Enums"]["badge_type"]
@@ -1013,7 +1016,16 @@ export type Database = {
     }
     Enums: {
       ai_solution: "NanoBanana" | "Veo" | "Sora" | "Runway" | "Pika" | "Other"
-      badge_type: "best" | "official"
+      badge_type:
+        | "official"
+        | "amateur"
+        | "semi_pro"
+        | "pro"
+        | "director"
+        | "gold"
+        | "silver"
+        | "bronze"
+        | "buffer"
       video_category:
         | "education"
         | "commercial"
@@ -1150,7 +1162,17 @@ export const Constants = {
   public: {
     Enums: {
       ai_solution: ["NanoBanana", "Veo", "Sora", "Runway", "Pika", "Other"],
-      badge_type: ["best", "official"],
+      badge_type: [
+        "official",
+        "amateur",
+        "semi_pro",
+        "pro",
+        "director",
+        "gold",
+        "silver",
+        "bronze",
+        "buffer",
+      ],
       video_category: [
         "education",
         "commercial",
