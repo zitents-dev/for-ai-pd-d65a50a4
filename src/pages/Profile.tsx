@@ -29,7 +29,7 @@ interface Profile {
 }
 
 interface UserBadge {
-  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "gold" | "silver" | "bronze" | "buffer";
+  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "mentor" | "gold" | "silver" | "bronze" | "buffer";
   award_year?: number | null;
 }
 
