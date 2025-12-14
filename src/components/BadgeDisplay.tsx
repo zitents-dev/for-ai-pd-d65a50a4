@@ -1,4 +1,4 @@
-import { ShieldCheck, Medal, Trophy, Star } from "lucide-react";
+import { ShieldCheck, Medal, Trophy, Orbit, Moon, Eclipse, Sun } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -25,24 +25,24 @@ const badgeConfig: Record<
 > = {
   official: {
     icon: ShieldCheck,
-    label: "공식식",
+    label: "공식인증",
     bgColor: "bg-blue-500",
     iconColor: "text-white",
   },
   amateur: {
-    icon: Star,
+    icon: Moon,
     label: "아마추어",
     bgColor: "bg-green-500",
     iconColor: "text-white",
   },
   semi_pro: {
-    icon: Star,
+    icon: Orbit,
     label: "세미프로",
     bgColor: "bg-yellow-500",
     iconColor: "text-white",
   },
   pro: {
-    icon: Star,
+    icon: Sun,
     label: "프로",
     bgColor: "bg-orange-500",
     iconColor: "text-white",
