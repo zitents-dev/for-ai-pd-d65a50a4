@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { VideoCard } from "@/components/VideoCard";
 import { VideoCardSkeleton } from "@/components/VideoCardSkeleton";
 import { BackToTopButton } from "@/components/BackToTopButton";
+import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -329,6 +330,7 @@ export default function VideosListing() {
           </>
         )}
       </div>
+      <ScrollProgressBar />
       <BackToTopButton />
     </div>
   );
