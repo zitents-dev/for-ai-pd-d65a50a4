@@ -95,7 +95,7 @@ const badgeConfig: Record<
   },
 };
 
-const premiumBadges: BadgeType[] = ["pro", "director", "mentor", "gold", "silver", "bronze"];
+const premiumBadges: BadgeType[] = ["pro", "director", "gold", "silver", "bronze"];
 
 export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
   if (!badges || badges.length === 0) return null;
