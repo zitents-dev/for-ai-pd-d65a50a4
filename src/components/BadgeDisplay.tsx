@@ -93,6 +93,8 @@ const badgeConfig: Record<
   },
 };
 
+const premiumBadges: BadgeType[] = ["pro", "director", "gold", "silver", "bronze"];
+
 export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
   if (!badges || badges.length === 0) return null;
 
@@ -117,6 +119,7 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
 
           const Icon = config.icon;
           const isAward = ["gold", "silver", "bronze"].includes(badge.badge_type);
+          const isPremium = premiumBadges.includes(badge.badge_type);
           const tooltipLabel = isAward && badge.award_year
             ? `${badge.award_year} ${config.label}`
             : config.label;
@@ -126,7 +129,7 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
               <TooltipTrigger asChild>
                 <div
                   className={cn(
-                    "rounded-full flex items-center justify-center cursor-default shadow-sm",
+                    "relative rounded-full flex items-center justify-center cursor-default shadow-sm overflow-hidden",
                     "animate-in fade-in-0 zoom-in-50 duration-300",
                     "transition-all hover:scale-125 hover:shadow-md hover:-translate-y-0.5",
                     sizeClasses[size],
@@ -134,7 +137,13 @@ export const BadgeDisplay = ({ badges, size = "md" }: BadgeDisplayProps) => {
                   )}
                   style={{ animationDelay: `${index * 75}ms`, animationFillMode: 'backwards' }}
                 >
-                  <Icon className={cn(iconSizeClasses[size], config.iconColor)} />
+                  {isPremium && (
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 animate-shimmer"
+                      style={{ backgroundSize: '200% 100%' }}
+                    />
+                  )}
+                  <Icon className={cn(iconSizeClasses[size], config.iconColor, "relative z-10")} />
                 </div>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs font-medium">
