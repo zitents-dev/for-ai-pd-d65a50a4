@@ -39,6 +39,12 @@ const badgeConfig: Record<
     bgColor: "bg-blue-500",
     iconColor: "text-white",
   },
+  mentor: {
+    icon: Lightbulb,
+    label: "멘토",
+    bgColor: "bg-green-600",
+    iconColor: "text-white",
+  },
   amateur: {
     icon: Moon,
     label: "아마추어",
@@ -61,12 +67,6 @@ const badgeConfig: Record<
     icon: Star,
     label: "디렉터",
     bgColor: "bg-red-500",
-    iconColor: "text-white",
-  },
-  mentor: {
-    icon: Lightbulb,
-    label: "멘토",
-    bgColor: "bg-green-600",
     iconColor: "text-white",
   },
   gold: {
