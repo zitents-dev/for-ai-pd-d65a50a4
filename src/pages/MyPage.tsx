@@ -48,6 +48,7 @@ import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { VideoEditDialog } from "@/components/VideoEditDialog";
 import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
+import { BulkEditDialog } from "@/components/BulkEditDialog";
 import { DateRange } from "react-day-picker";
 
 interface Profile {
@@ -186,6 +187,9 @@ export default function MyPage() {
   const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
   const [batchDeleteAgreed, setBatchDeleteAgreed] = useState(false);
+
+  // Bulk edit state
+  const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -959,45 +963,55 @@ export default function MyPage() {
               <h2 className="text-2xl font-bold">내 작품</h2>
               <div className="flex items-center gap-2">
                 {selectedVideos.size > 0 && (
-                  <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        {selectedVideos.size}개 삭제
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>선택한 작품 삭제</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          선택한 {selectedVideos.size}개의 작품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <div className="flex items-center space-x-2 py-4">
-                        <Checkbox
-                          id="batch-delete-agree"
-                          checked={batchDeleteAgreed}
-                          onCheckedChange={(checked) => setBatchDeleteAgreed(checked === true)}
-                        />
-                        <label
-                          htmlFor="batch-delete-agree"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          위 내용을 이해하고, 삭제 합니다.
-                        </label>
-                      </div>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setBatchDeleteAgreed(false)}>취소</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleBatchDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          disabled={!batchDeleteAgreed}
-                        >
-                          삭제하기
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkEditDialogOpen(true)}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      {selectedVideos.size}개 일괄수정
+                    </Button>
+                    <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {selectedVideos.size}개 삭제
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>선택한 작품 삭제</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            선택한 {selectedVideos.size}개의 작품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="flex items-center space-x-2 py-4">
+                          <Checkbox
+                            id="batch-delete-agree"
+                            checked={batchDeleteAgreed}
+                            onCheckedChange={(checked) => setBatchDeleteAgreed(checked === true)}
+                          />
+                          <label
+                            htmlFor="batch-delete-agree"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            위 내용을 이해하고, 삭제 합니다.
+                          </label>
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setBatchDeleteAgreed(false)}>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleBatchDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={!batchDeleteAgreed}
+                          >
+                            삭제하기
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
                 )}
                 <Button asChild>
                   <a href="/upload">
@@ -1310,6 +1324,17 @@ export default function MyPage() {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSaved={loadMyVideos}
+      />
+
+      {/* Bulk Edit Dialog */}
+      <BulkEditDialog
+        open={bulkEditDialogOpen}
+        onOpenChange={setBulkEditDialogOpen}
+        selectedVideoIds={Array.from(selectedVideos)}
+        onSuccess={() => {
+          setSelectedVideos(new Set());
+          loadMyVideos();
+        }}
       />
     </div>
   );
