@@ -76,6 +76,10 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [deleteAgreed, setDeleteAgreed] = useState<Record<string, boolean>>({});
   const [videoRemoveAgreed, setVideoRemoveAgreed] = useState<Record<string, boolean>>({});
 
+  // Bulk selection states
+  const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
+  const [bulkRemoveDialogOpen, setBulkRemoveDialogOpen] = useState(false);
+  const [bulkRemoveAgreed, setBulkRemoveAgreed] = useState(false);
   useEffect(() => {
     loadDirectories();
   }, [user]);
@@ -83,6 +87,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   useEffect(() => {
     if (selectedDirectory) {
       loadDirectoryVideos(selectedDirectory);
+      setSelectedVideos(new Set()); // Clear selection when directory changes
     }
   }, [selectedDirectory]);
 
@@ -211,6 +216,69 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
     } catch (error) {
       console.error("Error removing video from directory:", error);
       toast.error("제거에 실패했습니다");
+    }
+  };
+
+  const bulkRemoveVideosFromDirectory = async () => {
+    if (!selectedDirectory || selectedVideos.size === 0) return;
+
+    try {
+      const videoIds = Array.from(selectedVideos);
+      const { error } = await supabase
+        .from("directory_videos")
+        .delete()
+        .in("video_id", videoIds)
+        .eq("directory_id", selectedDirectory);
+
+      if (error) throw error;
+
+      toast.success(`${videoIds.length}개의 작품이 디렉토리에서 제거되었습니다`);
+      setSelectedVideos(new Set());
+      setBulkRemoveDialogOpen(false);
+      setBulkRemoveAgreed(false);
+      loadDirectories();
+      loadDirectoryVideos(selectedDirectory);
+    } catch (error) {
+      console.error("Error bulk removing videos:", error);
+      toast.error("제거에 실패했습니다");
+    }
+  };
+
+  const toggleVideoSelection = (videoId: string) => {
+    const newSelected = new Set(selectedVideos);
+    if (newSelected.has(videoId)) {
+      newSelected.delete(videoId);
+    } else {
+      newSelected.add(videoId);
+    }
+    setSelectedVideos(newSelected);
+  };
+
+  const handleSelectAllVideos = () => {
+    const currentPageVideos = directoryVideos.slice(
+      (directoryVideosPage - 1) * itemsPerPage,
+      directoryVideosPage * itemsPerPage
+    );
+    const allSelected = currentPageVideos.every((v) => selectedVideos.has(v.id));
+
+    if (allSelected) {
+      const newSelected = new Set(selectedVideos);
+      currentPageVideos.forEach((v) => newSelected.delete(v.id));
+      setSelectedVideos(newSelected);
+    } else {
+      const newSelected = new Set(selectedVideos);
+      currentPageVideos.forEach((v) => newSelected.add(v.id));
+      setSelectedVideos(newSelected);
+    }
+  };
+
+  const handleSelectAllDirectoryVideos = () => {
+    const allSelected = directoryVideos.length > 0 && directoryVideos.every((v) => selectedVideos.has(v.id));
+
+    if (allSelected) {
+      setSelectedVideos(new Set());
+    } else {
+      setSelectedVideos(new Set(directoryVideos.map((v) => v.id)));
     }
   };
 
@@ -464,19 +532,99 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
 
       {selectedDirectory && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{directories.find((d) => d.id === selectedDirectory)?.name || "디렉토리"} 작품</CardTitle>
+            {selectedVideos.size > 0 && (
+              <AlertDialog open={bulkRemoveDialogOpen} onOpenChange={setBulkRemoveDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {selectedVideos.size}개 제거
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>선택한 작품 제거</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      선택한 {selectedVideos.size}개의 작품을 디렉토리에서 제거하시겠습니까?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="flex items-center space-x-2 py-4">
+                    <Checkbox
+                      id="bulk-remove-agree"
+                      checked={bulkRemoveAgreed}
+                      onCheckedChange={(checked) => setBulkRemoveAgreed(checked === true)}
+                    />
+                    <label
+                      htmlFor="bulk-remove-agree"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      위 내용을 이해하고, 제거 합니다.
+                    </label>
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setBulkRemoveAgreed(false)}>취소</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={bulkRemoveVideosFromDirectory}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      disabled={!bulkRemoveAgreed}
+                    >
+                      제거하기
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </CardHeader>
           <CardContent>
             {directoryVideos.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">이 디렉토리에 아직 작품이 없습니다</p>
             ) : (
               <>
+                {/* Selection Controls */}
+                <div className="flex items-center gap-6 pb-4">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="select-all-dir-videos"
+                      checked={directoryVideos
+                        .slice((directoryVideosPage - 1) * itemsPerPage, directoryVideosPage * itemsPerPage)
+                        .every((v) => selectedVideos.has(v.id))}
+                      onCheckedChange={handleSelectAllVideos}
+                    />
+                    <label htmlFor="select-all-dir-videos" className="text-sm font-medium leading-none cursor-pointer">
+                      현재 페이지 전체 선택
+                    </label>
+                  </div>
+                  {directoryVideos.length > itemsPerPage && (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="select-all-dir-videos-all"
+                        checked={directoryVideos.length > 0 && directoryVideos.every((v) => selectedVideos.has(v.id))}
+                        onCheckedChange={handleSelectAllDirectoryVideos}
+                      />
+                      <label htmlFor="select-all-dir-videos-all" className="text-sm font-medium leading-none cursor-pointer">
+                        모든 페이지 전체 선택 ({directoryVideos.length}개)
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {directoryVideos
                     .slice((directoryVideosPage - 1) * itemsPerPage, directoryVideosPage * itemsPerPage)
                     .map((video) => (
                       <div key={video.id} className="relative group">
+                        {/* Selection Checkbox */}
+                        <div 
+                          className="absolute top-2 left-2 z-10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox
+                            checked={selectedVideos.has(video.id)}
+                            onCheckedChange={() => toggleVideoSelection(video.id)}
+                            className="h-5 w-5 bg-background/80 backdrop-blur-sm border-2"
+                          />
+                        </div>
                         <VideoCard video={video} />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
