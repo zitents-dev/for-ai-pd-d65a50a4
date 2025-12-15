@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { CalendarIcon, ArrowUpDown, X, Filter, Search } from "lucide-react";
+import { CalendarIcon, ArrowUpDown, X, Filter, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
@@ -72,12 +73,14 @@ export function VideoFilterSort({
   directories = [],
 }: VideoFilterSortProps) {
   const [dateOpen, setDateOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const handleClearDate = () => {
     onDateRangeChange(undefined);
   };
 
   const hasActiveFilters = searchQuery || categoryFilter || aiSolutionFilter || directoryFilter;
+  const activeFilterCount = [searchQuery, categoryFilter, aiSolutionFilter, directoryFilter].filter(Boolean).length;
 
   const clearAllFilters = () => {
     onSearchQueryChange?.("");
@@ -87,7 +90,29 @@ export function VideoFilterSort({
   };
 
   return (
-    <div className="space-y-2">
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded} className="space-y-2">
+      <div className="flex items-center gap-2">
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9 gap-2">
+            <Filter className="h-4 w-4" />
+            필터
+            {activeFilterCount > 0 && (
+              <span className="ml-1 rounded-full bg-primary text-primary-foreground text-xs px-1.5 py-0.5">
+                {activeFilterCount}
+              </span>
+            )}
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </CollapsibleTrigger>
+        {!isExpanded && hasActiveFilters && (
+          <Button variant="ghost" size="sm" className="h-9" onClick={clearAllFilters}>
+            <X className="mr-1 h-4 w-4" />
+            초기화
+          </Button>
+        )}
+      </div>
+
+      <CollapsibleContent className="space-y-2">
       {/* Row 1: Search, Sort, Date */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Search Box */}
@@ -242,6 +267,7 @@ export function VideoFilterSort({
           )}
         </div>
       )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
