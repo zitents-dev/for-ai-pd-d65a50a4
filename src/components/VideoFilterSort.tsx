@@ -87,152 +87,160 @@ export function VideoFilterSort({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {/* Search Box */}
-      {onSearchQueryChange && (
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="제목 검색..."
-            value={searchQuery || ""}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="h-9 w-[180px] pl-8"
-          />
-        </div>
-      )}
+    <div className="space-y-2">
+      {/* Row 1: Search, Sort, Date */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search Box */}
+        {onSearchQueryChange && (
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="제목 검색..."
+              value={searchQuery || ""}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              className="h-9 w-[180px] pl-8"
+            />
+          </div>
+        )}
 
-      {/* Date Range Filter */}
-      <Popover open={dateOpen} onOpenChange={setDateOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-9">
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange?.from ? (
-              dateRange.to ? (
-                <>
-                  {format(dateRange.from, "MM.dd", { locale: ko })} -{" "}
-                  {format(dateRange.to, "MM.dd", { locale: ko })}
-                </>
+        {/* Sort Select */}
+        <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
+          <SelectTrigger className="w-[140px] h-9">
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-background">
+            {sortOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Date Range Filter */}
+        <Popover open={dateOpen} onOpenChange={setDateOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "MM.dd", { locale: ko })} -{" "}
+                    {format(dateRange.to, "MM.dd", { locale: ko })}
+                  </>
+                ) : (
+                  format(dateRange.from, "yyyy.MM.dd", { locale: ko })
+                )
               ) : (
-                format(dateRange.from, "yyyy.MM.dd", { locale: ko })
-              )
-            ) : (
-              "기간 설정"
+                "기간 설정"
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-background" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={onDateRangeChange}
+              numberOfMonths={2}
+              locale={ko}
+            />
+            {dateRange && (
+              <div className="p-2 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleClearDate}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  기간 초기화
+                </Button>
+              </div>
             )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-background" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={dateRange?.from}
-            selected={dateRange}
-            onSelect={onDateRangeChange}
-            numberOfMonths={2}
-            locale={ko}
-          />
-          {dateRange && (
-            <div className="p-2 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full"
-                onClick={handleClearDate}
-              >
-                <X className="mr-2 h-4 w-4" />
-                기간 초기화
-              </Button>
-            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Row 2: Filters (Category, Solution, Directory) */}
+      {(onCategoryFilterChange || onAiSolutionFilterChange || (onDirectoryFilterChange && directories.length > 0)) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Category Filter */}
+          {onCategoryFilterChange && (
+            <Select 
+              value={categoryFilter || "__all__"} 
+              onValueChange={(value) => onCategoryFilterChange(value === "__all__" ? "" : value)}
+            >
+              <SelectTrigger className="w-[130px] h-9">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="카테고리" />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                <SelectItem value="__all__">전체 카테고리</SelectItem>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
-        </PopoverContent>
-      </Popover>
 
-      {/* Category Filter */}
-      {onCategoryFilterChange && (
-        <Select 
-          value={categoryFilter || "__all__"} 
-          onValueChange={(value) => onCategoryFilterChange(value === "__all__" ? "" : value)}
-        >
-          <SelectTrigger className="w-[130px] h-9">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="카테고리" />
-          </SelectTrigger>
-          <SelectContent className="bg-background">
-            <SelectItem value="__all__">전체 카테고리</SelectItem>
-            {CATEGORIES.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+          {/* AI Solution Filter */}
+          {onAiSolutionFilterChange && (
+            <Select 
+              value={aiSolutionFilter || "__all__"} 
+              onValueChange={(value) => onAiSolutionFilterChange(value === "__all__" ? "" : value)}
+            >
+              <SelectTrigger className="w-[130px] h-9">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="AI 솔루션" />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                <SelectItem value="__all__">전체 솔루션</SelectItem>
+                {AI_SOLUTIONS.map((solution) => (
+                  <SelectItem key={solution} value={solution}>
+                    {solution}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
-      {/* AI Solution Filter */}
-      {onAiSolutionFilterChange && (
-        <Select 
-          value={aiSolutionFilter || "__all__"} 
-          onValueChange={(value) => onAiSolutionFilterChange(value === "__all__" ? "" : value)}
-        >
-          <SelectTrigger className="w-[130px] h-9">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="AI 솔루션" />
-          </SelectTrigger>
-          <SelectContent className="bg-background">
-            <SelectItem value="__all__">전체 솔루션</SelectItem>
-            {AI_SOLUTIONS.map((solution) => (
-              <SelectItem key={solution} value={solution}>
-                {solution}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+          {/* Directory Filter */}
+          {onDirectoryFilterChange && directories.length > 0 && (
+            <Select 
+              value={directoryFilter || "__all__"} 
+              onValueChange={(value) => onDirectoryFilterChange(value === "__all__" ? "" : value)}
+            >
+              <SelectTrigger className="w-[160px] h-9">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="디렉토리" />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                <SelectItem value="__all__">전체 디렉토리</SelectItem>
+                {directories.map((dir) => (
+                  <SelectItem key={dir.id} value={dir.id}>
+                    <span className="flex items-center justify-between w-full gap-2">
+                      <span className="truncate">{dir.name}</span>
+                      <span className="text-muted-foreground text-xs">({dir.video_count ?? 0})</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
-      {/* Directory Filter */}
-      {onDirectoryFilterChange && directories.length > 0 && (
-        <Select 
-          value={directoryFilter || "__all__"} 
-          onValueChange={(value) => onDirectoryFilterChange(value === "__all__" ? "" : value)}
-        >
-          <SelectTrigger className="w-[160px] h-9">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="디렉토리" />
-          </SelectTrigger>
-          <SelectContent className="bg-background">
-            <SelectItem value="__all__">전체 디렉토리</SelectItem>
-            {directories.map((dir) => (
-              <SelectItem key={dir.id} value={dir.id}>
-                <span className="flex items-center justify-between w-full gap-2">
-                  <span className="truncate">{dir.name}</span>
-                  <span className="text-muted-foreground text-xs">({dir.video_count ?? 0})</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {/* Sort Select */}
-      <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
-        <SelectTrigger className="w-[140px] h-9">
-          <ArrowUpDown className="mr-2 h-4 w-4" />
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="bg-background">
-          {sortOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Clear All Filters */}
-      {hasActiveFilters && (
-        <Button variant="ghost" size="sm" className="h-9" onClick={clearAllFilters}>
-          <X className="mr-2 h-4 w-4" />
-          필터 초기화
-        </Button>
+          {/* Clear All Filters */}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" className="h-9" onClick={clearAllFilters}>
+              <X className="mr-2 h-4 w-4" />
+              필터 초기화
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
