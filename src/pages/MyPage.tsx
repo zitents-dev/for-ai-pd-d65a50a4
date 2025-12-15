@@ -574,7 +574,7 @@ export default function MyPage() {
     }
 
     // Apply directory filter
-    if (directoryFilter && directoryVideoIds.size > 0) {
+    if (directoryFilter) {
       result = result.filter((v) => directoryVideoIds.has(v.id));
     }
     
