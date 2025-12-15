@@ -28,6 +28,7 @@ const CATEGORIES = Constants.public.Enums.video_category;
 interface Directory {
   id: string;
   name: string;
+  video_count?: number;
 }
 
 interface VideoFilterSortProps {
@@ -193,7 +194,7 @@ export function VideoFilterSort({
           value={directoryFilter || "__all__"} 
           onValueChange={(value) => onDirectoryFilterChange(value === "__all__" ? "" : value)}
         >
-          <SelectTrigger className="w-[130px] h-9">
+          <SelectTrigger className="w-[160px] h-9">
             <Filter className="mr-2 h-4 w-4" />
             <SelectValue placeholder="디렉토리" />
           </SelectTrigger>
@@ -201,7 +202,10 @@ export function VideoFilterSort({
             <SelectItem value="__all__">전체 디렉토리</SelectItem>
             {directories.map((dir) => (
               <SelectItem key={dir.id} value={dir.id}>
-                {dir.name}
+                <span className="flex items-center justify-between w-full gap-2">
+                  <span className="truncate">{dir.name}</span>
+                  <span className="text-muted-foreground text-xs">({dir.video_count ?? 0})</span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
