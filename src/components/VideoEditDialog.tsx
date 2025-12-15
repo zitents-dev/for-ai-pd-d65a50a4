@@ -23,6 +23,7 @@ import { X, Plus, Loader2, ImagePlus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Constants } from "@/integrations/supabase/types";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 
 interface VideoEditDialogProps {
   video: {
@@ -64,6 +65,8 @@ export function VideoEditDialog({
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -78,6 +81,7 @@ export function VideoEditDialog({
       setThumbnailUrl(video.thumbnail_url || null);
       setThumbnailFile(null);
       setThumbnailPreview(null);
+      setImageToCrop(null);
     }
   }, [video]);
 
@@ -97,9 +101,29 @@ export function VideoEditDialog({
       return;
     }
 
-    setThumbnailFile(file);
-    const previewUrl = URL.createObjectURL(file);
+    // Open cropper with selected image
+    const imageUrl = URL.createObjectURL(file);
+    setImageToCrop(imageUrl);
+    setCropDialogOpen(true);
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Create a File from the blob for upload
+    const croppedFile = new File([croppedBlob], "thumbnail.jpg", { type: "image/jpeg" });
+    setThumbnailFile(croppedFile);
+    const previewUrl = URL.createObjectURL(croppedBlob);
     setThumbnailPreview(previewUrl);
+    
+    // Clean up the original image URL
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+      setImageToCrop(null);
+    }
+    
+    // Reset file input
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = "";
+    }
   };
 
   const handleRemoveThumbnail = () => {
@@ -426,6 +450,27 @@ export function VideoEditDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Thumbnail Crop Dialog */}
+      {imageToCrop && (
+        <ImageCropDialog
+          open={cropDialogOpen}
+          onOpenChange={(open) => {
+            setCropDialogOpen(open);
+            if (!open && imageToCrop) {
+              URL.revokeObjectURL(imageToCrop);
+              setImageToCrop(null);
+              if (thumbnailInputRef.current) {
+                thumbnailInputRef.current.value = "";
+              }
+            }
+          }}
+          imageSrc={imageToCrop}
+          aspectRatio={16 / 9}
+          onCropComplete={handleCropComplete}
+          title="썸네일 편집"
+        />
+      )}
     </Dialog>
   );
 }
