@@ -96,12 +96,12 @@ export function BulkEditDialog({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>카테고리</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={category} onValueChange={(value) => setCategory(value === "__none__" ? "" : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="변경할 카테고리 선택" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">변경하지 않음</SelectItem>
+                <SelectItem value="__none__">변경하지 않음</SelectItem>
                 {CATEGORIES.map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {cat}
@@ -113,12 +113,12 @@ export function BulkEditDialog({
 
           <div className="space-y-2">
             <Label>AI 솔루션</Label>
-            <Select value={aiSolution} onValueChange={setAiSolution}>
+            <Select value={aiSolution} onValueChange={(value) => setAiSolution(value === "__none__" ? "" : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="변경할 AI 솔루션 선택" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">변경하지 않음</SelectItem>
+                <SelectItem value="__none__">변경하지 않음</SelectItem>
                 {AI_SOLUTIONS.map((solution) => (
                   <SelectItem key={solution} value={solution}>
                     {solution}
