@@ -180,7 +180,7 @@ export default function MyPage() {
   const [directoryFilter, setDirectoryFilter] = useState<string>("");
 
   // Directories for filter
-  const [userDirectories, setUserDirectories] = useState<{ id: string; name: string }[]>([]);
+  const [userDirectories, setUserDirectories] = useState<{ id: string; name: string; video_count?: number }[]>([]);
   const [directoryVideoIds, setDirectoryVideoIds] = useState<Set<string>>(new Set());
 
   // Video edit dialog state
@@ -306,12 +306,19 @@ export default function MyPage() {
     try {
       const { data, error } = await supabase
         .from("directories")
-        .select("id, name")
+        .select("id, name, directory_videos(count)")
         .eq("user_id", user.id)
         .order("name");
 
       if (error) throw error;
-      setUserDirectories(data || []);
+      
+      const directoriesWithCount = (data || []).map((dir: any) => ({
+        id: dir.id,
+        name: dir.name,
+        video_count: dir.directory_videos?.[0]?.count || 0,
+      }));
+      
+      setUserDirectories(directoriesWithCount);
     } catch (error) {
       console.error("Error loading user directories:", error);
     }
