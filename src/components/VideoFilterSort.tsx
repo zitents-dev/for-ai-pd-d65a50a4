@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, ArrowUpDown, X, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CalendarIcon, ArrowUpDown, X, Filter, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
@@ -35,6 +36,8 @@ interface VideoFilterSortProps {
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   // New filter props
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
   categoryFilter?: string;
   onCategoryFilterChange?: (category: string) => void;
   aiSolutionFilter?: string;
@@ -57,6 +60,8 @@ export function VideoFilterSort({
   onDateRangeChange,
   sortBy,
   onSortChange,
+  searchQuery,
+  onSearchQueryChange,
   categoryFilter,
   onCategoryFilterChange,
   aiSolutionFilter,
@@ -71,9 +76,10 @@ export function VideoFilterSort({
     onDateRangeChange(undefined);
   };
 
-  const hasActiveFilters = categoryFilter || aiSolutionFilter || directoryFilter;
+  const hasActiveFilters = searchQuery || categoryFilter || aiSolutionFilter || directoryFilter;
 
   const clearAllFilters = () => {
+    onSearchQueryChange?.("");
     onCategoryFilterChange?.("");
     onAiSolutionFilterChange?.("");
     onDirectoryFilterChange?.("");
@@ -81,6 +87,19 @@ export function VideoFilterSort({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {/* Search Box */}
+      {onSearchQueryChange && (
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="제목 검색..."
+            value={searchQuery || ""}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            className="h-9 w-[180px] pl-8"
+          />
+        </div>
+      )}
+
       {/* Date Range Filter */}
       <Popover open={dateOpen} onOpenChange={setDateOpen}>
         <PopoverTrigger asChild>
