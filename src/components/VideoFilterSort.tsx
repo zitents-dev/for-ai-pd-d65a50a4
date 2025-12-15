@@ -14,8 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { CalendarIcon, ArrowUpDown, X, Filter, Search, ChevronDown, ChevronUp } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CalendarIcon, ArrowUpDown, X, Filter, Search, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
@@ -73,47 +72,26 @@ export function VideoFilterSort({
   directories = [],
 }: VideoFilterSortProps) {
   const [dateOpen, setDateOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleClearDate = () => {
     onDateRangeChange(undefined);
   };
 
-  const hasActiveFilters = searchQuery || categoryFilter || aiSolutionFilter || directoryFilter;
-  const activeFilterCount = [searchQuery, categoryFilter, aiSolutionFilter, directoryFilter].filter(Boolean).length;
+  const hasActiveFilters = categoryFilter || aiSolutionFilter || directoryFilter;
+  const activeFilterCount = [categoryFilter, aiSolutionFilter, directoryFilter].filter(Boolean).length;
 
   const clearAllFilters = () => {
-    onSearchQueryChange?.("");
     onCategoryFilterChange?.("");
     onAiSolutionFilterChange?.("");
     onDirectoryFilterChange?.("");
   };
 
-  return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded} className="space-y-2">
-      <div className="flex items-center gap-2">
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" size="sm" className="h-9 gap-2">
-            <Filter className="h-4 w-4" />
-            필터
-            {activeFilterCount > 0 && (
-              <span className="ml-1 rounded-full bg-primary text-primary-foreground text-xs px-1.5 py-0.5">
-                {activeFilterCount}
-              </span>
-            )}
-            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-        </CollapsibleTrigger>
-        {!isExpanded && hasActiveFilters && (
-          <Button variant="ghost" size="sm" className="h-9" onClick={clearAllFilters}>
-            <X className="mr-1 h-4 w-4" />
-            초기화
-          </Button>
-        )}
-      </div>
+  const showFilterRow = onCategoryFilterChange || onAiSolutionFilterChange || (onDirectoryFilterChange && directories.length > 0);
 
-      <CollapsibleContent className="space-y-2">
-      {/* Row 1: Search, Sort, Date */}
+  return (
+    <div className="space-y-2">
+      {/* Row 1: Search, Sort, Date - Always visible */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Search Box */}
         {onSearchQueryChange && (
@@ -189,85 +167,109 @@ export function VideoFilterSort({
         </Popover>
       </div>
 
-      {/* Row 2: Filters (Category, Solution, Directory) */}
-      {(onCategoryFilterChange || onAiSolutionFilterChange || (onDirectoryFilterChange && directories.length > 0)) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Category Filter */}
-          {onCategoryFilterChange && (
-            <Select 
-              value={categoryFilter || "__all__"} 
-              onValueChange={(value) => onCategoryFilterChange(value === "__all__" ? "" : value)}
-            >
-              <SelectTrigger className="w-[130px] h-9">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="카테고리" />
-              </SelectTrigger>
-              <SelectContent className="bg-background">
-                <SelectItem value="__all__">전체 카테고리</SelectItem>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+      {/* Row 2: Filter toggle + horizontal expanding filters */}
+      {showFilterRow && (
+        <div className="flex items-center gap-2">
+          {/* Filter Toggle Button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-9 gap-2"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <Filter className="h-4 w-4" />
+            필터
+            {activeFilterCount > 0 && (
+              <span className="rounded-full bg-primary text-primary-foreground text-xs px-1.5 py-0.5">
+                {activeFilterCount}
+              </span>
+            )}
+            <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+          </Button>
 
-          {/* AI Solution Filter */}
-          {onAiSolutionFilterChange && (
-            <Select 
-              value={aiSolutionFilter || "__all__"} 
-              onValueChange={(value) => onAiSolutionFilterChange(value === "__all__" ? "" : value)}
-            >
-              <SelectTrigger className="w-[130px] h-9">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="AI 솔루션" />
-              </SelectTrigger>
-              <SelectContent className="bg-background">
-                <SelectItem value="__all__">전체 솔루션</SelectItem>
-                {AI_SOLUTIONS.map((solution) => (
-                  <SelectItem key={solution} value={solution}>
-                    {solution}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          {/* Horizontal expanding filters */}
+          <div className={`flex items-center gap-2 overflow-hidden transition-all duration-200 ${isExpanded ? 'opacity-100 max-w-[600px]' : 'opacity-0 max-w-0'}`}>
+            {/* Category Filter */}
+            {onCategoryFilterChange && (
+              <Select 
+                value={categoryFilter || "__all__"} 
+                onValueChange={(value) => onCategoryFilterChange(value === "__all__" ? "" : value)}
+              >
+                <SelectTrigger className="w-[130px] h-9">
+                  <SelectValue placeholder="카테고리" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="__all__">전체 카테고리</SelectItem>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-          {/* Directory Filter */}
-          {onDirectoryFilterChange && directories.length > 0 && (
-            <Select 
-              value={directoryFilter || "__all__"} 
-              onValueChange={(value) => onDirectoryFilterChange(value === "__all__" ? "" : value)}
-            >
-              <SelectTrigger className="w-[160px] h-9">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="디렉토리" />
-              </SelectTrigger>
-              <SelectContent className="bg-background">
-                <SelectItem value="__all__">전체 디렉토리</SelectItem>
-                {directories.map((dir) => (
-                  <SelectItem key={dir.id} value={dir.id}>
-                    <span className="flex items-center justify-between w-full gap-2">
-                      <span className="truncate">{dir.name}</span>
-                      <span className="text-muted-foreground text-xs">({dir.video_count ?? 0})</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+            {/* AI Solution Filter */}
+            {onAiSolutionFilterChange && (
+              <Select 
+                value={aiSolutionFilter || "__all__"} 
+                onValueChange={(value) => onAiSolutionFilterChange(value === "__all__" ? "" : value)}
+              >
+                <SelectTrigger className="w-[130px] h-9">
+                  <SelectValue placeholder="AI 솔루션" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="__all__">전체 솔루션</SelectItem>
+                  {AI_SOLUTIONS.map((solution) => (
+                    <SelectItem key={solution} value={solution}>
+                      {solution}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-          {/* Clear All Filters */}
-          {hasActiveFilters && (
+            {/* Directory Filter */}
+            {onDirectoryFilterChange && directories.length > 0 && (
+              <Select 
+                value={directoryFilter || "__all__"} 
+                onValueChange={(value) => onDirectoryFilterChange(value === "__all__" ? "" : value)}
+              >
+                <SelectTrigger className="w-[160px] h-9">
+                  <SelectValue placeholder="디렉토리" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="__all__">전체 디렉토리</SelectItem>
+                  {directories.map((dir) => (
+                    <SelectItem key={dir.id} value={dir.id}>
+                      <span className="flex items-center justify-between w-full gap-2">
+                        <span className="truncate">{dir.name}</span>
+                        <span className="text-muted-foreground text-xs">({dir.video_count ?? 0})</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Clear All Filters */}
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" className="h-9" onClick={clearAllFilters}>
+                <X className="mr-1 h-4 w-4" />
+                초기화
+              </Button>
+            )}
+          </div>
+
+          {/* Show clear button when collapsed with active filters */}
+          {!isExpanded && hasActiveFilters && (
             <Button variant="ghost" size="sm" className="h-9" onClick={clearAllFilters}>
-              <X className="mr-2 h-4 w-4" />
-              필터 초기화
+              <X className="mr-1 h-4 w-4" />
+              초기화
             </Button>
           )}
         </div>
       )}
-      </CollapsibleContent>
-    </Collapsible>
+    </div>
   );
 }
