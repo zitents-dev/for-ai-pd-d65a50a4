@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,10 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { Loader2, Calendar, MapPin, Mail, User, Users, UserPlus, UserCheck, Cake } from 'lucide-react';
+import { Loader2, Calendar, MapPin, Mail, User, Users, UserPlus, UserCheck, Cake, CalendarIcon, ArrowUpDown, X } from 'lucide-react';
 import { VideoCard } from '@/components/VideoCard';
 import { BadgeDisplay } from '@/components/BadgeDisplay';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
 
 interface Profile {
   id: string;
@@ -60,6 +66,9 @@ export default function Profile() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [sortBy, setSortBy] = useState<'recent' | 'views'>('recent');
+  const [dateOpen, setDateOpen] = useState(false);
 
   const isOwnProfile = user?.id === userId;
 
@@ -195,6 +204,35 @@ export default function Profile() {
     const date = new Date(dateStr);
     return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
   };
+
+  const handleClearDate = () => {
+    setDateRange(undefined);
+  };
+
+  // Filter and sort videos
+  const filteredVideos = useMemo(() => {
+    let result = [...videos];
+
+    // Apply date filter
+    if (dateRange?.from) {
+      result = result.filter((video) => {
+        const videoDate = new Date(video.created_at);
+        if (dateRange.to) {
+          return videoDate >= dateRange.from! && videoDate <= dateRange.to;
+        }
+        return videoDate >= dateRange.from!;
+      });
+    }
+
+    // Apply sorting
+    if (sortBy === 'recent') {
+      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (sortBy === 'views') {
+      result.sort((a, b) => (b.views || 0) - (a.views || 0));
+    }
+
+    return result;
+  }, [videos, dateRange, sortBy]);
 
   if (loading) {
     return (
@@ -335,10 +373,71 @@ export default function Profile() {
 
           {/* Videos */}
           <div>
-            <h2 className="text-xl font-semibold mb-4">업로드한 영상 ({videos.length})</h2>
-            {videos.length > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <h2 className="text-xl font-semibold">업로드한 영상 ({filteredVideos.length})</h2>
+              <div className="flex items-center gap-2">
+                {/* Sort Select */}
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'recent' | 'views')}>
+                  <SelectTrigger className="w-[120px] h-9">
+                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background">
+                    <SelectItem value="recent">최신순</SelectItem>
+                    <SelectItem value="views">인기순</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Date Range Filter */}
+                <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "MM.dd", { locale: ko })} -{" "}
+                            {format(dateRange.to, "MM.dd", { locale: ko })}
+                          </>
+                        ) : (
+                          format(dateRange.from, "yyyy.MM.dd", { locale: ko })
+                        )
+                      ) : (
+                        "기간 설정"
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-background" align="end">
+                    <CalendarComponent
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={setDateRange}
+                      numberOfMonths={2}
+                      locale={ko}
+                    />
+                    {dateRange && (
+                      <div className="p-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full"
+                          onClick={handleClearDate}
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          기간 초기화
+                        </Button>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            
+            {filteredVideos.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {videos.map((video) => (
+                {filteredVideos.map((video) => (
                   <VideoCard
                     key={video.id}
                     video={{
@@ -359,7 +458,7 @@ export default function Profile() {
             ) : (
               <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
-                  아직 업로드한 영상이 없습니다.
+                  {videos.length > 0 ? "해당 기간에 업로드한 영상이 없습니다." : "아직 업로드한 영상이 없습니다."}
                 </CardContent>
               </Card>
             )}
