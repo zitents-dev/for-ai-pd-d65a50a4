@@ -10,11 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Loader2, FolderPlus } from "lucide-react";
+import { Loader2, FolderPlus, Plus } from "lucide-react";
 
 interface Directory {
   id: string;
@@ -40,11 +41,18 @@ export function BulkMoveToDirectoryDialog({
   const [selectedDirectories, setSelectedDirectories] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // New directory form state
+  const [showNewDirectoryForm, setShowNewDirectoryForm] = useState(false);
+  const [newDirectoryName, setNewDirectoryName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (open && user) {
       loadDirectories();
       setSelectedDirectories(new Set());
+      setShowNewDirectoryForm(false);
+      setNewDirectoryName("");
     }
   }, [open, user]);
 
@@ -77,6 +85,37 @@ export function BulkMoveToDirectoryDialog({
       newSelected.add(directoryId);
     }
     setSelectedDirectories(newSelected);
+  };
+
+  const handleCreateDirectory = async () => {
+    if (!user || !newDirectoryName.trim()) return;
+
+    setIsCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from("directories")
+        .insert({
+          name: newDirectoryName.trim(),
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("디렉토리가 생성되었습니다");
+      setNewDirectoryName("");
+      setShowNewDirectoryForm(false);
+      
+      // Add newly created directory to the list and select it
+      setDirectories((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedDirectories((prev) => new Set([...prev, data.id]));
+    } catch (error: any) {
+      console.error("Error creating directory:", error);
+      toast.error("디렉토리 생성에 실패했습니다");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleSave = async () => {
@@ -146,7 +185,54 @@ export function BulkMoveToDirectoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4">
+        <div className="py-4 space-y-4">
+          {/* New Directory Form */}
+          {showNewDirectoryForm ? (
+            <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/50">
+              <Input
+                placeholder="새 디렉토리 이름"
+                value={newDirectoryName}
+                onChange={(e) => setNewDirectoryName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newDirectoryName.trim()) {
+                    handleCreateDirectory();
+                  }
+                }}
+                disabled={isCreating}
+                autoFocus
+              />
+              <Button
+                size="sm"
+                onClick={handleCreateDirectory}
+                disabled={isCreating || !newDirectoryName.trim()}
+              >
+                {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "생성"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setShowNewDirectoryForm(false);
+                  setNewDirectoryName("");
+                }}
+                disabled={isCreating}
+              >
+                취소
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowNewDirectoryForm(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              새 디렉토리 만들기
+            </Button>
+          )}
+
+          {/* Directory List */}
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -154,10 +240,10 @@ export function BulkMoveToDirectoryDialog({
           ) : directories.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>디렉토리가 없습니다.</p>
-              <p className="text-sm mt-1">먼저 디렉토리를 만들어주세요.</p>
+              <p className="text-sm mt-1">위 버튼으로 새 디렉토리를 만들어주세요.</p>
             </div>
           ) : (
-            <ScrollArea className="h-[300px] pr-4">
+            <ScrollArea className="h-[250px] pr-4">
               <div className="space-y-3">
                 {directories.map((dir) => (
                   <div
