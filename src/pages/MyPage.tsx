@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -41,10 +41,14 @@ import {
   UserMinus,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
+import { MyVideoCard } from "@/components/MyVideoCard";
 import { DirectoryManager } from "@/components/DirectoryManager";
 import { MoveToDirectoryDropdown } from "@/components/MoveToDirectoryDropdown";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { VideoEditDialog } from "@/components/VideoEditDialog";
+import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
+import { DateRange } from "react-day-picker";
 
 interface Profile {
   id: string;
@@ -74,6 +78,15 @@ interface Video {
   duration: number | null;
   views: number | null;
   created_at: string;
+  likes_count: number | null;
+  dislikes_count: number | null;
+  comments_count: number | null;
+  ai_solution: string | null;
+  category: string | null;
+  description: string | null;
+  prompt_command: string | null;
+  show_prompt: boolean | null;
+  tags: string[] | null;
 }
 
 interface FavoriteVideo {
@@ -155,6 +168,14 @@ export default function MyPage() {
   const [subscriptionsPage, setSubscriptionsPage] = useState(1);
   const subscriptionsPerPage = 8;
 
+  // Filter and sort state for videos
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [sortBy, setSortBy] = useState<SortOption>("recent");
+
+  // Video edit dialog state
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   // Checkbox states for delete confirmations
   const [quitMemberAgreed, setQuitMemberAgreed] = useState(false);
   const [bannerDeleteAgreed, setBannerDeleteAgreed] = useState(false);
@@ -222,14 +243,34 @@ export default function MyPage() {
 
   const loadMyVideos = async () => {
     try {
+      // Fetch videos with like/dislike/comment counts from the video_details_view
       const { data, error } = await supabase
-        .from("videos")
+        .from("video_details_view")
         .select("*")
         .eq("creator_id", user!.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setVideos((data as Video[]) || []);
+      
+      const formattedVideos: Video[] = (data || []).map((v) => ({
+        id: v.id!,
+        title: v.title || "",
+        thumbnail_url: v.thumbnail_url,
+        duration: v.duration,
+        views: v.views,
+        created_at: v.created_at || "",
+        likes_count: Number(v.likes_count) || 0,
+        dislikes_count: Number(v.dislikes_count) || 0,
+        comments_count: Number(v.comments_count) || 0,
+        ai_solution: v.ai_solution,
+        category: v.category,
+        description: v.description,
+        prompt_command: v.prompt_command,
+        show_prompt: v.show_prompt,
+        tags: v.tags,
+      }));
+      
+      setVideos(formattedVideos);
     } catch (error) {
       console.error("Error loading videos:", error);
     }
@@ -439,9 +480,57 @@ export default function MyPage() {
     setSelectedVideos(newSelected);
   };
 
-  const currentPageVideos = videos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
+  // Filter and sort videos
+  const filteredAndSortedVideos = useMemo(() => {
+    let result = [...videos];
+    
+    // Apply date filter
+    if (dateRange?.from) {
+      const fromDate = new Date(dateRange.from);
+      fromDate.setHours(0, 0, 0, 0);
+      result = result.filter((v) => {
+        const videoDate = new Date(v.created_at);
+        return videoDate >= fromDate;
+      });
+    }
+    if (dateRange?.to) {
+      const toDate = new Date(dateRange.to);
+      toDate.setHours(23, 59, 59, 999);
+      result = result.filter((v) => {
+        const videoDate = new Date(v.created_at);
+        return videoDate <= toDate;
+      });
+    }
+    
+    // Apply sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "recent":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "views":
+          return (b.views || 0) - (a.views || 0);
+        case "likes":
+          return (b.likes_count || 0) - (a.likes_count || 0);
+        case "dislikes":
+          return (b.dislikes_count || 0) - (a.dislikes_count || 0);
+        case "comments":
+          return (b.comments_count || 0) - (a.comments_count || 0);
+        default:
+          return 0;
+      }
+    });
+    
+    return result;
+  }, [videos, dateRange, sortBy]);
+
+  const currentPageVideos = filteredAndSortedVideos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
   const allCurrentPageSelected =
     currentPageVideos.length > 0 && currentPageVideos.every((v) => selectedVideos.has(v.id));
+  
+  const handleEditVideo = (video: Video) => {
+    setEditingVideo(video);
+    setEditDialogOpen(true);
+  };
 
   const handleQuitMember = async () => {
     try {
@@ -918,13 +1007,27 @@ export default function MyPage() {
               </div>
             </div>
 
-            {videos.length === 0 ? (
+            {/* Filter and Sort Controls */}
+            <VideoFilterSort
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
+
+            {filteredAndSortedVideos.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">아직 업로드된 작품이 없습니다</p>
-                  <Button asChild>
-                    <a href="/upload">당신의 첫 작품을 업로드 하세요</a>
-                  </Button>
+                  <p className="text-muted-foreground mb-4">
+                    {videos.length === 0 
+                      ? "아직 업로드된 작품이 없습니다" 
+                      : "조건에 맞는 작품이 없습니다"}
+                  </p>
+                  {videos.length === 0 && (
+                    <Button asChild>
+                      <a href="/upload">당신의 첫 작품을 업로드 하세요</a>
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -941,7 +1044,7 @@ export default function MyPage() {
                       현재 페이지 전체 선택
                     </label>
                   </div>
-                  {videos.length > worksPerPage && (
+                  {filteredAndSortedVideos.length > worksPerPage && (
                     <div className="flex items-center gap-2">
                       <Checkbox
                         id="select-all-pages"
@@ -949,104 +1052,27 @@ export default function MyPage() {
                         onCheckedChange={handleSelectAllPages}
                       />
                       <label htmlFor="select-all-pages" className="text-sm font-medium leading-none cursor-pointer">
-                        모든 페이지 전체 선택 ({videos.length}개)
+                        모든 페이지 전체 선택 ({filteredAndSortedVideos.length}개)
                       </label>
                     </div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-3">
                   {currentPageVideos.map((video) => (
-                    <div
+                    <MyVideoCard
                       key={video.id}
-                      className={`relative group ${selectedVideos.has(video.id) ? "ring-2 ring-primary rounded-lg" : ""}`}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("videoId", video.id);
-                        e.dataTransfer.setData("videoTitle", video.title);
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                    >
-                      {/* Selection Checkbox */}
-                      <div className="absolute top-2 left-2 z-10">
-                        <Checkbox
-                          checked={selectedVideos.has(video.id)}
-                          onCheckedChange={() => handleToggleVideoSelect(video.id)}
-                          className="bg-background/80 backdrop-blur-sm"
-                        />
-                      </div>
-                      <div className="cursor-grab active:cursor-grabbing">
-                        <VideoCard
-                          video={{
-                            ...video,
-                            profiles: {
-                              name: profile?.name || "",
-                              avatar_url: profile?.avatar_url || null,
-                            },
-                          }}
-                        />
-                      </div>
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <MoveToDirectoryDropdown videoId={video.id} />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>작품 삭제</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                "{video.title}"을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <div className="flex items-center space-x-2 py-4">
-                              <Checkbox
-                                id={`video-delete-agree-${video.id}`}
-                                checked={videoDeleteAgreed[video.id] || false}
-                                onCheckedChange={(checked) =>
-                                  setVideoDeleteAgreed((prev) => ({ ...prev, [video.id]: checked === true }))
-                                }
-                              />
-                              <label
-                                htmlFor={`video-delete-agree-${video.id}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                              >
-                                위 내용을 이해하고, 삭제 합니다.
-                              </label>
-                            </div>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel
-                                onClick={() => setVideoDeleteAgreed((prev) => ({ ...prev, [video.id]: false }))}
-                              >
-                                취소
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => {
-                                  handleDeleteVideo(video.id);
-                                  setVideoDeleteAgreed((prev) => ({ ...prev, [video.id]: false }));
-                                }}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                disabled={!videoDeleteAgreed[video.id]}
-                              >
-                                삭제하기
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
+                      video={video}
+                      isSelected={selectedVideos.has(video.id)}
+                      onSelect={handleToggleVideoSelect}
+                      onEdit={handleEditVideo}
+                      onDelete={handleDeleteVideo}
+                    />
                   ))}
                 </div>
 
                 {/* Pagination Controls */}
-                {videos.length > worksPerPage && (
+                {filteredAndSortedVideos.length > worksPerPage && (
                   <div className="flex items-center justify-center gap-2 pt-4">
                     <Button
                       variant="outline"
@@ -1057,7 +1083,7 @@ export default function MyPage() {
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.ceil(videos.length / worksPerPage) }, (_, i) => i + 1).map((page) => (
+                      {Array.from({ length: Math.ceil(filteredAndSortedVideos.length / worksPerPage) }, (_, i) => i + 1).map((page) => (
                         <Button
                           key={page}
                           variant={workPage === page ? "default" : "outline"}
@@ -1072,8 +1098,8 @@ export default function MyPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setWorkPage((prev) => Math.min(Math.ceil(videos.length / worksPerPage), prev + 1))}
-                      disabled={workPage === Math.ceil(videos.length / worksPerPage)}
+                      onClick={() => setWorkPage((prev) => Math.min(Math.ceil(filteredAndSortedVideos.length / worksPerPage), prev + 1))}
+                      disabled={workPage === Math.ceil(filteredAndSortedVideos.length / worksPerPage)}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -1276,6 +1302,14 @@ export default function MyPage() {
         aspectRatio={cropImageType === "avatar" ? 1 : 16 / 6}
         onCropComplete={handleCroppedImage}
         title={cropImageType === "avatar" ? "프로필 사진 편집" : "배너 이미지 편집"}
+      />
+
+      {/* Video Edit Dialog */}
+      <VideoEditDialog
+        video={editingVideo}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSaved={loadMyVideos}
       />
     </div>
   );
