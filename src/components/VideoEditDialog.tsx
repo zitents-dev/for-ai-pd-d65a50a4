@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Loader2 } from "lucide-react";
+import { X, Plus, Loader2, ImagePlus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Constants } from "@/integrations/supabase/types";
@@ -34,6 +34,7 @@ interface VideoEditDialogProps {
     prompt_command?: string | null;
     show_prompt?: boolean | null;
     tags?: string[] | null;
+    thumbnail_url?: string | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -59,6 +60,11 @@ export function VideoEditDialog({
   const [newTag, setNewTag] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (video) {
@@ -69,8 +75,68 @@ export function VideoEditDialog({
       setPromptCommand(video.prompt_command || "");
       setShowPrompt(video.show_prompt || false);
       setTags(video.tags || []);
+      setThumbnailUrl(video.thumbnail_url || null);
+      setThumbnailFile(null);
+      setThumbnailPreview(null);
     }
   }, [video]);
+
+  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("이미지 파일만 업로드할 수 있습니다");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("파일 크기는 5MB 이하여야 합니다");
+      return;
+    }
+
+    setThumbnailFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setThumbnailPreview(previewUrl);
+  };
+
+  const handleRemoveThumbnail = () => {
+    setThumbnailFile(null);
+    setThumbnailPreview(null);
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = "";
+    }
+  };
+
+  const uploadThumbnail = async (videoId: string): Promise<string | null> => {
+    if (!thumbnailFile) return thumbnailUrl;
+
+    setIsUploadingThumbnail(true);
+    try {
+      const fileExt = thumbnailFile.name.split(".").pop();
+      const fileName = `${videoId}_${Date.now()}.${fileExt}`;
+      const filePath = `thumbnails/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("videos")
+        .upload(filePath, thumbnailFile, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("videos")
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading thumbnail:", error);
+      throw error;
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
 
   const handleAddTag = useCallback(() => {
     const trimmedTag = newTag.trim();
@@ -103,6 +169,12 @@ export function VideoEditDialog({
     setIsSaving(true);
 
     try {
+      // Upload thumbnail if changed
+      let newThumbnailUrl = thumbnailUrl;
+      if (thumbnailFile) {
+        newThumbnailUrl = await uploadThumbnail(video.id);
+      }
+
       const updateData: {
         title: string;
         description: string | null;
@@ -111,12 +183,14 @@ export function VideoEditDialog({
         prompt_command: string | null;
         show_prompt: boolean;
         tags: string[] | null;
+        thumbnail_url: string | null;
       } = {
         title: title.trim(),
         description: description.trim() || null,
         prompt_command: promptCommand.trim() || null,
         show_prompt: showPrompt,
         tags: tags.length > 0 ? tags : null,
+        thumbnail_url: newThumbnailUrl,
       };
 
       if (aiSolution) {
@@ -157,6 +231,64 @@ export function VideoEditDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Thumbnail Section */}
+          <div className="space-y-2">
+            <Label>썸네일</Label>
+            <div className="flex items-start gap-4">
+              <div className="relative w-32 h-20 bg-muted rounded-md overflow-hidden border border-border">
+                {(thumbnailPreview || thumbnailUrl) ? (
+                  <>
+                    <img
+                      src={thumbnailPreview || thumbnailUrl || ""}
+                      alt="썸네일"
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={handleRemoveThumbnail}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <ImagePlus className="h-8 w-8" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleThumbnailSelect}
+                  className="hidden"
+                  id="thumbnail-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => thumbnailInputRef.current?.click()}
+                  disabled={isUploadingThumbnail}
+                >
+                  {isUploadingThumbnail ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                  )}
+                  이미지 선택
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  권장 크기: 1280x720 (16:9), 최대 5MB
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="title">제목</Label>
             <Input
