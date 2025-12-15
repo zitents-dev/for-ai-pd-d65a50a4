@@ -174,6 +174,13 @@ export default function MyPage() {
   // Filter and sort state for videos
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [sortBy, setSortBy] = useState<SortOption>("recent");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [aiSolutionFilter, setAiSolutionFilter] = useState<string>("");
+  const [directoryFilter, setDirectoryFilter] = useState<string>("");
+
+  // Directories for filter
+  const [userDirectories, setUserDirectories] = useState<{ id: string; name: string }[]>([]);
+  const [directoryVideoIds, setDirectoryVideoIds] = useState<Set<string>>(new Set());
 
   // Video edit dialog state
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
@@ -210,8 +217,18 @@ export default function MyPage() {
       loadMyVideos();
       loadFavorites();
       loadSubscriptions();
+      loadUserDirectories();
     }
   }, [user]);
+
+  // Load directory video IDs when directory filter changes
+  useEffect(() => {
+    if (directoryFilter) {
+      loadDirectoryVideoIds(directoryFilter);
+    } else {
+      setDirectoryVideoIds(new Set());
+    }
+  }, [directoryFilter]);
 
   const loadProfile = async () => {
     try {
@@ -280,6 +297,36 @@ export default function MyPage() {
       setVideos(formattedVideos);
     } catch (error) {
       console.error("Error loading videos:", error);
+    }
+  };
+
+  const loadUserDirectories = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from("directories")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .order("name");
+
+      if (error) throw error;
+      setUserDirectories(data || []);
+    } catch (error) {
+      console.error("Error loading user directories:", error);
+    }
+  };
+
+  const loadDirectoryVideoIds = async (directoryId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("directory_videos")
+        .select("video_id")
+        .eq("directory_id", directoryId);
+
+      if (error) throw error;
+      setDirectoryVideoIds(new Set(data?.map((d) => d.video_id) || []));
+    } catch (error) {
+      console.error("Error loading directory video IDs:", error);
     }
   };
 
@@ -508,6 +555,21 @@ export default function MyPage() {
         return videoDate <= toDate;
       });
     }
+
+    // Apply category filter
+    if (categoryFilter) {
+      result = result.filter((v) => v.category === categoryFilter);
+    }
+
+    // Apply AI solution filter
+    if (aiSolutionFilter) {
+      result = result.filter((v) => v.ai_solution === aiSolutionFilter);
+    }
+
+    // Apply directory filter
+    if (directoryFilter && directoryVideoIds.size > 0) {
+      result = result.filter((v) => directoryVideoIds.has(v.id));
+    }
     
     // Apply sorting
     result.sort((a, b) => {
@@ -528,7 +590,7 @@ export default function MyPage() {
     });
     
     return result;
-  }, [videos, dateRange, sortBy]);
+  }, [videos, dateRange, sortBy, categoryFilter, aiSolutionFilter, directoryFilter, directoryVideoIds]);
 
   const currentPageVideos = filteredAndSortedVideos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
   const allCurrentPageSelected =
@@ -1038,6 +1100,13 @@ export default function MyPage() {
               onDateRangeChange={setDateRange}
               sortBy={sortBy}
               onSortChange={setSortBy}
+              categoryFilter={categoryFilter}
+              onCategoryFilterChange={setCategoryFilter}
+              aiSolutionFilter={aiSolutionFilter}
+              onAiSolutionFilterChange={setAiSolutionFilter}
+              directoryFilter={directoryFilter}
+              onDirectoryFilterChange={setDirectoryFilter}
+              directories={userDirectories}
             />
 
             {filteredAndSortedVideos.length === 0 ? (

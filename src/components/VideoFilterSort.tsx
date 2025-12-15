@@ -13,19 +13,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
-import { CalendarIcon, ArrowUpDown, X } from "lucide-react";
+import { CalendarIcon, ArrowUpDown, X, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
+import { Constants } from "@/integrations/supabase/types";
 
 export type SortOption = "recent" | "views" | "likes" | "dislikes" | "comments";
+
+const AI_SOLUTIONS = Constants.public.Enums.ai_solution;
+const CATEGORIES = Constants.public.Enums.video_category;
+
+interface Directory {
+  id: string;
+  name: string;
+}
 
 interface VideoFilterSortProps {
   dateRange: DateRange | undefined;
   onDateRangeChange: (range: DateRange | undefined) => void;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
+  // New filter props
+  categoryFilter?: string;
+  onCategoryFilterChange?: (category: string) => void;
+  aiSolutionFilter?: string;
+  onAiSolutionFilterChange?: (solution: string) => void;
+  directoryFilter?: string;
+  onDirectoryFilterChange?: (directoryId: string) => void;
+  directories?: Directory[];
 }
 
 const sortOptions: { value: SortOption; label: string }[] = [
@@ -41,11 +57,26 @@ export function VideoFilterSort({
   onDateRangeChange,
   sortBy,
   onSortChange,
+  categoryFilter,
+  onCategoryFilterChange,
+  aiSolutionFilter,
+  onAiSolutionFilterChange,
+  directoryFilter,
+  onDirectoryFilterChange,
+  directories = [],
 }: VideoFilterSortProps) {
   const [dateOpen, setDateOpen] = useState(false);
 
   const handleClearDate = () => {
     onDateRangeChange(undefined);
+  };
+
+  const hasActiveFilters = categoryFilter || aiSolutionFilter || directoryFilter;
+
+  const clearAllFilters = () => {
+    onCategoryFilterChange?.("");
+    onAiSolutionFilterChange?.("");
+    onDirectoryFilterChange?.("");
   };
 
   return (
@@ -95,6 +126,69 @@ export function VideoFilterSort({
         </PopoverContent>
       </Popover>
 
+      {/* Category Filter */}
+      {onCategoryFilterChange && (
+        <Select 
+          value={categoryFilter || "__all__"} 
+          onValueChange={(value) => onCategoryFilterChange(value === "__all__" ? "" : value)}
+        >
+          <SelectTrigger className="w-[130px] h-9">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="카테고리" />
+          </SelectTrigger>
+          <SelectContent className="bg-background">
+            <SelectItem value="__all__">전체 카테고리</SelectItem>
+            {CATEGORIES.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* AI Solution Filter */}
+      {onAiSolutionFilterChange && (
+        <Select 
+          value={aiSolutionFilter || "__all__"} 
+          onValueChange={(value) => onAiSolutionFilterChange(value === "__all__" ? "" : value)}
+        >
+          <SelectTrigger className="w-[130px] h-9">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="AI 솔루션" />
+          </SelectTrigger>
+          <SelectContent className="bg-background">
+            <SelectItem value="__all__">전체 솔루션</SelectItem>
+            {AI_SOLUTIONS.map((solution) => (
+              <SelectItem key={solution} value={solution}>
+                {solution}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Directory Filter */}
+      {onDirectoryFilterChange && directories.length > 0 && (
+        <Select 
+          value={directoryFilter || "__all__"} 
+          onValueChange={(value) => onDirectoryFilterChange(value === "__all__" ? "" : value)}
+        >
+          <SelectTrigger className="w-[130px] h-9">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="디렉토리" />
+          </SelectTrigger>
+          <SelectContent className="bg-background">
+            <SelectItem value="__all__">전체 디렉토리</SelectItem>
+            {directories.map((dir) => (
+              <SelectItem key={dir.id} value={dir.id}>
+                {dir.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
       {/* Sort Select */}
       <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
         <SelectTrigger className="w-[140px] h-9">
@@ -109,6 +203,14 @@ export function VideoFilterSort({
           ))}
         </SelectContent>
       </Select>
+
+      {/* Clear All Filters */}
+      {hasActiveFilters && (
+        <Button variant="ghost" size="sm" className="h-9" onClick={clearAllFilters}>
+          <X className="mr-2 h-4 w-4" />
+          필터 초기화
+        </Button>
+      )}
     </div>
   );
 }
