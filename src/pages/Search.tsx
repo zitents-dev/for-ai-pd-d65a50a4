@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search as SearchIcon, Video, User, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { BadgeDisplay } from "@/components/BadgeDisplay";
 
 interface Video {
   id: string;
@@ -25,6 +26,11 @@ interface Video {
   };
 }
 
+interface UserBadge {
+  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "mentor" | "gold" | "silver" | "bronze" | "buffer";
+  award_year?: number | null;
+}
+
 interface Creator {
   id: string;
   name: string;
@@ -32,6 +38,7 @@ interface Creator {
   bio: string | null;
   subscriberCount?: number;
   videoCount?: number;
+  badges?: UserBadge[];
 }
 
 export default function Search() {
@@ -111,10 +118,10 @@ export default function Search() {
 
       if (creatorError) throw creatorError;
       
-      // Fetch subscriber counts and video counts for each creator
+      // Fetch subscriber counts, video counts, and badges for each creator
       const creatorsWithCounts = await Promise.all(
         (creatorData || []).map(async (creator) => {
-          const [{ count: subscriberCount }, { count: videoCount }] = await Promise.all([
+          const [{ count: subscriberCount }, { count: videoCount }, { data: badgesData }] = await Promise.all([
             supabase
               .from("subscriptions")
               .select("*", { count: "exact", head: true })
@@ -122,9 +129,18 @@ export default function Search() {
             supabase
               .from("videos")
               .select("*", { count: "exact", head: true })
-              .eq("creator_id", creator.id)
+              .eq("creator_id", creator.id),
+            supabase
+              .from("user_badges")
+              .select("badge_type, award_year")
+              .eq("user_id", creator.id)
           ]);
-          return { ...creator, subscriberCount: subscriberCount || 0, videoCount: videoCount || 0 };
+          return { 
+            ...creator, 
+            subscriberCount: subscriberCount || 0, 
+            videoCount: videoCount || 0,
+            badges: badgesData || []
+          };
         })
       );
       setCreators(creatorsWithCounts);
@@ -209,8 +225,13 @@ export default function Search() {
                             <AvatarFallback>{creator.name?.[0] || "?"}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <h3 className="font-semibold text-foreground">{creator.name}</h3>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold text-foreground">{creator.name}</h3>
+                              {creator.badges && creator.badges.length > 0 && (
+                                <BadgeDisplay badges={creator.badges} />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                               <div className="flex items-center gap-1">
                                 <Users className="w-3.5 h-3.5" />
                                 <span>구독자 {creator.subscriberCount?.toLocaleString() || 0}명</span>
@@ -220,11 +241,6 @@ export default function Search() {
                                 <span>작품 {creator.videoCount?.toLocaleString() || 0}개</span>
                               </div>
                             </div>
-                            {creator.bio && (
-                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                {creator.bio}
-                              </p>
-                            )}
                           </div>
                         </div>
                       </Card>
