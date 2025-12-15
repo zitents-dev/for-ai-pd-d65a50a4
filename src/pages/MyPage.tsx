@@ -39,6 +39,7 @@ import {
   ChevronRight,
   Users,
   UserMinus,
+  FolderInput,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
@@ -49,6 +50,7 @@ import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { VideoEditDialog } from "@/components/VideoEditDialog";
 import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
 import { BulkEditDialog } from "@/components/BulkEditDialog";
+import { BulkMoveToDirectoryDialog } from "@/components/BulkMoveToDirectoryDialog";
 import { DateRange } from "react-day-picker";
 
 interface Profile {
@@ -190,6 +192,7 @@ export default function MyPage() {
 
   // Bulk edit state
   const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
+  const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -967,6 +970,14 @@ export default function MyPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setBulkMoveDialogOpen(true)}
+                    >
+                      <FolderInput className="mr-2 h-4 w-4" />
+                      {selectedVideos.size}개 이동
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setBulkEditDialogOpen(true)}
                     >
                       <Pencil className="mr-2 h-4 w-4" />
@@ -1334,6 +1345,16 @@ export default function MyPage() {
         onSuccess={() => {
           setSelectedVideos(new Set());
           loadMyVideos();
+        }}
+      />
+
+      {/* Bulk Move to Directory Dialog */}
+      <BulkMoveToDirectoryDialog
+        open={bulkMoveDialogOpen}
+        onOpenChange={setBulkMoveDialogOpen}
+        selectedVideoIds={Array.from(selectedVideos)}
+        onSuccess={() => {
+          setSelectedVideos(new Set());
         }}
       />
     </div>
