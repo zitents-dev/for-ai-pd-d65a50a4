@@ -603,9 +603,16 @@ export default function MyPage() {
             ) : isTextarea ? (
               <Textarea
                 value={value}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={(e) => {
+                  if (!isComposing) {
+                    setValue(e.target.value);
+                  }
+                }}
                 onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
+                onCompositionEnd={(e) => {
+                  setIsComposing(false);
+                  setValue((e.target as HTMLTextAreaElement).value);
+                }}
                 className="min-h-[80px] resize-none"
                 autoFocus
                 onFocus={(e) => {
@@ -618,9 +625,16 @@ export default function MyPage() {
               <Input 
                 type={type} 
                 value={value} 
-                onChange={(e) => setValue(e.target.value)} 
+                onChange={(e) => {
+                  if (!isComposing) {
+                    setValue(e.target.value);
+                  }
+                }}
                 onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
+                onCompositionEnd={(e) => {
+                  setIsComposing(false);
+                  setValue((e.target as HTMLInputElement).value);
+                }}
                 className="h-8" 
               />
             )}
