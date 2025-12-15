@@ -174,6 +174,7 @@ export default function MyPage() {
   // Filter and sort state for videos
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [sortBy, setSortBy] = useState<SortOption>("recent");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [aiSolutionFilter, setAiSolutionFilter] = useState<string>("");
   const [directoryFilter, setDirectoryFilter] = useState<string>("");
@@ -556,6 +557,12 @@ export default function MyPage() {
       });
     }
 
+    // Apply search query filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter((v) => v.title.toLowerCase().includes(query));
+    }
+
     // Apply category filter
     if (categoryFilter) {
       result = result.filter((v) => v.category === categoryFilter);
@@ -590,7 +597,7 @@ export default function MyPage() {
     });
     
     return result;
-  }, [videos, dateRange, sortBy, categoryFilter, aiSolutionFilter, directoryFilter, directoryVideoIds]);
+  }, [videos, dateRange, sortBy, searchQuery, categoryFilter, aiSolutionFilter, directoryFilter, directoryVideoIds]);
 
   const currentPageVideos = filteredAndSortedVideos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
   const allCurrentPageSelected =
@@ -1100,6 +1107,8 @@ export default function MyPage() {
               onDateRangeChange={setDateRange}
               sortBy={sortBy}
               onSortChange={setSortBy}
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
               categoryFilter={categoryFilter}
               onCategoryFilterChange={setCategoryFilter}
               aiSolutionFilter={aiSolutionFilter}
