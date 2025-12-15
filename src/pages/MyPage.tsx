@@ -553,6 +553,8 @@ export default function MyPage() {
     }
   };
 
+  const [isComposing, setIsComposing] = useState(false);
+
   const EditableField = ({
     label,
     value,
@@ -590,7 +592,7 @@ export default function MyPage() {
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="선택하세요" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   {options.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
@@ -602,6 +604,8 @@ export default function MyPage() {
               <Textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 className="min-h-[80px] resize-none"
                 autoFocus
                 onFocus={(e) => {
@@ -611,7 +615,14 @@ export default function MyPage() {
                 }}
               />
             ) : (
-              <Input type={type} value={value} onChange={(e) => setValue(e.target.value)} className="h-8" />
+              <Input 
+                type={type} 
+                value={value} 
+                onChange={(e) => setValue(e.target.value)} 
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
+                className="h-8" 
+              />
             )}
             <Button
               size="sm"
