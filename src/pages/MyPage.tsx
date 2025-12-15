@@ -553,8 +553,6 @@ export default function MyPage() {
     }
   };
 
-  const [isComposing, setIsComposing] = useState(false);
-
   const EditableField = ({
     label,
     value,
@@ -592,7 +590,7 @@ export default function MyPage() {
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="선택하세요" />
                 </SelectTrigger>
-                <SelectContent className="bg-background">
+                <SelectContent>
                   {options.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
@@ -603,16 +601,7 @@ export default function MyPage() {
             ) : isTextarea ? (
               <Textarea
                 value={value}
-                onChange={(e) => {
-                  if (!isComposing) {
-                    setValue(e.target.value);
-                  }
-                }}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={(e) => {
-                  setIsComposing(false);
-                  setValue((e.target as HTMLTextAreaElement).value);
-                }}
+                onChange={(e) => setValue(e.target.value)}
                 className="min-h-[80px] resize-none"
                 autoFocus
                 onFocus={(e) => {
@@ -622,21 +611,7 @@ export default function MyPage() {
                 }}
               />
             ) : (
-              <Input 
-                type={type} 
-                value={value} 
-                onChange={(e) => {
-                  if (!isComposing) {
-                    setValue(e.target.value);
-                  }
-                }}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={(e) => {
-                  setIsComposing(false);
-                  setValue((e.target as HTMLInputElement).value);
-                }}
-                className="h-8" 
-              />
+              <Input type={type} value={value} onChange={(e) => setValue(e.target.value)} className="h-8" />
             )}
             <Button
               size="sm"
