@@ -14,6 +14,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [birthday, setBirthday] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !birthday) {
       toast.error('모든 필드를 입력해주세요');
       return;
     }
@@ -55,7 +56,7 @@ export default function Auth() {
     }
     
     setLoading(true);
-    const { error } = await signUp(email, password, name);
+    const { error } = await signUp(email, password, name, birthday);
     setLoading(false);
     
     if (error) {
@@ -167,6 +168,16 @@ export default function Auth() {
                     placeholder="example@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-birthday">생년월일</Label>
+                  <Input
+                    id="signup-birthday"
+                    type="date"
+                    value={birthday}
+                    onChange={(e) => setBirthday(e.target.value)}
                     disabled={loading}
                   />
                 </div>
