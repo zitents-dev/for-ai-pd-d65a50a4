@@ -13,6 +13,7 @@ import { LikeDislikeButtons } from "@/components/LikeDislikeButtons";
 import { ReportDialog } from "@/components/ReportDialog";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import {
   Collapsible,
   CollapsibleContent,
@@ -337,12 +338,7 @@ export default function VideoView() {
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Video Player */}
           <Card className="overflow-hidden">
-            <video
-              src={video.video_url}
-              controls
-              className="w-full aspect-video bg-black"
-              autoPlay
-            />
+            <VideoPlayer src={video.video_url} autoPlay />
           </Card>
 
           {/* Video Info */}
