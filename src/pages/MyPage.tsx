@@ -67,6 +67,7 @@ interface Profile {
   show_birthday: boolean;
   show_gender: boolean;
   show_country: boolean;
+  name_updated_at: string | null;
 }
 
 interface UserBadge {
@@ -423,6 +424,66 @@ export default function MyPage() {
       loadProfile();
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveName = async (newName: string) => {
+    if (!user || !newName.trim()) {
+      toast.error("이름을 입력해주세요");
+      return false;
+    }
+
+    setSaving(true);
+    try {
+      // Check 6-month restriction
+      if (profile?.name_updated_at) {
+        const lastUpdated = new Date(profile.name_updated_at);
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        if (lastUpdated > sixMonthsAgo) {
+          const nextChangeDate = new Date(lastUpdated);
+          nextChangeDate.setMonth(nextChangeDate.getMonth() + 6);
+          const daysLeft = Math.ceil((nextChangeDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          toast.error(`이름은 6개월에 한 번만 변경할 수 있습니다. 남은 기간: ${daysLeft}일`);
+          return false;
+        }
+      }
+
+      // Check username uniqueness (case-insensitive)
+      const { data: existingUser, error: checkError } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("name", newName.trim())
+        .neq("id", user.id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingUser) {
+        toast.error("이미 사용 중인 이름입니다. 다른 이름을 선택해주세요.");
+        return false;
+      }
+
+      // Update name and name_updated_at
+      const { error } = await supabase
+        .from("profiles")
+        .update({ 
+          name: newName.trim(),
+          name_updated_at: new Date().toISOString()
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      
+      toast.success("이름이 저장되었습니다");
+      loadProfile();
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || "이름 저장에 실패했습니다");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -926,9 +987,11 @@ export default function MyPage() {
                     />
                     <Button
                       size="sm"
-                      onClick={() => {
-                        handleSaveField("name", name);
-                        setEditingName(false);
+                      onClick={async () => {
+                        const success = await handleSaveName(name);
+                        if (success) {
+                          setEditingName(false);
+                        }
                       }}
                       disabled={saving}
                     >
