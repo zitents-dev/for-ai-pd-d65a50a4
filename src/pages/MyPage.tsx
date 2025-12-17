@@ -203,6 +203,9 @@ export default function MyPage() {
   const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
   const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
 
+  // Name change alert state
+  const [nameChangeAlertOpen, setNameChangeAlertOpen] = useState(false);
+
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -1001,9 +1004,37 @@ export default function MyPage() {
                 ) : (
                   <>
                     <h1 className="text-2xl md:text-3xl font-bold text-foreground">{name || "이름 없음"}</h1>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingName(true)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog open={nameChangeAlertOpen} onOpenChange={setNameChangeAlertOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>이름 변경 안내</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-2">
+                            <p>이름 변경 시 다음 사항을 유의해 주세요:</p>
+                            <ul className="list-disc list-inside space-y-1 text-sm">
+                              <li>이름은 <strong>6개월에 한 번만</strong> 변경할 수 있습니다.</li>
+                              <li>다른 사용자와 <strong>중복된 이름</strong>은 사용할 수 없습니다.</li>
+                              <li>변경 후에는 취소할 수 없습니다.</li>
+                            </ul>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              setNameChangeAlertOpen(false);
+                              setEditingName(true);
+                            }}
+                          >
+                            계속하기
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </>
                 )}
               </div>
