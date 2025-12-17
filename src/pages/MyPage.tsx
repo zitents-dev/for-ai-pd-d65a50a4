@@ -1000,6 +1000,17 @@ export default function MyPage() {
                     >
                       저장
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setName(profile?.name || "");
+                        setEditingName(false);
+                      }}
+                      disabled={saving}
+                    >
+                      취소
+                    </Button>
                   </div>
                 ) : (
                   <>
