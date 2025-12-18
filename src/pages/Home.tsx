@@ -26,7 +26,7 @@ const PAGE_SIZE = 10;
 
 export default function Home() {
   const { user } = useAuth();
-  
+
   // Mentor videos
   const [mentorVideos, setMentorVideos] = useState<Video[]>([]);
   const [mentorLoading, setMentorLoading] = useState(true);
@@ -58,19 +58,16 @@ export default function Home() {
   // Helper to add like counts to videos
   const addLikeCounts = async (videos: any[]): Promise<Video[]> => {
     if (videos.length === 0) return [];
-    
-    const videoIds = videos.map(v => v.id);
-    const { data: likesData } = await supabase
-      .from("likes")
-      .select("video_id, type")
-      .in("video_id", videoIds);
+
+    const videoIds = videos.map((v) => v.id);
+    const { data: likesData } = await supabase.from("likes").select("video_id, type").in("video_id", videoIds);
 
     const likeCounts: Record<string, { likes: number; dislikes: number }> = {};
-    videoIds.forEach(id => {
+    videoIds.forEach((id) => {
       likeCounts[id] = { likes: 0, dislikes: 0 };
     });
-    
-    likesData?.forEach(like => {
+
+    likesData?.forEach((like) => {
       if (like.type === "like") {
         likeCounts[like.video_id].likes++;
       } else if (like.type === "dislike") {
@@ -78,7 +75,7 @@ export default function Home() {
       }
     });
 
-    return videos.map(video => ({
+    return videos.map((video) => ({
       ...video,
       views: video.views || 0,
       likes_count: likeCounts[video.id]?.likes || 0,
@@ -89,13 +86,10 @@ export default function Home() {
   // Load mentor videos (from users with mentor badge)
   const loadMentorVideos = useCallback(async (page: number, category: VideoCategory) => {
     setMentorLoading(true);
-    
+
     try {
       // Get mentor user IDs
-      const { data: mentorBadges } = await supabase
-        .from("user_badges")
-        .select("user_id")
-        .eq("badge_type", "mentor");
+      const { data: mentorBadges } = await supabase.from("user_badges").select("user_id").eq("badge_type", "mentor");
 
       if (!mentorBadges || mentorBadges.length === 0) {
         setMentorHasMore(false);
@@ -103,14 +97,16 @@ export default function Home() {
         return;
       }
 
-      const mentorIds = mentorBadges.map(b => b.user_id);
-      
+      const mentorIds = mentorBadges.map((b) => b.user_id);
+
       let query = supabase
         .from("videos")
-        .select(`
+        .select(
+          `
           id, title, thumbnail_url, duration, views, created_at,
           profiles (name, avatar_url)
-        `)
+        `,
+        )
         .in("creator_id", mentorIds)
         .order("created_at", { ascending: false });
 
@@ -127,7 +123,7 @@ export default function Home() {
         if (page === 0) {
           setMentorVideos(videosWithCounts);
         } else {
-          setMentorVideos(prev => [...prev, ...videosWithCounts]);
+          setMentorVideos((prev) => [...prev, ...videosWithCounts]);
         }
         setMentorHasMore(data.length === PAGE_SIZE);
       }
@@ -141,14 +137,16 @@ export default function Home() {
   // Load recent videos
   const loadRecentVideos = useCallback(async (page: number, category: VideoCategory) => {
     setRecentLoading(true);
-    
+
     try {
       let query = supabase
         .from("videos")
-        .select(`
+        .select(
+          `
           id, title, thumbnail_url, duration, views, created_at,
           profiles (name, avatar_url)
-        `)
+        `,
+        )
         .order("created_at", { ascending: false });
 
       if (category !== "all") {
@@ -164,7 +162,7 @@ export default function Home() {
         if (page === 0) {
           setRecentVideos(videosWithCounts);
         } else {
-          setRecentVideos(prev => [...prev, ...videosWithCounts]);
+          setRecentVideos((prev) => [...prev, ...videosWithCounts]);
         }
         setRecentHasMore(data.length === PAGE_SIZE);
       }
@@ -178,7 +176,7 @@ export default function Home() {
   // Load popular videos (sorted by likes)
   const loadPopularVideos = useCallback(async (page: number, category: VideoCategory) => {
     setPopularLoading(true);
-    
+
     try {
       let query = supabase
         .from("trending_videos_view")
@@ -194,7 +192,7 @@ export default function Home() {
       if (error) throw error;
 
       if (data) {
-        const videos: Video[] = data.map(v => ({
+        const videos: Video[] = data.map((v) => ({
           id: v.id!,
           title: v.title!,
           thumbnail_url: v.thumbnail_url,
@@ -208,11 +206,11 @@ export default function Home() {
             avatar_url: v.creator_avatar,
           },
         }));
-        
+
         if (page === 0) {
           setPopularVideos(videos);
         } else {
-          setPopularVideos(prev => [...prev, ...videos]);
+          setPopularVideos((prev) => [...prev, ...videos]);
         }
         setPopularHasMore(data.length === PAGE_SIZE);
       }
@@ -226,7 +224,7 @@ export default function Home() {
   // Load subscriber videos (only for signed-in users)
   const loadSubscriberVideos = useCallback(async (page: number, category: VideoCategory, userId: string) => {
     setSubscriberLoading(true);
-    
+
     try {
       // Get subscribed creator IDs
       const { data: subscriptions } = await supabase
@@ -241,14 +239,16 @@ export default function Home() {
         return;
       }
 
-      const creatorIds = subscriptions.map(s => s.creator_id);
-      
+      const creatorIds = subscriptions.map((s) => s.creator_id);
+
       let query = supabase
         .from("videos")
-        .select(`
+        .select(
+          `
           id, title, thumbnail_url, duration, views, created_at,
           profiles (name, avatar_url)
-        `)
+        `,
+        )
         .in("creator_id", creatorIds)
         .order("created_at", { ascending: false });
 
@@ -265,7 +265,7 @@ export default function Home() {
         if (page === 0) {
           setSubscriberVideos(videosWithCounts);
         } else {
-          setSubscriberVideos(prev => [...prev, ...videosWithCounts]);
+          setSubscriberVideos((prev) => [...prev, ...videosWithCounts]);
         }
         setSubscriberHasMore(data.length === PAGE_SIZE);
       }
@@ -331,16 +331,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative">
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center opacity-25 -z-10"
         style={{ backgroundImage: `url(${heroBg})` }}
       />
       <Navbar />
-      
+
       <div className="py-6">
         {/* Mentor Videos */}
         <VideoRow
-          title="🎓 Mentor Videos"
+          title="🎓 멘토 영상"
           videos={mentorVideos}
           loading={mentorLoading && mentorVideos.length > 0}
           initialLoading={mentorInitialLoading}
@@ -359,7 +359,7 @@ export default function Home() {
 
         {/* Recent Videos */}
         <VideoRow
-          title="🕐 Recent Videos"
+          title="🕐 최신 영상"
           videos={recentVideos}
           loading={recentLoading && recentVideos.length > 0}
           initialLoading={recentInitialLoading}
@@ -417,13 +417,17 @@ export default function Home() {
         )}
 
         {/* Empty state */}
-        {mentorVideos.length === 0 && recentVideos.length === 0 && 
-         popularVideos.length === 0 && subscriberVideos.length === 0 && 
-         !mentorLoading && !recentLoading && !popularLoading && (
-          <div className="text-center py-24">
-            <p className="text-muted-foreground text-lg">No videos yet. Be the first to upload!</p>
-          </div>
-        )}
+        {mentorVideos.length === 0 &&
+          recentVideos.length === 0 &&
+          popularVideos.length === 0 &&
+          subscriberVideos.length === 0 &&
+          !mentorLoading &&
+          !recentLoading &&
+          !popularLoading && (
+            <div className="text-center py-24">
+              <p className="text-muted-foreground text-lg">No videos yet. Be the first to upload!</p>
+            </div>
+          )}
       </div>
       <ScrollProgressBar />
       <BackToTopButton />
