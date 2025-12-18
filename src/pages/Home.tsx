@@ -378,7 +378,7 @@ export default function Home() {
 
         {/* Popular Videos */}
         <VideoRow
-          title="🔥 Popular Videos"
+          title="🔥 인기 영상"
           videos={popularVideos}
           loading={popularLoading && popularVideos.length > 0}
           initialLoading={popularInitialLoading}
@@ -398,7 +398,7 @@ export default function Home() {
         {/* Subscriber Videos (only for signed-in users) */}
         {user && (
           <VideoRow
-            title="📺 From Your Subscriptions"
+            title="📺 구독자 영상"
             videos={subscriberVideos}
             loading={subscriberLoading && subscriberVideos.length > 0}
             initialLoading={subscriberInitialLoading}
