@@ -23,18 +23,18 @@ interface ReportDialogProps {
 }
 
 const REPORT_REASONS = [
-  "Sexual content",
-  "Violent or repulsive content",
-  "Hateful or abusive content",
-  "Harassment or bullying",
-  "Harmful or dangerous acts",
-  "Misinformation",
-  "Child abuse",
-  "Promotes terrorism",
-  "Spam or misleading",
-  "Infringes my rights",
-  "Captions issue",
-  "Not AI Works",
+  "AI 작품이 아님",
+  "성적인 콘텐츠",
+  "폭력적 또는 혐오스러운 콘텐츠",
+  "증오 또는 악의적인 콘텐츠",
+  "괴롭힘 또는 폭력",
+  "유해하거나 위험한 행위",
+  "잘못된 정보",
+  "아동 학대",
+  "테러 조장",
+  "스팸 또는 혼동을 야기하는 콘텐츠",
+  "법적 문제",
+  "캡션 문제",
 ];
 
 export const ReportDialog = ({ videoId }: ReportDialogProps) => {
@@ -92,9 +92,7 @@ export const ReportDialog = ({ videoId }: ReportDialogProps) => {
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>동영상 신고</DialogTitle>
-          <DialogDescription>
-            부적절한 콘텐츠를 신고해주세요. 모든 신고는 검토됩니다.
-          </DialogDescription>
+          <DialogDescription>부적절한 콘텐츠를 신고해주세요. 모든 신고는 검토됩니다.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-3">
