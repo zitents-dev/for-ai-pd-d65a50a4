@@ -425,7 +425,7 @@ export default function Home() {
           !recentLoading &&
           !popularLoading && (
             <div className="text-center py-24">
-              <p className="text-muted-foreground text-lg">No videos yet. Be the first to upload!</p>
+              <p className="text-muted-foreground text-lg">영상이 없습니다. 첫 작품이 되어 보세요!</p>
             </div>
           )}
       </div>
