@@ -4,13 +4,7 @@ import { VideoCard } from "./VideoCard";
 import { VideoCardSkeleton } from "./VideoCardSkeleton";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Video {
   id: string;
@@ -27,18 +21,26 @@ interface Video {
   };
 }
 
-export type VideoCategory = "all" | "education" | "commercial" | "fiction" | "podcast" | "entertainment" | "tutorial" | "other";
+export type VideoCategory =
+  | "all"
+  | "education"
+  | "commercial"
+  | "fiction"
+  | "podcast"
+  | "entertainment"
+  | "tutorial"
+  | "other";
 export type SectionType = "mentor" | "recent" | "popular" | "subscriptions";
 
 const CATEGORIES: { value: VideoCategory; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "education", label: "Education" },
-  { value: "commercial", label: "Commercial" },
-  { value: "fiction", label: "Fiction" },
-  { value: "podcast", label: "Podcast" },
-  { value: "entertainment", label: "Entertainment" },
-  { value: "tutorial", label: "Tutorial" },
-  { value: "other", label: "Other" },
+  { value: "all", label: "전체" },
+  { value: "education", label: "교육" },
+  { value: "commercial", label: "광고" },
+  { value: "fiction", label: "픽션" },
+  { value: "podcast", label: "팟캐스트" },
+  { value: "entertainment", label: "엔터테인먼트" },
+  { value: "tutorial", label: "튜토리얼" },
+  { value: "other", label: "기타" },
 ];
 
 interface VideoRowProps {
@@ -54,12 +56,12 @@ interface VideoRowProps {
   sectionType?: SectionType;
 }
 
-export const VideoRow = ({ 
-  title, 
+export const VideoRow = ({
+  title,
   videos,
-  loading, 
+  loading,
   initialLoading,
-  onLoadMore, 
+  onLoadMore,
   hasMore,
   selectedCategory = "all",
   onCategoryChange,
@@ -75,9 +77,7 @@ export const VideoRow = ({
     const container = scrollContainerRef.current;
     if (container) {
       setCanScrollLeft(container.scrollLeft > 0);
-      setCanScrollRight(
-        container.scrollLeft < container.scrollWidth - container.clientWidth - 10
-      );
+      setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth - 10);
     }
   };
 
@@ -146,17 +146,13 @@ export const VideoRow = ({
             </Select>
           )}
           {sectionType && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate(`/videos/${sectionType}`)}
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate(`/videos/${sectionType}`)}>
               View All
             </Button>
           )}
         </div>
       </div>
-      
+
       <div className="relative group">
         {/* Left scroll button */}
         {canScrollLeft && (
