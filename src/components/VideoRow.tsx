@@ -33,7 +33,7 @@ export type VideoCategory =
 export type SectionType = "mentor" | "recent" | "popular" | "subscriptions";
 
 const CATEGORIES: { value: VideoCategory; label: string }[] = [
-  { value: "all", label: "전체" },
+  { value: "all", label: "전체 카테고리" },
   { value: "education", label: "교육" },
   { value: "commercial", label: "광고" },
   { value: "fiction", label: "픽션" },
@@ -147,7 +147,7 @@ export const VideoRow = ({
           )}
           {sectionType && (
             <Button variant="outline" size="sm" onClick={() => navigate(`/videos/${sectionType}`)}>
-              전체 보기
+              View All
             </Button>
           )}
         </div>
