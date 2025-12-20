@@ -24,6 +24,7 @@ export default function Upload() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [promptCommand, setPromptCommand] = useState("");
@@ -67,6 +68,34 @@ export default function Upload() {
     setVideoFile(null);
     setVideoPreviewUrl(null);
     setVideoDuration(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith("video/")) {
+        handleVideoSelect(file);
+      } else {
+        toast.error("동영상 파일만 업로드할 수 있습니다.");
+      }
+    }
   };
 
   const handleThumbnailSelect = (file: File) => {
@@ -171,19 +200,38 @@ export default function Upload() {
               <div className="space-y-2">
                 <Label htmlFor="video">동영상 파일 *(필수)</Label>
                 {!videoPreviewUrl ? (
-                  <>
-                    <Input
-                      id="video"
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleVideoSelect(file);
-                      }}
-                      required
-                    />
-                    <p className="text-sm text-muted-foreground">최대 3분, 포맷: MP4</p>
-                  </>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
+                      isDragging
+                        ? "border-primary bg-primary/5"
+                        : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center justify-center gap-3 text-center">
+                      <div className={`p-3 rounded-full transition-colors ${isDragging ? "bg-primary/10" : "bg-muted"}`}>
+                        <UploadIcon className={`h-8 w-8 ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium">
+                          {isDragging ? "여기에 파일을 놓으세요" : "동영상을 드래그하거나 클릭하여 업로드"}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">최대 3분, 포맷: MP4</p>
+                      </div>
+                      <Input
+                        id="video"
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleVideoSelect(file);
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="relative rounded-lg overflow-hidden border border-border bg-black">
