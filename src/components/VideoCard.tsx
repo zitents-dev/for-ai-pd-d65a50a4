@@ -86,8 +86,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                   </span>
                 </>
               )}
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>•</span>
               {(evaluationAverages.consistency !== null || evaluationAverages.probability !== null) && (
                 <>
                   {evaluationAverages.consistency !== null && (
@@ -104,7 +103,8 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                   )}
                 </>
               )}
-              <span>•</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
             </div>
           </div>
