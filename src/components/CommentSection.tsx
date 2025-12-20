@@ -63,6 +63,21 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [editingComment, setEditingComment] = useState<Comment | null>(null);
   const [editContent, setEditContent] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+
+  const COMMENT_TRUNCATE_LENGTH = 200;
+
+  const toggleExpand = (commentId: string) => {
+    setExpandedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId);
+      } else {
+        newSet.add(commentId);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     loadComments();
@@ -392,9 +407,23 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                   </div>
                 </form>
               ) : (
-                <p className="text-foreground whitespace-pre-wrap break-words">
-                  {comment.content}
-                </p>
+                <div>
+                  <p className="text-foreground whitespace-pre-wrap break-words">
+                    {comment.content.length > COMMENT_TRUNCATE_LENGTH && !expandedComments.has(comment.id)
+                      ? `${comment.content.slice(0, COMMENT_TRUNCATE_LENGTH)}...`
+                      : comment.content}
+                  </p>
+                  {comment.content.length > COMMENT_TRUNCATE_LENGTH && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => toggleExpand(comment.id)}
+                      className="p-0 h-auto text-muted-foreground hover:text-foreground"
+                    >
+                      {expandedComments.has(comment.id) ? "접기" : "더 보기"}
+                    </Button>
+                  )}
+                </div>
               )}
               
               {/* Collapse/Expand toggle for comments with replies */}
