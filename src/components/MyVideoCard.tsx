@@ -119,7 +119,7 @@ export function MyVideoCard({
         {/* Content */}
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div>
-            <h3 className="font-medium text-sm line-clamp-2 mb-1">{video.title}</h3>
+            <h3 className="font-medium text-sm truncate mb-1" title={video.title}>{video.title}</h3>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {video.ai_solution && (
                 <Badge variant="outline" className="text-xs h-5">
