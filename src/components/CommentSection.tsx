@@ -76,6 +76,7 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
   const [visibleCount, setVisibleCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'liked'>('recent');
+  const [hasUserCommented, setHasUserCommented] = useState(false);
 
   const COMMENT_TRUNCATE_LENGTH = 200;
   const COMMENTS_PER_PAGE = 10;
@@ -95,6 +96,30 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
   useEffect(() => {
     loadComments();
   }, [videoId]);
+
+  // Check if user has already commented on this video
+  useEffect(() => {
+    const checkUserComment = async () => {
+      if (!user) {
+        setHasUserCommented(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("comments")
+        .select("id")
+        .eq("video_id", videoId)
+        .eq("user_id", user.id)
+        .is("parent_id", null)
+        .limit(1);
+      
+      if (!error && data) {
+        setHasUserCommented(data.length > 0);
+      }
+    };
+    
+    checkUserComment();
+  }, [user, videoId, comments]);
 
   useEffect(() => {
     if (comments.length > 0) {
@@ -300,6 +325,11 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
       return;
     }
 
+    if (hasUserCommented) {
+      toast.error("이미 이 영상에 댓글을 작성하셨습니다");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const { error } = await supabase
@@ -315,6 +345,7 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
 
       toast.success("댓글이 등록되었습니다");
       setNewComment("");
+      setHasUserCommented(true);
       loadComments();
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -700,22 +731,30 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
 
       {/* Comment Form */}
       {user ? (
-        <Card className="p-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <MentionInput
-              placeholder="댓글을 입력하세요... (@로 사용자 언급)"
-              value={newComment}
-              onChange={setNewComment}
-              minHeight="100px"
-              disabled={submitting}
-            />
-            <div className="flex justify-end">
-              <Button type="submit" disabled={submitting || !newComment.trim()}>
-                {submitting ? "등록 중..." : "댓글 등록"}
-              </Button>
-            </div>
-          </form>
-        </Card>
+        hasUserCommented ? (
+          <Card className="p-4 text-center">
+            <p className="text-muted-foreground">
+              이미 이 영상에 댓글을 작성하셨습니다
+            </p>
+          </Card>
+        ) : (
+          <Card className="p-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <MentionInput
+                placeholder="댓글을 입력하세요... (@로 사용자 언급)"
+                value={newComment}
+                onChange={setNewComment}
+                minHeight="100px"
+                disabled={submitting}
+              />
+              <div className="flex justify-end">
+                <Button type="submit" disabled={submitting || !newComment.trim()}>
+                  {submitting ? "등록 중..." : "댓글 등록"}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )
       ) : (
         <Card className="p-4 text-center">
           <p className="text-muted-foreground">
