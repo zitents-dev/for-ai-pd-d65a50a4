@@ -29,18 +29,28 @@ export const VideoCard = ({ video }: VideoCardProps) => {
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
       onClick={() => navigate(`/video/${video.id}`)}
     >
-      <div className="relative aspect-video bg-muted">
+      <div className="relative aspect-video bg-muted overflow-hidden group/thumbnail">
         {video.thumbnail_url ? (
           <img
             src={video.thumbnail_url}
             alt={video.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover/thumbnail:scale-110"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black/90"></div>
         )}
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover/thumbnail:bg-black/20 transition-colors duration-300" />
+        {/* Play icon on hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300">
+          <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center backdrop-blur-sm">
+            <svg className="w-6 h-6 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
         {video.duration !== null && video.duration !== undefined && (
-          <span className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm">
+          <span className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm z-10">
             {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
           </span>
         )}
