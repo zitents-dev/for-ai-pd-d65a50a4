@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Reply, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -50,6 +50,8 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [replyContent, setReplyContent] = useState("");
   const [collapsedThreads, setCollapsedThreads] = useState<Set<string>>(new Set());
   const [totalCommentCount, setTotalCommentCount] = useState(0);
+  const [editingComment, setEditingComment] = useState<Comment | null>(null);
+  const [editContent, setEditContent] = useState("");
 
   useEffect(() => {
     loadComments();
@@ -243,6 +245,38 @@ export function CommentSection({ videoId }: CommentSectionProps) {
     }
   };
 
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !editingComment) {
+      return;
+    }
+
+    if (!editContent.trim()) {
+      toast.error("댓글 내용을 입력해주세요");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .update({ content: editContent.trim() })
+        .eq("id", editingComment.id);
+
+      if (error) throw error;
+
+      toast.success("댓글이 수정되었습니다");
+      setEditContent("");
+      setEditingComment(null);
+      loadComments();
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      toast.error("댓글 수정에 실패했습니다");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const renderComment = (comment: Comment, depth = 0) => {
     const maxIndent = 4; // Maximum nesting visual depth
     const indentLevel = Math.min(depth, maxIndent);
@@ -290,6 +324,18 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                       답글
                     </Button>
                   )}
+                  {user?.id === comment.user_id && editingComment?.id !== comment.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setEditingComment(comment);
+                        setEditContent(comment.content);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  )}
                   {user?.id === comment.user_id && (
                     <Button
                       variant="ghost"
@@ -301,9 +347,43 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                   )}
                 </div>
               </div>
-              <p className="text-foreground whitespace-pre-wrap break-words">
-                {comment.content}
-              </p>
+              
+              {/* Edit form for this comment */}
+              {editingComment?.id === comment.id ? (
+                <form onSubmit={handleEditSubmit} className="space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="min-h-[80px]"
+                    disabled={submitting}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingComment(null);
+                        setEditContent("");
+                      }}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={submitting || !editContent.trim()}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      {submitting ? "수정 중..." : "수정"}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <p className="text-foreground whitespace-pre-wrap break-words">
+                  {comment.content}
+                </p>
+              )}
               
               {/* Collapse/Expand toggle for comments with replies */}
               {hasReplies && (
