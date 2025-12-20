@@ -32,6 +32,14 @@ const countReplies = (comment: Comment): number => {
   return comment.replies.length + comment.replies.reduce((acc, reply) => acc + countReplies(reply), 0);
 };
 
+// Helper function to count all comments including nested replies
+const countAllComments = (comments: Comment[]): number => {
+  return comments.reduce((acc, comment) => acc + 1 + countReplies(comment), 0);
+};
+
+// Threshold for auto-collapsing threads
+const AUTO_COLLAPSE_THRESHOLD = 3;
+
 export function CommentSection({ videoId }: CommentSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -41,6 +49,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [collapsedThreads, setCollapsedThreads] = useState<Set<string>>(new Set());
+  const [totalCommentCount, setTotalCommentCount] = useState(0);
 
   useEffect(() => {
     loadComments();
@@ -115,6 +124,25 @@ export function CommentSection({ videoId }: CommentSectionProps) {
       rootComments.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+      
+      // Calculate total comment count
+      setTotalCommentCount(countAllComments(rootComments));
+      
+      // Auto-collapse threads with many replies
+      const autoCollapsed = new Set<string>();
+      const findLongThreads = (comments: Comment[]) => {
+        comments.forEach(comment => {
+          const replyCount = countReplies(comment);
+          if (replyCount >= AUTO_COLLAPSE_THRESHOLD) {
+            autoCollapsed.add(comment.id);
+          }
+          if (comment.replies && comment.replies.length > 0) {
+            findLongThreads(comment.replies);
+          }
+        });
+      };
+      findLongThreads(rootComments);
+      setCollapsedThreads(autoCollapsed);
       
       setComments(rootComments);
     } catch (error) {
@@ -359,7 +387,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-foreground">
-        댓글 {comments.length}개
+        댓글 {totalCommentCount}개
       </h2>
 
       {/* Comment Form */}
