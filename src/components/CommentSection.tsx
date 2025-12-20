@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Reply, X } from "lucide-react";
+import { Trash2, Reply, X, ChevronDown, ChevronUp } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -26,6 +26,12 @@ interface CommentSectionProps {
   videoId: string;
 }
 
+// Helper function to count total replies recursively
+const countReplies = (comment: Comment): number => {
+  if (!comment.replies || comment.replies.length === 0) return 0;
+  return comment.replies.length + comment.replies.reduce((acc, reply) => acc + countReplies(reply), 0);
+};
+
 export function CommentSection({ videoId }: CommentSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -34,10 +40,23 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [submitting, setSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [collapsedThreads, setCollapsedThreads] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadComments();
   }, [videoId]);
+
+  const toggleThread = (commentId: string) => {
+    setCollapsedThreads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId);
+      } else {
+        newSet.add(commentId);
+      }
+      return newSet;
+    });
+  };
 
   const loadComments = async () => {
     setLoading(true);
@@ -199,6 +218,9 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const renderComment = (comment: Comment, depth = 0) => {
     const maxIndent = 4; // Maximum nesting visual depth
     const indentLevel = Math.min(depth, maxIndent);
+    const replyCount = countReplies(comment);
+    const isCollapsed = collapsedThreads.has(comment.id);
+    const hasReplies = comment.replies && comment.replies.length > 0;
     
     return (
       <div key={comment.id} className="space-y-2">
@@ -255,6 +277,28 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                 {comment.content}
               </p>
               
+              {/* Collapse/Expand toggle for comments with replies */}
+              {hasReplies && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleThread(comment.id)}
+                  className="mt-2 text-primary hover:text-primary/80 p-0 h-auto"
+                >
+                  {isCollapsed ? (
+                    <>
+                      <ChevronDown className="w-4 h-4 mr-1" />
+                      답글 {replyCount}개 보기
+                    </>
+                  ) : (
+                    <>
+                      <ChevronUp className="w-4 h-4 mr-1" />
+                      답글 숨기기
+                    </>
+                  )}
+                </Button>
+              )}
+              
               {/* Reply form for this comment */}
               {replyingTo?.id === comment.id && (
                 <div className="mt-4 p-3 bg-muted/50 rounded-lg">
@@ -302,10 +346,10 @@ export function CommentSection({ videoId }: CommentSectionProps) {
           </div>
         </Card>
         
-        {/* Render nested replies recursively */}
-        {comment.replies && comment.replies.length > 0 && (
+        {/* Render nested replies recursively (only if not collapsed) */}
+        {hasReplies && !isCollapsed && (
           <div className="space-y-2">
-            {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+            {comment.replies!.map((reply) => renderComment(reply, depth + 1))}
           </div>
         )}
       </div>
