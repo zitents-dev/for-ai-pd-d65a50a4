@@ -97,20 +97,28 @@ export function MyVideoCard({
         </div>
 
         {/* Thumbnail */}
-        <div className="relative w-32 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+        <div className="relative w-32 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted group/thumbnail">
           {video.thumbnail_url ? (
             <img
               src={video.thumbnail_url}
               alt={video.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover/thumbnail:scale-110"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Play className="h-8 w-8 text-muted-foreground" />
             </div>
           )}
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-black/0 group-hover/thumbnail:bg-black/20 transition-colors duration-300" />
+          {/* Play icon on hover */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300">
+            <div className="w-8 h-8 rounded-full bg-primary/90 flex items-center justify-center backdrop-blur-sm">
+              <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
+            </div>
+          </div>
           {video.duration !== null && video.duration !== undefined && (
-            <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 rounded">
+            <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 rounded z-10">
               {formatDuration(video.duration)}
             </span>
           )}
