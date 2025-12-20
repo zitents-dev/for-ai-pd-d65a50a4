@@ -11,11 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload as UploadIcon, Image as ImageIcon, X } from "lucide-react";
+import { Loader2, Upload as UploadIcon, Image as ImageIcon, X, Clock, HardDrive } from "lucide-react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { Progress } from "@/components/ui/progress";
 
-// Maximum file size: 500MB
+// Maximum file size: 500MB, Maximum duration: 3 minutes
 const MAX_FILE_SIZE = 500 * 1024 * 1024;
+const MAX_DURATION_SECONDS = 180;
 
 const formatFileSize = (bytes: number): string => {
   if (bytes >= 1024 * 1024 * 1024) {
@@ -34,6 +36,7 @@ export default function Upload() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -138,14 +141,51 @@ export default function Upload() {
     e.preventDefault();
     if (!videoFile || !user) return;
 
+    // Validate duration before upload
+    if (videoDuration && videoDuration > MAX_DURATION_SECONDS) {
+      toast.error(`동영상 길이가 너무 깁니다. 최대 ${Math.floor(MAX_DURATION_SECONDS / 60)}분까지 업로드 가능합니다.`);
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress(0);
 
     try {
-      // Upload video
+      // Upload video with progress tracking
       const videoPath = `${user.id}/${Date.now()}-${videoFile.name}`;
-      const { error: videoError } = await supabase.storage.from("videos").upload(videoPath, videoFile);
+      
+      // Create XMLHttpRequest for progress tracking
+      const uploadPromise = new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percentComplete);
+          }
+        });
 
-      if (videoError) throw videoError;
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error("Upload failed"));
+          }
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+
+        // Get the upload URL from Supabase
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        
+        xhr.open("POST", `${supabaseUrl}/storage/v1/object/videos/${videoPath}`);
+        xhr.setRequestHeader("Authorization", `Bearer ${supabaseKey}`);
+        xhr.setRequestHeader("x-upsert", "true");
+        xhr.send(videoFile);
+      });
+
+      await uploadPromise;
 
       const {
         data: { publicUrl: videoUrl },
@@ -240,7 +280,17 @@ export default function Upload() {
                         <p className="font-medium">
                           {isDragging ? "여기에 파일을 놓으세요" : "동영상을 드래그하거나 클릭하여 업로드"}
                         </p>
-                        <p className="text-sm text-muted-foreground mt-1">최대 3분, 포맷: MP4</p>
+                        <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mt-2">
+                          <span className="flex items-center gap-1">
+                            <HardDrive className="h-3.5 w-3.5" />
+                            최대 {formatFileSize(MAX_FILE_SIZE)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            최대 {Math.floor(MAX_DURATION_SECONDS / 60)}분
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">포맷: MP4, MOV, AVI</p>
                       </div>
                       <Input
                         id="video"
@@ -392,10 +442,10 @@ export default function Upload() {
 
               <Button type="submit" className="w-full" disabled={uploading || !videoFile || !category || !aiSolution}>
                 {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    업로드 중...
-                  </>
+                  <div className="flex items-center gap-2 w-full">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>업로드 중... {uploadProgress}%</span>
+                  </div>
                 ) : (
                   <>
                     <UploadIcon className="mr-2 h-4 w-4" />
@@ -403,6 +453,15 @@ export default function Upload() {
                   </>
                 )}
               </Button>
+              
+              {uploading && (
+                <div className="space-y-2">
+                  <Progress value={uploadProgress} className="h-2" />
+                  <p className="text-sm text-center text-muted-foreground">
+                    {uploadProgress < 100 ? "동영상 업로드 중..." : "처리 중..."}
+                  </p>
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>
