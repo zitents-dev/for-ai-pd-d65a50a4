@@ -193,7 +193,12 @@ export const NotificationDropdown = () => {
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
-                <div className="mt-0.5">{getIcon(notification.type)}</div>
+                <div className="relative mt-0.5">
+                  {getIcon(notification.type)}
+                  {!notification.is_read && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{notification.title}</p>
                   <p className="text-xs text-muted-foreground line-clamp-2">
