@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload as UploadIcon, Image as ImageIcon, X, Clock, HardDrive, AlertTriangle } from "lucide-react";
+import { Loader2, Upload as UploadIcon, Image as ImageIcon, X, Clock, HardDrive, AlertTriangle, Camera } from "lucide-react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { Progress } from "@/components/ui/progress";
 
@@ -44,6 +44,7 @@ export default function Upload() {
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [promptCommand, setPromptCommand] = useState("");
@@ -139,6 +140,33 @@ export default function Upload() {
       setCropDialogOpen(true);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCaptureFrame = () => {
+    if (!videoRef.current) {
+      toast.error("동영상을 먼저 선택해주세요.");
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      toast.error("프레임을 캡처할 수 없습니다.");
+      return;
+    }
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to data URL and open crop dialog
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    setCropImageSrc(dataUrl);
+    setCropDialogOpen(true);
+    
+    toast.success("현재 프레임이 캡처되었습니다.");
   };
 
   const handleCroppedThumbnail = (croppedBlob: Blob) => {
@@ -317,6 +345,7 @@ export default function Upload() {
                   <div className="space-y-3">
                     <div className="relative rounded-lg overflow-hidden border border-border bg-black">
                       <video
+                        ref={videoRef}
                         src={videoPreviewUrl}
                         controls
                         className="w-full max-h-[300px] object-contain"
@@ -361,21 +390,54 @@ export default function Upload() {
 
               <div className="space-y-2">
                 <Label htmlFor="thumbnail">썸네일 (선택)</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="thumbnail"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleThumbnailSelect(file);
-                      e.target.value = "";
-                    }}
-                    className="flex-1"
-                  />
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="thumbnail"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleThumbnailSelect(file);
+                        e.target.value = "";
+                      }}
+                      className="flex-1"
+                    />
+                    {videoPreviewUrl && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCaptureFrame}
+                        className="flex-shrink-0"
+                      >
+                        <Camera className="mr-2 h-4 w-4" />
+                        프레임 캡처
+                      </Button>
+                    )}
+                  </div>
+                  {videoPreviewUrl && !thumbnailPreview && (
+                    <p className="text-xs text-muted-foreground">
+                      동영상을 원하는 장면에서 일시정지한 후 "프레임 캡처" 버튼을 클릭하세요.
+                    </p>
+                  )}
                   {thumbnailPreview && (
-                    <div className="relative h-16 w-28 rounded-md overflow-hidden border border-border">
-                      <img src={thumbnailPreview} alt="Thumbnail preview" className="h-full w-full object-cover" />
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-20 w-36 rounded-md overflow-hidden border border-border">
+                        <img src={thumbnailPreview} alt="Thumbnail preview" className="h-full w-full object-cover" />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6"
+                          onClick={() => {
+                            setThumbnailBlob(null);
+                            setThumbnailPreview(null);
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <span className="text-sm text-muted-foreground">썸네일이 설정되었습니다.</span>
                     </div>
                   )}
                 </div>
