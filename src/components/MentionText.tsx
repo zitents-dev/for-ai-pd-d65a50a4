@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { MentionHoverCard } from "./MentionHoverCard";
 
 interface MentionTextProps {
   text: string;
@@ -49,14 +49,14 @@ export function MentionText({ text, className = "" }: MentionTextProps) {
       {parts.map((part, index) => {
         if (part.type === "mention") {
           return (
-            <Link
-              key={index}
-              to={`/search?q=@${encodeURIComponent(part.content)}`}
-              className="text-primary hover:underline font-medium"
-              onClick={(e) => e.stopPropagation()}
-            >
-              @{part.content}
-            </Link>
+            <MentionHoverCard key={index} username={part.content}>
+              <span
+                className="text-primary hover:underline font-medium cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                @{part.content}
+              </span>
+            </MentionHoverCard>
           );
         }
         return <span key={index}>{part.content}</span>;
