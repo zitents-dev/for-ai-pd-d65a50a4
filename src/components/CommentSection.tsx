@@ -76,6 +76,8 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
   const [visibleCount, setVisibleCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'liked'>('recent');
+  const [animatingPinId, setAnimatingPinId] = useState<string | null>(null);
+  const [animationType, setAnimationType] = useState<'pin' | 'unpin' | null>(null);
 
   const COMMENT_TRUNCATE_LENGTH = 200;
   const COMMENTS_PER_PAGE = 10;
@@ -448,6 +450,16 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
 
       if (error) throw error;
 
+      // Trigger animation
+      setAnimatingPinId(commentId);
+      setAnimationType(isPinned ? 'unpin' : 'pin');
+      
+      // Clear animation after it completes
+      setTimeout(() => {
+        setAnimatingPinId(null);
+        setAnimationType(null);
+      }, 500);
+
       if (isPinned) {
         toast.success("댓글 고정이 해제되었습니다");
       } else if (previouslyPinnedAuthor) {
@@ -470,10 +482,17 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
     const hasReplies = comment.replies && comment.replies.length > 0;
     const isPinned = !!comment.pinned_at;
     
+    const isAnimating = animatingPinId === comment.id;
+    const pinAnimationClass = isAnimating 
+      ? animationType === 'pin' 
+        ? 'animate-scale-in ring-2 ring-primary ring-offset-2' 
+        : 'animate-fade-out'
+      : '';
+    
     return (
       <div key={comment.id} className="space-y-2">
         <Card 
-          className={`p-4 ${depth > 0 ? "border-l-2 border-primary/20" : ""} ${isPinned && isPinnedSection ? "border-primary bg-primary/5" : ""}`}
+          className={`p-4 transition-all duration-300 ${depth > 0 ? "border-l-2 border-primary/20" : ""} ${isPinned && isPinnedSection ? "border-primary bg-primary/5" : ""} ${pinAnimationClass}`}
           style={{ marginLeft: `${indentLevel * 24}px` }}
         >
           <div className="flex gap-3">
