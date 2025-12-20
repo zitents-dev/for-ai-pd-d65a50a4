@@ -7,17 +7,19 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Trash2, Reply, X } from "lucide-react";
 
 interface Comment {
   id: string;
   content: string;
   created_at: string;
   user_id: string;
+  parent_id: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
   };
+  replies?: Comment[];
 }
 
 interface CommentSectionProps {
@@ -30,6 +32,8 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  const [replyContent, setReplyContent] = useState("");
 
   useEffect(() => {
     loadComments();
@@ -39,7 +43,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("comments" as any)
+        .from("comments")
         .select(`
           *,
           profiles (
@@ -51,7 +55,19 @@ export function CommentSection({ videoId }: CommentSectionProps) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setComments((data as any) || []);
+      
+      // Organize comments into parent-child structure
+      const allComments = (data as unknown as Comment[]) || [];
+      const parentComments = allComments.filter(c => !c.parent_id);
+      const childComments = allComments.filter(c => c.parent_id);
+      
+      parentComments.forEach(parent => {
+        parent.replies = childComments
+          .filter(child => child.parent_id === parent.id)
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      });
+      
+      setComments(parentComments);
     } catch (error) {
       console.error("Error loading comments:", error);
       toast.error("Failed to load comments");
@@ -75,21 +91,59 @@ export function CommentSection({ videoId }: CommentSectionProps) {
     setSubmitting(true);
     try {
       const { error } = await supabase
-        .from("comments" as any)
+        .from("comments")
         .insert({
           video_id: videoId,
           user_id: user.id,
           content: newComment.trim(),
+          parent_id: null,
         });
 
       if (error) throw error;
 
-      toast.success("Comment added");
+      toast.success("댓글이 등록되었습니다");
       setNewComment("");
       loadComments();
     } catch (error) {
       console.error("Error adding comment:", error);
-      toast.error("Failed to add comment");
+      toast.error("댓글 등록에 실패했습니다");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !replyingTo) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+
+    if (!replyContent.trim()) {
+      toast.error("답글 내용을 입력해주세요");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .insert({
+          video_id: videoId,
+          user_id: user.id,
+          content: replyContent.trim(),
+          parent_id: replyingTo.id,
+        });
+
+      if (error) throw error;
+
+      toast.success("답글이 등록되었습니다");
+      setReplyContent("");
+      setReplyingTo(null);
+      loadComments();
+    } catch (error) {
+      console.error("Error adding reply:", error);
+      toast.error("답글 등록에 실패했습니다");
     } finally {
       setSubmitting(false);
     }
@@ -98,19 +152,118 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const handleDelete = async (commentId: string) => {
     try {
       const { error } = await supabase
-        .from("comments" as any)
+        .from("comments")
         .delete()
         .eq("id", commentId);
 
       if (error) throw error;
 
-      toast.success("Comment deleted");
+      toast.success("삭제되었습니다");
       loadComments();
     } catch (error) {
       console.error("Error deleting comment:", error);
-      toast.error("Failed to delete comment");
+      toast.error("삭제에 실패했습니다");
     }
   };
+
+  const renderComment = (comment: Comment, isReply = false) => (
+    <Card key={comment.id} className={`p-4 ${isReply ? "ml-12 border-l-2 border-primary/20" : ""}`}>
+      <div className="flex gap-3">
+        <Avatar className="w-10 h-10">
+          <AvatarImage src={comment.profiles.avatar_url || ""} />
+          <AvatarFallback>
+            {comment.profiles.name?.[0] || "?"}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h4 className="font-semibold text-foreground">
+                {comment.profiles.name}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {formatDistanceToNow(new Date(comment.created_at), {
+                  addSuffix: true,
+                })}
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              {user && !isReply && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setReplyingTo(comment);
+                    setReplyContent("");
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Reply className="w-4 h-4 mr-1" />
+                  답글
+                </Button>
+              )}
+              {user?.id === comment.user_id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(comment.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+          <p className="text-foreground whitespace-pre-wrap">
+            {comment.content}
+          </p>
+          
+          {/* Reply form for this comment */}
+          {replyingTo?.id === comment.id && (
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  @{comment.profiles.name}에게 답글 작성
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setReplyingTo(null)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <form onSubmit={handleReplySubmit} className="space-y-2">
+                <Textarea
+                  placeholder="답글을 입력하세요..."
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  className="min-h-[80px]"
+                  disabled={submitting}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setReplyingTo(null)}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={submitting || !replyContent.trim()}
+                  >
+                    {submitting ? "등록 중..." : "답글 등록"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
@@ -166,42 +319,14 @@ export function CommentSection({ videoId }: CommentSectionProps) {
           </Card>
         ) : (
           comments.map((comment) => (
-            <Card key={comment.id} className="p-4">
-              <div className="flex gap-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={comment.profiles.avatar_url || ""} />
-                  <AvatarFallback>
-                    {comment.profiles.name[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="font-semibold text-foreground">
-                        {comment.profiles.name}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.created_at), {
-                          addSuffix: true,
-                        })}
-                      </p>
-                    </div>
-                    {user?.id === comment.user_id && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(comment.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-foreground whitespace-pre-wrap">
-                    {comment.content}
-                  </p>
+            <div key={comment.id} className="space-y-2">
+              {renderComment(comment)}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="space-y-2">
+                  {comment.replies.map((reply) => renderComment(reply, true))}
                 </div>
-              </div>
-            </Card>
+              )}
+            </div>
           ))
         )}
       </div>
