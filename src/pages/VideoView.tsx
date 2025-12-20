@@ -487,7 +487,7 @@ export default function VideoView() {
             )}
 
             {/* Comments Section */}
-            <CommentSection videoId={video.id} />
+            <CommentSection videoId={video.id} creatorId={video.creator_id} />
           </div>
         </div>
       </div>

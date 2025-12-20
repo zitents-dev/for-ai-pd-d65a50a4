@@ -59,6 +59,7 @@ export type Database = {
           created_at: string | null
           id: string
           parent_id: string | null
+          pinned_at: string | null
           updated_at: string | null
           user_id: string
           video_id: string
@@ -68,6 +69,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           parent_id?: string | null
+          pinned_at?: string | null
           updated_at?: string | null
           user_id: string
           video_id: string
@@ -77,6 +79,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           parent_id?: string | null
+          pinned_at?: string | null
           updated_at?: string | null
           user_id?: string
           video_id?: string
