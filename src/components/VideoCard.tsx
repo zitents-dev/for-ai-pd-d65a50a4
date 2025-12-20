@@ -92,7 +92,6 @@ export const VideoCard = ({ video }: VideoCardProps) => {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {(evaluationAverages.consistency !== null || evaluationAverages.probability !== null) && (
                 <>
-                  <span>•</span>
                   {evaluationAverages.consistency !== null && (
                     <span className="flex items-center gap-1" title="일관성">
                       <Target className="w-3 h-3" />
