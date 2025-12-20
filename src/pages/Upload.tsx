@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload as UploadIcon, Image as ImageIcon, X, Clock, HardDrive } from "lucide-react";
+import { Loader2, Upload as UploadIcon, Image as ImageIcon, X, Clock, HardDrive, AlertTriangle } from "lucide-react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { Progress } from "@/components/ui/progress";
 
@@ -81,7 +81,16 @@ export default function Upload() {
     const video = document.createElement("video");
     video.preload = "metadata";
     video.onloadedmetadata = () => {
-      setVideoDuration(Math.round(video.duration));
+      const duration = Math.round(video.duration);
+      setVideoDuration(duration);
+      
+      // Show warning toast if duration exceeds limit
+      if (duration > MAX_DURATION_SECONDS) {
+        toast.warning(
+          `동영상 길이가 ${Math.floor(MAX_DURATION_SECONDS / 60)}분을 초과합니다. (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}) 업로드 전 편집이 필요합니다.`,
+          { duration: 5000 }
+        );
+      }
     };
     video.src = objectUrl;
   };
@@ -323,13 +332,29 @@ export default function Upload() {
                       </Button>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{videoFile?.name}</span>
+                      <span className="truncate max-w-[200px]">{videoFile?.name}</span>
                       {videoDuration !== null && (
-                        <span className="bg-muted px-2 py-1 rounded">
+                        <span className={`px-2 py-1 rounded flex items-center gap-1 ${
+                          videoDuration > MAX_DURATION_SECONDS 
+                            ? "bg-destructive/10 text-destructive" 
+                            : "bg-muted"
+                        }`}>
+                          {videoDuration > MAX_DURATION_SECONDS && (
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                          )}
                           {Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')}
                         </span>
                       )}
                     </div>
+                    {videoDuration !== null && videoDuration > MAX_DURATION_SECONDS && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                        <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                        <span>
+                          동영상 길이가 최대 허용 시간({Math.floor(MAX_DURATION_SECONDS / 60)}분)을 초과합니다. 
+                          업로드하려면 동영상을 편집해 주세요.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -440,7 +465,11 @@ export default function Upload() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={uploading || !videoFile || !category || !aiSolution}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={uploading || !videoFile || !category || !aiSolution || (videoDuration !== null && videoDuration > MAX_DURATION_SECONDS)}
+              >
                 {uploading ? (
                   <div className="flex items-center gap-2 w-full">
                     <Loader2 className="h-4 w-4 animate-spin" />
