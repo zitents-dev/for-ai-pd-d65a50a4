@@ -2,7 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Eye, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Eye, ThumbsUp, ThumbsDown, Target, Sparkles } from "lucide-react";
+import { useVideoEvaluationAverages } from "@/components/VideoEvaluation";
 
 interface VideoCardProps {
   video: {
@@ -23,6 +24,7 @@ interface VideoCardProps {
 
 export const VideoCard = ({ video }: VideoCardProps) => {
   const navigate = useNavigate();
+  const evaluationAverages = useVideoEvaluationAverages(video.id);
 
   return (
     <Card 
@@ -82,6 +84,23 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                     <ThumbsDown className="w-3 h-3" />
                     {(video.dislikes_count || 0).toLocaleString()}
                   </span>
+                </>
+              )}
+              {(evaluationAverages.consistency !== null || evaluationAverages.probability !== null) && (
+                <>
+                  <span>•</span>
+                  {evaluationAverages.consistency !== null && (
+                    <span className="flex items-center gap-1" title="일관성">
+                      <Target className="w-3 h-3" />
+                      {evaluationAverages.consistency.toFixed(2)}
+                    </span>
+                  )}
+                  {evaluationAverages.probability !== null && (
+                    <span className="flex items-center gap-1" title="개연성">
+                      <Sparkles className="w-3 h-3" />
+                      {evaluationAverages.probability.toFixed(2)}
+                    </span>
+                  )}
                 </>
               )}
               <span>•</span>

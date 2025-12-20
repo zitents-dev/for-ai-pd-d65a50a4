@@ -13,6 +13,7 @@ import { LikeDislikeButtons } from "@/components/LikeDislikeButtons";
 import { ReportDialog } from "@/components/ReportDialog";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
+import { VideoEvaluation } from "@/components/VideoEvaluation";
 import {
   Collapsible,
   CollapsibleContent,
@@ -381,6 +382,9 @@ export default function VideoView() {
                 <ReportDialog videoId={video.id} />
               </div>
             </div>
+
+            {/* Video Evaluation */}
+            <VideoEvaluation videoId={video.id} />
 
             {/* Creator Info */}
             <Card className="p-4">
