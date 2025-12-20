@@ -22,6 +22,7 @@ export default function Upload() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [promptCommand, setPromptCommand] = useState("");
@@ -38,6 +39,18 @@ export default function Upload() {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  const handleVideoSelect = (file: File) => {
+    setVideoFile(file);
+    // Extract video duration
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      setVideoDuration(Math.round(video.duration));
+      URL.revokeObjectURL(video.src);
+    };
+    video.src = URL.createObjectURL(file);
+  };
 
   const handleThumbnailSelect = (file: File) => {
     const reader = new FileReader();
@@ -87,8 +100,8 @@ export default function Upload() {
         thumbnailUrl = publicUrl;
       }
 
-      // Get video duration (simplified - in production you'd use proper video metadata)
-      const duration = 60; // placeholder
+      // Use the extracted video duration
+      const duration = videoDuration || 0;
 
       // Create video record
       const { error: dbError } = await supabase.from("videos").insert({
@@ -144,7 +157,10 @@ export default function Upload() {
                   id="video"
                   type="file"
                   accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleVideoSelect(file);
+                  }}
                   required
                 />
                 <p className="text-sm text-muted-foreground">최대 3분, 포맷: MP4</p>
