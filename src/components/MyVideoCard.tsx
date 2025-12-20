@@ -109,7 +109,7 @@ export function MyVideoCard({
               <Play className="h-8 w-8 text-muted-foreground" />
             </div>
           )}
-          {video.duration && (
+          {video.duration !== null && video.duration !== undefined && (
             <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 rounded">
               {formatDuration(video.duration)}
             </span>
