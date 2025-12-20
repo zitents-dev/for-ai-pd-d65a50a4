@@ -56,18 +56,48 @@ export function CommentSection({ videoId }: CommentSectionProps) {
 
       if (error) throw error;
       
-      // Organize comments into parent-child structure
+      // Build nested comment tree recursively
       const allComments = (data as unknown as Comment[]) || [];
-      const parentComments = allComments.filter(c => !c.parent_id);
-      const childComments = allComments.filter(c => c.parent_id);
+      const commentMap = new Map<string, Comment>();
       
-      parentComments.forEach(parent => {
-        parent.replies = childComments
-          .filter(child => child.parent_id === parent.id)
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      // First pass: create map of all comments
+      allComments.forEach(comment => {
+        comment.replies = [];
+        commentMap.set(comment.id, comment);
       });
       
-      setComments(parentComments);
+      // Second pass: build tree structure
+      const rootComments: Comment[] = [];
+      allComments.forEach(comment => {
+        if (comment.parent_id) {
+          const parent = commentMap.get(comment.parent_id);
+          if (parent) {
+            parent.replies!.push(comment);
+          }
+        } else {
+          rootComments.push(comment);
+        }
+      });
+      
+      // Sort replies by created_at ascending
+      const sortReplies = (comments: Comment[]) => {
+        comments.forEach(comment => {
+          if (comment.replies && comment.replies.length > 0) {
+            comment.replies.sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+            sortReplies(comment.replies);
+          }
+        });
+      };
+      sortReplies(rootComments);
+      
+      // Sort root comments by created_at descending
+      rootComments.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      setComments(rootComments);
     } catch (error) {
       console.error("Error loading comments:", error);
       toast.error("Failed to load comments");
@@ -166,104 +196,121 @@ export function CommentSection({ videoId }: CommentSectionProps) {
     }
   };
 
-  const renderComment = (comment: Comment, isReply = false) => (
-    <Card key={comment.id} className={`p-4 ${isReply ? "ml-12 border-l-2 border-primary/20" : ""}`}>
-      <div className="flex gap-3">
-        <Avatar className="w-10 h-10">
-          <AvatarImage src={comment.profiles.avatar_url || ""} />
-          <AvatarFallback>
-            {comment.profiles.name?.[0] || "?"}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h4 className="font-semibold text-foreground">
-                {comment.profiles.name}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {formatDistanceToNow(new Date(comment.created_at), {
-                  addSuffix: true,
-                })}
+  const renderComment = (comment: Comment, depth = 0) => {
+    const maxIndent = 4; // Maximum nesting visual depth
+    const indentLevel = Math.min(depth, maxIndent);
+    
+    return (
+      <div key={comment.id} className="space-y-2">
+        <Card 
+          className={`p-4 ${depth > 0 ? "border-l-2 border-primary/20" : ""}`}
+          style={{ marginLeft: `${indentLevel * 24}px` }}
+        >
+          <div className="flex gap-3">
+            <Avatar className="w-10 h-10 flex-shrink-0">
+              <AvatarImage src={comment.profiles.avatar_url || ""} />
+              <AvatarFallback>
+                {comment.profiles.name?.[0] || "?"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h4 className="font-semibold text-foreground">
+                    {comment.profiles.name}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDistanceToNow(new Date(comment.created_at), {
+                      addSuffix: true,
+                    })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  {user && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setReplyingTo(comment);
+                        setReplyContent("");
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Reply className="w-4 h-4 mr-1" />
+                      답글
+                    </Button>
+                  )}
+                  {user?.id === comment.user_id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(comment.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="text-foreground whitespace-pre-wrap break-words">
+                {comment.content}
               </p>
-            </div>
-            <div className="flex items-center gap-1">
-              {user && !isReply && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setReplyingTo(comment);
-                    setReplyContent("");
-                  }}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <Reply className="w-4 h-4 mr-1" />
-                  답글
-                </Button>
-              )}
-              {user?.id === comment.user_id && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(comment.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+              
+              {/* Reply form for this comment */}
+              {replyingTo?.id === comment.id && (
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">
+                      @{comment.profiles.name}에게 답글 작성
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setReplyingTo(null)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <form onSubmit={handleReplySubmit} className="space-y-2">
+                    <Textarea
+                      placeholder="답글을 입력하세요..."
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      className="min-h-[80px]"
+                      disabled={submitting}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReplyingTo(null)}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={submitting || !replyContent.trim()}
+                      >
+                        {submitting ? "등록 중..." : "답글 등록"}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
               )}
             </div>
           </div>
-          <p className="text-foreground whitespace-pre-wrap">
-            {comment.content}
-          </p>
-          
-          {/* Reply form for this comment */}
-          {replyingTo?.id === comment.id && (
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
-                  @{comment.profiles.name}에게 답글 작성
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setReplyingTo(null)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <form onSubmit={handleReplySubmit} className="space-y-2">
-                <Textarea
-                  placeholder="답글을 입력하세요..."
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  className="min-h-[80px]"
-                  disabled={submitting}
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setReplyingTo(null)}
-                  >
-                    취소
-                  </Button>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={submitting || !replyContent.trim()}
-                  >
-                    {submitting ? "등록 중..." : "답글 등록"}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          )}
-        </div>
+        </Card>
+        
+        {/* Render nested replies recursively */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="space-y-2">
+            {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+          </div>
+        )}
       </div>
-    </Card>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -318,16 +365,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
             <p className="text-muted-foreground">첫 번째 댓글을 작성해보세요!</p>
           </Card>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="space-y-2">
-              {renderComment(comment)}
-              {comment.replies && comment.replies.length > 0 && (
-                <div className="space-y-2">
-                  {comment.replies.map((reply) => renderComment(reply, true))}
-                </div>
-              )}
-            </div>
-          ))
+          comments.map((comment) => renderComment(comment, 0))
         )}
       </div>
     </div>
