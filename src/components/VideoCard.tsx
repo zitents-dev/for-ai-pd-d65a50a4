@@ -39,7 +39,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black/90"></div>
         )}
-        {video.duration && (
+        {video.duration !== null && video.duration !== undefined && (
           <span className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm">
             {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
           </span>
