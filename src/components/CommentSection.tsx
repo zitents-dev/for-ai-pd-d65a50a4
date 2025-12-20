@@ -23,6 +23,7 @@ interface Comment {
   id: string;
   content: string;
   created_at: string;
+  updated_at: string | null;
   user_id: string;
   parent_id: string | null;
   profiles: {
@@ -330,11 +331,16 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                   <h4 className="font-semibold text-foreground">
                     {comment.profiles.name}
                   </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(comment.created_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      {formatDistanceToNow(new Date(comment.created_at), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                    {comment.updated_at && new Date(comment.updated_at).getTime() > new Date(comment.created_at).getTime() + 1000 && (
+                      <span className="text-xs">(수정됨)</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   {user && (
