@@ -78,6 +78,7 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
   const [sortBy, setSortBy] = useState<'recent' | 'liked'>('recent');
   const [animatingPinId, setAnimatingPinId] = useState<string | null>(null);
   const [animationType, setAnimationType] = useState<'pin' | 'unpin' | null>(null);
+  const [pinConfirmData, setPinConfirmData] = useState<{ commentId: string; currentPinnedAuthor: string } | null>(null);
 
   const COMMENT_TRUNCATE_LENGTH = 200;
   const COMMENTS_PER_PAGE = 10;
@@ -419,28 +420,40 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
       return;
     }
 
+    // If unpinning, proceed directly
+    if (isPinned) {
+      await executePinAction(commentId, true, null);
+      return;
+    }
+
+    // Check if there's already a pinned comment
+    const { data: pinnedComments } = await supabase
+      .from("comments")
+      .select("id, profiles(name)")
+      .eq("video_id", videoId)
+      .not("pinned_at", "is", null);
+
+    if (pinnedComments && pinnedComments.length > 0) {
+      const pinnedComment = pinnedComments[0] as { id: string; profiles: { name: string } | null };
+      const currentPinnedAuthor = pinnedComment.profiles?.name || "알 수 없음";
+      
+      // Show confirmation dialog
+      setPinConfirmData({ commentId, currentPinnedAuthor });
+    } else {
+      // No existing pinned comment, proceed directly
+      await executePinAction(commentId, false, null);
+    }
+  };
+
+  const executePinAction = async (commentId: string, isPinned: boolean, previouslyPinnedAuthor: string | null) => {
     try {
-      // If pinning a new comment, first check for existing pinned comments
-      let previouslyPinnedAuthor: string | null = null;
+      // If pinning a new comment, unpin existing ones
       if (!isPinned) {
-        // Find the currently pinned comment to show feedback
-        const { data: pinnedComments } = await supabase
+        await supabase
           .from("comments")
-          .select("id, profiles(name)")
+          .update({ pinned_at: null })
           .eq("video_id", videoId)
           .not("pinned_at", "is", null);
-
-        if (pinnedComments && pinnedComments.length > 0) {
-          const pinnedComment = pinnedComments[0] as { id: string; profiles: { name: string } | null };
-          previouslyPinnedAuthor = pinnedComment.profiles?.name || null;
-          
-          // Unpin existing pinned comments
-          await supabase
-            .from("comments")
-            .update({ pinned_at: null })
-            .eq("video_id", videoId)
-            .not("pinned_at", "is", null);
-        }
       }
 
       const { error } = await supabase
@@ -471,6 +484,13 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
     } catch (error) {
       console.error("Error pinning comment:", error);
       toast.error("댓글 고정 처리에 실패했습니다");
+    }
+  };
+
+  const handleConfirmPinReplace = async () => {
+    if (pinConfirmData) {
+      await executePinAction(pinConfirmData.commentId, false, pinConfirmData.currentPinnedAuthor);
+      setPinConfirmData(null);
     }
   };
 
@@ -879,6 +899,25 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Pin Replacement Confirmation Dialog */}
+      <AlertDialog open={!!pinConfirmData} onOpenChange={(open) => !open && setPinConfirmData(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>고정 댓글을 변경하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              현재 <span className="font-semibold">{pinConfirmData?.currentPinnedAuthor}</span>님의 댓글이 고정되어 있습니다.
+              새 댓글을 고정하면 기존 고정이 해제됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPinReplace}>
+              변경
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
