@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check, ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
+import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check, ThumbsUp, ThumbsDown, Loader2, Clock, TrendingUp } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface Comment {
   id: string;
@@ -68,6 +69,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [commentLikes, setCommentLikes] = useState<Record<string, { likes: number; dislikes: number; userReaction: 'like' | 'dislike' | null }>>({});
   const [visibleCount, setVisibleCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [sortBy, setSortBy] = useState<'recent' | 'liked'>('recent');
 
   const COMMENT_TRUNCATE_LENGTH = 200;
   const COMMENTS_PER_PAGE = 10;
@@ -668,8 +670,23 @@ export function CommentSection({ videoId }: CommentSectionProps) {
         </Card>
       )}
 
-      {/* Comments List */}
+      {/* Sort Toggle and Comments List */}
       <div className="space-y-4">
+        {comments.length > 0 && !loading && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">정렬 기준</span>
+            <ToggleGroup type="single" value={sortBy} onValueChange={(value) => value && setSortBy(value as 'recent' | 'liked')}>
+              <ToggleGroupItem value="recent" aria-label="최신순" className="gap-1.5 text-xs">
+                <Clock className="h-3.5 w-3.5" />
+                최신순
+              </ToggleGroupItem>
+              <ToggleGroupItem value="liked" aria-label="인기순" className="gap-1.5 text-xs">
+                <TrendingUp className="h-3.5 w-3.5" />
+                인기순
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        )}
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -690,7 +707,17 @@ export function CommentSection({ videoId }: CommentSectionProps) {
           </Card>
         ) : (
           <>
-            {comments.slice(0, visibleCount).map((comment) => renderComment(comment, 0))}
+            {[...comments]
+              .sort((a, b) => {
+                if (sortBy === 'liked') {
+                  const aLikes = (commentLikes[a.id]?.likes || 0) - (commentLikes[a.id]?.dislikes || 0);
+                  const bLikes = (commentLikes[b.id]?.likes || 0) - (commentLikes[b.id]?.dislikes || 0);
+                  return bLikes - aLikes;
+                }
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              })
+              .slice(0, visibleCount)
+              .map((comment) => renderComment(comment, 0))}
             {visibleCount < comments.length && (
               <div className="flex justify-center pt-4">
                 <Button
