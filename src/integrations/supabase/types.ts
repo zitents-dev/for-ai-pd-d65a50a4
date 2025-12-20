@@ -342,6 +342,36 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          comment_pinned_enabled: boolean
+          created_at: string
+          id: string
+          mention_enabled: boolean
+          new_content_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_pinned_enabled?: boolean
+          created_at?: string
+          id?: string
+          mention_enabled?: boolean
+          new_content_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_pinned_enabled?: boolean
+          created_at?: string
+          id?: string
+          mention_enabled?: boolean
+          new_content_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           comment_id: string | null
