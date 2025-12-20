@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check, ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -66,8 +66,11 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentLikes, setCommentLikes] = useState<Record<string, { likes: number; dislikes: number; userReaction: 'like' | 'dislike' | null }>>({});
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const COMMENT_TRUNCATE_LENGTH = 200;
+  const COMMENTS_PER_PAGE = 10;
 
   const toggleExpand = (commentId: string) => {
     setExpandedComments(prev => {
@@ -686,7 +689,34 @@ export function CommentSection({ videoId }: CommentSectionProps) {
             <p className="text-muted-foreground">첫 번째 댓글을 작성해보세요!</p>
           </Card>
         ) : (
-          comments.map((comment) => renderComment(comment, 0))
+          <>
+            {comments.slice(0, visibleCount).map((comment) => renderComment(comment, 0))}
+            {visibleCount < comments.length && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setLoadingMore(true);
+                    setTimeout(() => {
+                      setVisibleCount(prev => prev + COMMENTS_PER_PAGE);
+                      setLoadingMore(false);
+                    }, 300);
+                  }}
+                  disabled={loadingMore}
+                  className="w-full max-w-xs"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      로딩 중...
+                    </>
+                  ) : (
+                    `댓글 더 보기 (${comments.length - visibleCount}개 남음)`
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
