@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check } from "lucide-react";
+import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -65,6 +65,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [editContent, setEditContent] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [commentLikes, setCommentLikes] = useState<Record<string, { likes: number; dislikes: number; userReaction: 'like' | 'dislike' | null }>>({});
 
   const COMMENT_TRUNCATE_LENGTH = 200;
 
@@ -83,6 +84,12 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   useEffect(() => {
     loadComments();
   }, [videoId]);
+
+  useEffect(() => {
+    if (comments.length > 0) {
+      loadCommentLikes();
+    }
+  }, [comments, user]);
 
   const toggleThread = (commentId: string) => {
     setCollapsedThreads(prev => {
@@ -179,6 +186,94 @@ export function CommentSection({ videoId }: CommentSectionProps) {
       toast.error("Failed to load comments");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getAllCommentIds = (comments: Comment[]): string[] => {
+    const ids: string[] = [];
+    const collectIds = (comments: Comment[]) => {
+      comments.forEach(comment => {
+        ids.push(comment.id);
+        if (comment.replies) {
+          collectIds(comment.replies);
+        }
+      });
+    };
+    collectIds(comments);
+    return ids;
+  };
+
+  const loadCommentLikes = async () => {
+    const commentIds = getAllCommentIds(comments);
+    if (commentIds.length === 0) return;
+
+    try {
+      const { data: likesData, error } = await supabase
+        .from("comment_likes")
+        .select("comment_id, type, user_id")
+        .in("comment_id", commentIds);
+
+      if (error) throw error;
+
+      const likesMap: Record<string, { likes: number; dislikes: number; userReaction: 'like' | 'dislike' | null }> = {};
+      
+      commentIds.forEach(id => {
+        likesMap[id] = { likes: 0, dislikes: 0, userReaction: null };
+      });
+
+      likesData?.forEach(like => {
+        if (likesMap[like.comment_id]) {
+          if (like.type === 'like') {
+            likesMap[like.comment_id].likes++;
+          } else {
+            likesMap[like.comment_id].dislikes++;
+          }
+          if (user && like.user_id === user.id) {
+            likesMap[like.comment_id].userReaction = like.type as 'like' | 'dislike';
+          }
+        }
+      });
+
+      setCommentLikes(likesMap);
+    } catch (error) {
+      console.error("Error loading comment likes:", error);
+    }
+  };
+
+  const handleCommentReaction = async (commentId: string, type: 'like' | 'dislike') => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+
+    const currentReaction = commentLikes[commentId]?.userReaction;
+
+    try {
+      if (currentReaction === type) {
+        // Remove reaction
+        await supabase
+          .from("comment_likes")
+          .delete()
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+      } else if (currentReaction) {
+        // Change reaction
+        await supabase
+          .from("comment_likes")
+          .update({ type })
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+      } else {
+        // Add new reaction
+        await supabase
+          .from("comment_likes")
+          .insert({ comment_id: commentId, user_id: user.id, type });
+      }
+
+      loadCommentLikes();
+    } catch (error) {
+      console.error("Error updating reaction:", error);
+      toast.error("반응 처리에 실패했습니다");
     }
   };
 
@@ -343,6 +438,33 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {/* Like/Dislike buttons */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCommentReaction(comment.id, 'like')}
+                    className={`text-muted-foreground hover:text-foreground ${
+                      commentLikes[comment.id]?.userReaction === 'like' ? 'text-primary' : ''
+                    }`}
+                  >
+                    <ThumbsUp className={`w-4 h-4 mr-1 ${
+                      commentLikes[comment.id]?.userReaction === 'like' ? 'fill-current' : ''
+                    }`} />
+                    {commentLikes[comment.id]?.likes || 0}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCommentReaction(comment.id, 'dislike')}
+                    className={`text-muted-foreground hover:text-foreground ${
+                      commentLikes[comment.id]?.userReaction === 'dislike' ? 'text-destructive' : ''
+                    }`}
+                  >
+                    <ThumbsDown className={`w-4 h-4 mr-1 ${
+                      commentLikes[comment.id]?.userReaction === 'dislike' ? 'fill-current' : ''
+                    }`} />
+                    {commentLikes[comment.id]?.dislikes || 0}
+                  </Button>
                   {user && (
                     <Button
                       variant="ghost"
