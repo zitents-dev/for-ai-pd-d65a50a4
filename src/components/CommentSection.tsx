@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MentionInput } from "@/components/MentionInput";
+import { MentionText } from "@/components/MentionText";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -590,8 +592,13 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
                 <div>
                   <p className="text-foreground whitespace-pre-wrap break-words">
                     {comment.content.length > COMMENT_TRUNCATE_LENGTH && !expandedComments.has(comment.id)
-                      ? `${comment.content.slice(0, COMMENT_TRUNCATE_LENGTH)}...`
-                      : comment.content}
+                      ? (
+                        <>
+                          <MentionText text={comment.content.slice(0, COMMENT_TRUNCATE_LENGTH)} />
+                          ...
+                        </>
+                      )
+                      : <MentionText text={comment.content} />}
                   </p>
                   {comment.content.length > COMMENT_TRUNCATE_LENGTH && (
                     <Button
@@ -644,11 +651,11 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
                     </Button>
                   </div>
                   <form onSubmit={handleReplySubmit} className="space-y-2">
-                    <Textarea
-                      placeholder="답글을 입력하세요..."
+                    <MentionInput
+                      placeholder="답글을 입력하세요... (@로 사용자 언급)"
                       value={replyContent}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      className="min-h-[80px]"
+                      onChange={setReplyContent}
+                      minHeight="80px"
                       disabled={submitting}
                     />
                     <div className="flex justify-end gap-2">
@@ -695,11 +702,11 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
       {user ? (
         <Card className="p-4">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Textarea
-              placeholder="댓글을 입력하세요..."
+            <MentionInput
+              placeholder="댓글을 입력하세요... (@로 사용자 언급)"
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-[100px]"
+              onChange={setNewComment}
+              minHeight="100px"
               disabled={submitting}
             />
             <div className="flex justify-end">
