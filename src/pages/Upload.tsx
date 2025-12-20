@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload as UploadIcon, Image as ImageIcon } from "lucide-react";
+import { Loader2, Upload as UploadIcon, Image as ImageIcon, X } from "lucide-react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 
 export default function Upload() {
@@ -22,6 +22,7 @@ export default function Upload() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -41,15 +42,31 @@ export default function Upload() {
   }, [user, authLoading, navigate]);
 
   const handleVideoSelect = (file: File) => {
+    // Clean up previous preview URL
+    if (videoPreviewUrl) {
+      URL.revokeObjectURL(videoPreviewUrl);
+    }
+    
     setVideoFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setVideoPreviewUrl(objectUrl);
+    
     // Extract video duration
     const video = document.createElement("video");
     video.preload = "metadata";
     video.onloadedmetadata = () => {
       setVideoDuration(Math.round(video.duration));
-      URL.revokeObjectURL(video.src);
     };
-    video.src = URL.createObjectURL(file);
+    video.src = objectUrl;
+  };
+
+  const handleRemoveVideo = () => {
+    if (videoPreviewUrl) {
+      URL.revokeObjectURL(videoPreviewUrl);
+    }
+    setVideoFile(null);
+    setVideoPreviewUrl(null);
+    setVideoDuration(null);
   };
 
   const handleThumbnailSelect = (file: File) => {
@@ -153,17 +170,48 @@ export default function Upload() {
             <form onSubmit={handleUpload} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="video">동영상 파일 *(필수)</Label>
-                <Input
-                  id="video"
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleVideoSelect(file);
-                  }}
-                  required
-                />
-                <p className="text-sm text-muted-foreground">최대 3분, 포맷: MP4</p>
+                {!videoPreviewUrl ? (
+                  <>
+                    <Input
+                      id="video"
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleVideoSelect(file);
+                      }}
+                      required
+                    />
+                    <p className="text-sm text-muted-foreground">최대 3분, 포맷: MP4</p>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="relative rounded-lg overflow-hidden border border-border bg-black">
+                      <video
+                        src={videoPreviewUrl}
+                        controls
+                        className="w-full max-h-[300px] object-contain"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8"
+                        onClick={handleRemoveVideo}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>{videoFile?.name}</span>
+                      {videoDuration !== null && (
+                        <span className="bg-muted px-2 py-1 rounded">
+                          {Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
