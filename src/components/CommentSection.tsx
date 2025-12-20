@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check } from "lucide-react";
@@ -52,6 +62,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
   const [totalCommentCount, setTotalCommentCount] = useState(0);
   const [editingComment, setEditingComment] = useState<Comment | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     loadComments();
@@ -238,6 +249,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
       if (error) throw error;
 
       toast.success("삭제되었습니다");
+      setDeleteConfirmId(null);
       loadComments();
     } catch (error) {
       console.error("Error deleting comment:", error);
@@ -340,7 +352,7 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDelete(comment.id)}
+                      onClick={() => setDeleteConfirmId(comment.id)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -520,6 +532,27 @@ export function CommentSection({ videoId }: CommentSectionProps) {
           comments.map((comment) => renderComment(comment, 0))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>댓글을 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              이 작업은 되돌릴 수 없습니다. 댓글이 영구적으로 삭제됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
