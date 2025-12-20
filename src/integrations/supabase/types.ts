@@ -342,6 +342,81 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          from_user_id: string | null
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comment_details_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playlist_videos: {
         Row: {
           added_at: string | null
@@ -1089,6 +1164,7 @@ export type Database = {
         | "silver"
         | "bronze"
         | "buffer"
+      notification_type: "mention" | "comment_pinned" | "new_content"
       video_category:
         | "education"
         | "commercial"
@@ -1237,6 +1313,7 @@ export const Constants = {
         "bronze",
         "buffer",
       ],
+      notification_type: ["mention", "comment_pinned", "new_content"],
       video_category: [
         "education",
         "commercial",

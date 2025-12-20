@@ -6,6 +6,7 @@ import { Upload, User, Search } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/ai-pd-hub-logo.svg";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 export const Navbar = () => {
   const { user } = useAuth();
@@ -49,6 +50,7 @@ export const Navbar = () => {
                   새 작품
                 </NavLink>
               </Button>
+              <NotificationDropdown />
               <Button asChild variant="ghost" size="icon">
                 <NavLink to="/my-page">
                   <User className="w-8 h-8" />
