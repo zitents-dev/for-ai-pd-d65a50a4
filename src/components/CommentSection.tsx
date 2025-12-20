@@ -418,13 +418,27 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
     }
 
     try {
-      // If pinning a new comment, first unpin any existing pinned comments
+      // If pinning a new comment, first check for existing pinned comments
+      let previouslyPinnedAuthor: string | null = null;
       if (!isPinned) {
-        await supabase
+        // Find the currently pinned comment to show feedback
+        const { data: pinnedComments } = await supabase
           .from("comments")
-          .update({ pinned_at: null })
+          .select("id, profiles(name)")
           .eq("video_id", videoId)
           .not("pinned_at", "is", null);
+
+        if (pinnedComments && pinnedComments.length > 0) {
+          const pinnedComment = pinnedComments[0] as { id: string; profiles: { name: string } | null };
+          previouslyPinnedAuthor = pinnedComment.profiles?.name || null;
+          
+          // Unpin existing pinned comments
+          await supabase
+            .from("comments")
+            .update({ pinned_at: null })
+            .eq("video_id", videoId)
+            .not("pinned_at", "is", null);
+        }
       }
 
       const { error } = await supabase
@@ -434,7 +448,13 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
 
       if (error) throw error;
 
-      toast.success(isPinned ? "댓글 고정이 해제되었습니다" : "댓글이 고정되었습니다");
+      if (isPinned) {
+        toast.success("댓글 고정이 해제되었습니다");
+      } else if (previouslyPinnedAuthor) {
+        toast.success(`댓글이 고정되었습니다 (${previouslyPinnedAuthor}님의 댓글 고정 해제됨)`);
+      } else {
+        toast.success("댓글이 고정되었습니다");
+      }
       loadComments();
     } catch (error) {
       console.error("Error pinning comment:", error);
