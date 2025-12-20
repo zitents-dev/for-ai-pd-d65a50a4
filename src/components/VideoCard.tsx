@@ -88,12 +88,10 @@ export const VideoCard = ({ video }: VideoCardProps) => {
               )}
               <span>•</span>
               <>
-                {evaluationAverages.consistency !== null && (
-                  <span className="flex items-center gap-1" title="일관성">
-                    <Target className="w-3 h-3" />
-                    {evaluationAverages.consistency === null ? "-" : evaluationAverages.consistency.toFixed(2)}
-                  </span>
-                )}
+                <span className="flex items-center gap-1" title="일관성">
+                  <Target className="w-3 h-3" />
+                  {evaluationAverages.consistency === null ? "-" : evaluationAverages.consistency.toFixed(2)}
+                </span>
                 {evaluationAverages.probability !== null && (
                   <span className="flex items-center gap-1" title="개연성">
                     <Sparkles className="w-3 h-3" />
