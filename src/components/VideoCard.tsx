@@ -52,7 +52,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
             <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate mb-1">
+            <h3 className="font-semibold text-foreground line-clamp-2 mb-1">
               {video.title}
             </h3>
             <p className="text-sm text-muted-foreground">{video.profiles.name}</p>
