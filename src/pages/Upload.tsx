@@ -14,6 +14,22 @@ import { toast } from "sonner";
 import { Loader2, Upload as UploadIcon, Image as ImageIcon, X } from "lucide-react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 
+// Maximum file size: 500MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024;
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes >= 1024 * 1024 * 1024) {
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+  }
+  if (bytes >= 1024 * 1024) {
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+  if (bytes >= 1024) {
+    return (bytes / 1024).toFixed(2) + " KB";
+  }
+  return bytes + " bytes";
+};
+
 export default function Upload() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +59,12 @@ export default function Upload() {
   }, [user, authLoading, navigate]);
 
   const handleVideoSelect = (file: File) => {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`파일 크기가 너무 큽니다. 최대 ${formatFileSize(MAX_FILE_SIZE)}까지 업로드 가능합니다. (현재: ${formatFileSize(file.size)})`);
+      return;
+    }
+
     // Clean up previous preview URL
     if (videoPreviewUrl) {
       URL.revokeObjectURL(videoPreviewUrl);
