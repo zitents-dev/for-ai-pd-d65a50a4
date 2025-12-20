@@ -418,6 +418,15 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
     }
 
     try {
+      // If pinning a new comment, first unpin any existing pinned comment
+      if (!isPinned) {
+        await supabase
+          .from("comments")
+          .update({ pinned_at: null })
+          .eq("video_id", videoId)
+          .not("pinned_at", "is", null);
+      }
+
       const { error } = await supabase
         .from("comments")
         .update({ pinned_at: isPinned ? null : new Date().toISOString() })
