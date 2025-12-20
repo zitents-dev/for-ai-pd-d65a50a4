@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check, ThumbsUp, ThumbsDown, Loader2, Clock, TrendingUp } from "lucide-react";
+import { Trash2, Reply, X, ChevronDown, ChevronUp, Pencil, Check, ThumbsUp, ThumbsDown, Loader2, Clock, TrendingUp, Pin, PinOff } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Badge } from "@/components/ui/badge";
 
 interface Comment {
   id: string;
@@ -27,6 +28,7 @@ interface Comment {
   updated_at: string | null;
   user_id: string;
   parent_id: string | null;
+  pinned_at: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -36,6 +38,7 @@ interface Comment {
 
 interface CommentSectionProps {
   videoId: string;
+  creatorId: string;
 }
 
 // Helper function to count total replies recursively
@@ -52,8 +55,9 @@ const countAllComments = (comments: Comment[]): number => {
 // Threshold for auto-collapsing threads
 const AUTO_COLLAPSE_THRESHOLD = 3;
 
-export function CommentSection({ videoId }: CommentSectionProps) {
+export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
   const { user } = useAuth();
+  const isCreator = user?.id === creatorId;
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -405,17 +409,40 @@ export function CommentSection({ videoId }: CommentSectionProps) {
     }
   };
 
-  const renderComment = (comment: Comment, depth = 0) => {
+  const handlePinComment = async (commentId: string, isPinned: boolean) => {
+    if (!isCreator) {
+      toast.error("영상 제작자만 댓글을 고정할 수 있습니다");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .update({ pinned_at: isPinned ? null : new Date().toISOString() })
+        .eq("id", commentId);
+
+      if (error) throw error;
+
+      toast.success(isPinned ? "댓글 고정이 해제되었습니다" : "댓글이 고정되었습니다");
+      loadComments();
+    } catch (error) {
+      console.error("Error pinning comment:", error);
+      toast.error("댓글 고정 처리에 실패했습니다");
+    }
+  };
+
+  const renderComment = (comment: Comment, depth = 0, isPinnedSection = false) => {
     const maxIndent = 4; // Maximum nesting visual depth
     const indentLevel = Math.min(depth, maxIndent);
     const replyCount = countReplies(comment);
     const isCollapsed = collapsedThreads.has(comment.id);
     const hasReplies = comment.replies && comment.replies.length > 0;
+    const isPinned = !!comment.pinned_at;
     
     return (
       <div key={comment.id} className="space-y-2">
         <Card 
-          className={`p-4 ${depth > 0 ? "border-l-2 border-primary/20" : ""}`}
+          className={`p-4 ${depth > 0 ? "border-l-2 border-primary/20" : ""} ${isPinned && isPinnedSection ? "border-primary bg-primary/5" : ""}`}
           style={{ marginLeft: `${indentLevel * 24}px` }}
         >
           <div className="flex gap-3">
@@ -427,20 +454,28 @@ export function CommentSection({ videoId }: CommentSectionProps) {
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h4 className="font-semibold text-foreground">
-                    {comment.profiles.name}
-                  </h4>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>
-                      {formatDistanceToNow(new Date(comment.created_at), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    {comment.updated_at && new Date(comment.updated_at).getTime() > new Date(comment.created_at).getTime() + 1000 && (
-                      <span className="text-xs">(수정됨)</span>
-                    )}
+                <div className="flex items-center gap-2">
+                  <div>
+                    <h4 className="font-semibold text-foreground">
+                      {comment.profiles.name}
+                    </h4>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>
+                        {formatDistanceToNow(new Date(comment.created_at), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                      {comment.updated_at && new Date(comment.updated_at).getTime() > new Date(comment.created_at).getTime() + 1000 && (
+                        <span className="text-xs">(수정됨)</span>
+                      )}
+                    </div>
                   </div>
+                  {isPinned && (
+                    <Badge variant="secondary" className="gap-1">
+                      <Pin className="w-3 h-3" />
+                      고정됨
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   {/* Like/Dislike buttons */}
@@ -503,6 +538,18 @@ export function CommentSection({ videoId }: CommentSectionProps) {
                       onClick={() => setDeleteConfirmId(comment.id)}
                     >
                       <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {/* Pin/Unpin button for video creator */}
+                  {isCreator && depth === 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handlePinComment(comment.id, isPinned)}
+                      className={isPinned ? "text-primary" : "text-muted-foreground"}
+                      title={isPinned ? "고정 해제" : "댓글 고정"}
+                    >
+                      {isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
                     </Button>
                   )}
                 </div>
@@ -707,7 +754,18 @@ export function CommentSection({ videoId }: CommentSectionProps) {
           </Card>
         ) : (
           <>
+            {/* Pinned comments section */}
+            {comments.filter(c => c.pinned_at).length > 0 && (
+              <div className="space-y-4">
+                {comments
+                  .filter(c => c.pinned_at)
+                  .sort((a, b) => new Date(b.pinned_at!).getTime() - new Date(a.pinned_at!).getTime())
+                  .map((comment) => renderComment(comment, 0, true))}
+              </div>
+            )}
+            {/* Regular comments */}
             {[...comments]
+              .filter(c => !c.pinned_at)
               .sort((a, b) => {
                 if (sortBy === 'liked') {
                   const aLikes = (commentLikes[a.id]?.likes || 0) - (commentLikes[a.id]?.dislikes || 0);
@@ -718,31 +776,34 @@ export function CommentSection({ videoId }: CommentSectionProps) {
               })
               .slice(0, visibleCount)
               .map((comment) => renderComment(comment, 0))}
-            {visibleCount < comments.length && (
-              <div className="flex justify-center pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setLoadingMore(true);
-                    setTimeout(() => {
-                      setVisibleCount(prev => prev + COMMENTS_PER_PAGE);
-                      setLoadingMore(false);
-                    }, 300);
-                  }}
-                  disabled={loadingMore}
-                  className="w-full max-w-xs"
-                >
-                  {loadingMore ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      로딩 중...
-                    </>
-                  ) : (
-                    `댓글 더 보기 (${comments.length - visibleCount}개 남음)`
-                  )}
-                </Button>
-              </div>
-            )}
+            {(() => {
+              const unpinnedComments = comments.filter(c => !c.pinned_at);
+              return visibleCount < unpinnedComments.length && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setLoadingMore(true);
+                      setTimeout(() => {
+                        setVisibleCount(prev => prev + COMMENTS_PER_PAGE);
+                        setLoadingMore(false);
+                      }, 300);
+                    }}
+                    disabled={loadingMore}
+                    className="w-full max-w-xs"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        로딩 중...
+                      </>
+                    ) : (
+                      `댓글 더 보기 (${unpinnedComments.length - visibleCount}개 남음)`
+                    )}
+                  </Button>
+                </div>
+              );
+            })()}
           </>
         )}
       </div>
