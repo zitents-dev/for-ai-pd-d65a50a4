@@ -84,7 +84,6 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                   </span>
                 </>
               )}
-              <span>•</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
