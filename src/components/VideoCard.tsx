@@ -2,8 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Eye, ThumbsUp, ThumbsDown, Target, Sparkles } from "lucide-react";
-import { useVideoEvaluationAverages } from "@/components/VideoEvaluation";
+import { Eye, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface VideoCardProps {
   video: {
@@ -24,10 +23,9 @@ interface VideoCardProps {
 
 export const VideoCard = ({ video }: VideoCardProps) => {
   const navigate = useNavigate();
-  const evaluationAverages = useVideoEvaluationAverages(video.id);
 
   return (
-    <Card
+    <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
       onClick={() => navigate(`/video/${video.id}`)}
     >
@@ -53,7 +51,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
         </div>
         {video.duration !== null && video.duration !== undefined && (
           <span className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm z-10">
-            {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, "0")}
+            {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
           </span>
         )}
       </div>
@@ -87,18 +85,6 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                 </>
               )}
               <span>•</span>
-              <>
-                <span className="flex items-center gap-1" title="일관성">
-                  <Target className="w-3 h-3" />
-                  {evaluationAverages.consistency === null ? "-.00" : evaluationAverages.consistency.toFixed(2)}
-                </span>
-                <span className="flex items-center gap-1" title="개연성">
-                  <Sparkles className="w-3 h-3" />
-                  {evaluationAverages.probability === null ? "-.00" : evaluationAverages.probability.toFixed(2)}
-                </span>
-              </>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
             </div>
           </div>
