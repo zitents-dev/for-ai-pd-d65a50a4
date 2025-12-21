@@ -25,7 +25,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
   const navigate = useNavigate();
 
   return (
-    <Card 
+    <Card
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
       onClick={() => navigate(`/video/${video.id}`)}
     >
@@ -51,7 +51,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
         </div>
         {video.duration !== null && video.duration !== undefined && (
           <span className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm z-10">
-            {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+            {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, "0")}
           </span>
         )}
       </div>
@@ -85,6 +85,8 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                 </>
               )}
               <span>•</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
             </div>
           </div>
