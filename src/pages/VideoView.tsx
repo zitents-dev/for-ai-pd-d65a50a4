@@ -335,167 +335,174 @@ export default function VideoView() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          {/* Video Player */}
-          <Card className="overflow-hidden">
-            <video
-              src={video.video_url}
-              controls
-              className="w-full aspect-video bg-black"
-              autoPlay
-            />
-          </Card>
-
-          {/* Video Info */}
-          <div className="space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-foreground mb-2">{video.title}</h1>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-4 h-4" />
-                    {video.views.toLocaleString()} views
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <LikeDislikeButtons
-                  videoId={video.id}
-                  initialLiked={isLiked}
-                  initialDisliked={isDisliked}
-                  initialLikesCount={video.likes_count || 0}
-                  initialDislikesCount={video.dislikes_count || 0}
-                />
-                <Button
-                  variant={isFavorited ? "default" : "outline"}
-                  size="sm"
-                  onClick={toggleFavorite}
-                  className="gap-2"
-                >
-                  <Heart className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
-                  {isFavorited ? "Favorited" : "Favorite"}
-                </Button>
-                <ReportDialog videoId={video.id} />
-              </div>
-            </div>
-
-            {/* Creator Info */}
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <Avatar 
-                  className="w-12 h-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                  onClick={() => navigate(`/profile/${video.creator_id}`)}
-                >
-                  <AvatarImage src={video.profiles.avatar_url || ""} />
-                  <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 
-                      className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => navigate(`/profile/${video.creator_id}`)}
-                    >
-                      {video.profiles.name}
-                    </h3>
-                    <BadgeDisplay badges={creatorBadges} size="sm" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    구독자 {subscriberCount.toLocaleString()}명
-                  </p>
-                </div>
-                {user?.id !== video.creator_id && (
-                  <Button
-                    variant={isSubscribed ? "secondary" : "default"}
-                    size="sm"
-                    onClick={toggleSubscription}
-                    className="gap-2"
-                  >
-                    {isSubscribed ? (
-                      <>
-                        <UserCheck className="w-4 h-4" />
-                        구독중
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-4 h-4" />
-                        구독
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Side - Main Content */}
+          <div className="flex-1 space-y-6">
+            {/* Video Player */}
+            <Card className="overflow-hidden">
+              <video
+                src={video.video_url}
+                controls
+                className="w-full aspect-video bg-black"
+                autoPlay
+              />
             </Card>
 
-            {/* Video Details */}
-            {(video.ai_solution || video.category || (video.prompt_command && video.show_prompt)) && (
+            {/* Video Info */}
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold text-foreground mb-2">{video.title}</h1>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      {video.views.toLocaleString()} views
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <LikeDislikeButtons
+                    videoId={video.id}
+                    initialLiked={isLiked}
+                    initialDisliked={isDisliked}
+                    initialLikesCount={video.likes_count || 0}
+                    initialDislikesCount={video.dislikes_count || 0}
+                  />
+                  <Button
+                    variant={isFavorited ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleFavorite}
+                    className="gap-2"
+                  >
+                    <Heart className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
+                    {isFavorited ? "Favorited" : "Favorite"}
+                  </Button>
+                  <ReportDialog videoId={video.id} />
+                </div>
+              </div>
+
+              {/* Creator Info */}
               <Card className="p-4">
-                <div className="space-y-3">
-                  {video.ai_solution && (
-                    <div>
-                      <span className="text-sm font-semibold text-foreground">AI Solution: </span>
-                      <span className="text-sm text-muted-foreground">{video.ai_solution}</span>
+                <div className="flex items-center gap-3">
+                  <Avatar 
+                    className="w-12 h-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                    onClick={() => navigate(`/profile/${video.creator_id}`)}
+                  >
+                    <AvatarImage src={video.profiles.avatar_url || ""} />
+                    <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 
+                        className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => navigate(`/profile/${video.creator_id}`)}
+                      >
+                        {video.profiles.name}
+                      </h3>
+                      <BadgeDisplay badges={creatorBadges} size="sm" />
                     </div>
-                  )}
-                  {video.category && (
-                    <div>
-                      <span className="text-sm font-semibold text-foreground">Category: </span>
-                      <span className="text-sm text-muted-foreground capitalize">{video.category}</span>
-                    </div>
-                  )}
-                  {video.prompt_command && video.show_prompt && (
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
-                          <Info className="w-4 h-4" />
-                          <span className="text-sm font-semibold">프롬프트 명령어 보기</span>
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-2">
-                        <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
-                          {video.prompt_command}
-                        </pre>
-                      </CollapsibleContent>
-                    </Collapsible>
+                    <p className="text-sm text-muted-foreground">
+                      구독자 {subscriberCount.toLocaleString()}명
+                    </p>
+                  </div>
+                  {user?.id !== video.creator_id && (
+                    <Button
+                      variant={isSubscribed ? "secondary" : "default"}
+                      size="sm"
+                      onClick={toggleSubscription}
+                      className="gap-2"
+                    >
+                      {isSubscribed ? (
+                        <>
+                          <UserCheck className="w-4 h-4" />
+                          구독중
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4" />
+                          구독
+                        </>
+                      )}
+                    </Button>
                   )}
                 </div>
               </Card>
-            )}
 
-            {/* Description */}
-            {video.description && (
-              <Card className="p-4">
-                <h3 className="font-semibold text-foreground mb-2">설명</h3>
-                <p className="text-muted-foreground whitespace-pre-wrap">{video.description}</p>
-              </Card>
-            )}
+              {/* Video Details */}
+              {(video.ai_solution || video.category || (video.prompt_command && video.show_prompt)) && (
+                <Card className="p-4">
+                  <div className="space-y-3">
+                    {video.ai_solution && (
+                      <div>
+                        <span className="text-sm font-semibold text-foreground">AI Solution: </span>
+                        <span className="text-sm text-muted-foreground">{video.ai_solution}</span>
+                      </div>
+                    )}
+                    {video.category && (
+                      <div>
+                        <span className="text-sm font-semibold text-foreground">Category: </span>
+                        <span className="text-sm text-muted-foreground capitalize">{video.category}</span>
+                      </div>
+                    )}
+                    {video.prompt_command && video.show_prompt && (
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
+                            <Info className="w-4 h-4" />
+                            <span className="text-sm font-semibold">프롬프트 명령어 보기</span>
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2">
+                          <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
+                            {video.prompt_command}
+                          </pre>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+                  </div>
+                </Card>
+              )}
 
-            {/* Tags */}
-            {video.tags && video.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {video.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
+              {/* Description */}
+              {video.description && (
+                <Card className="p-4">
+                  <h3 className="font-semibold text-foreground mb-2">설명</h3>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{video.description}</p>
+                </Card>
+              )}
 
-            {/* Related Videos */}
-            <RelatedVideoList
-              currentVideoId={video.id}
-              creatorId={video.creator_id}
-              creatorName={video.profiles.name}
-            />
+              {/* Tags */}
+              {video.tags && video.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {video.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-            {/* Comments Section */}
-            <CommentSection videoId={video.id} creatorId={video.creator_id} />
+              {/* Comments Section */}
+              <CommentSection videoId={video.id} creatorId={video.creator_id} />
+            </div>
+          </div>
+
+          {/* Right Side - Related Videos */}
+          <div className="lg:w-96 lg:shrink-0">
+            <div className="lg:sticky lg:top-4">
+              <RelatedVideoList
+                currentVideoId={video.id}
+                creatorId={video.creator_id}
+                creatorName={video.profiles.name}
+              />
+            </div>
           </div>
         </div>
       </div>
