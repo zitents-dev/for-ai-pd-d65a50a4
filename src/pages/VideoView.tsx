@@ -341,8 +341,10 @@ export default function VideoView() {
             {/* Video Player */}
             <Card className="overflow-hidden">
               <video
+                key={video.id}
                 src={video.video_url}
                 controls
+                playsInline
                 className="w-full aspect-video bg-black"
                 autoPlay
               />
