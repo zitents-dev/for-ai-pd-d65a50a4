@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoCard } from "@/components/VideoCard";
-import { Flame, Clock, Users, User } from "lucide-react";
+import { Flame, Clock, Users, User, Loader2 } from "lucide-react";
 
 type CategoryType = "popular" | "recent" | "subscribed" | "creator";
+
+const VIDEOS_PER_PAGE = 5;
 
 interface Video {
   id: string;
@@ -35,14 +37,34 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
   const [category, setCategory] = useState<CategoryType>("popular");
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  // Reset when category changes
+  useEffect(() => {
+    setVideos([]);
+    setPage(0);
+    setHasMore(true);
+    setLoading(true);
+  }, [category, currentVideoId, creatorId]);
+
+  // Load videos when page changes
   useEffect(() => {
     loadVideos();
-  }, [category, currentVideoId, creatorId, user]);
+  }, [page, category, currentVideoId, creatorId, user]);
 
   const loadVideos = async () => {
-    setLoading(true);
+    if (page === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
+      const offset = page * VIDEOS_PER_PAGE;
       let query = supabase
         .from("videos")
         .select(`
@@ -59,7 +81,7 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
           )
         `)
         .neq("id", currentVideoId)
-        .limit(8);
+        .range(offset, offset + VIDEOS_PER_PAGE - 1);
 
       switch (category) {
         case "popular":
@@ -70,7 +92,6 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
           break;
         case "subscribed":
           if (user) {
-            // Get subscribed creators
             const { data: subscriptions } = await supabase
               .from("subscriptions")
               .select("creator_id")
@@ -82,11 +103,15 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
             } else {
               setVideos([]);
               setLoading(false);
+              setLoadingMore(false);
+              setHasMore(false);
               return;
             }
           } else {
             setVideos([]);
             setLoading(false);
+            setLoadingMore(false);
+            setHasMore(false);
             return;
           }
           break;
@@ -98,6 +123,11 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
       const { data, error } = await query;
 
       if (error) throw error;
+
+      // Check if there are more videos
+      if (!data || data.length < VIDEOS_PER_PAGE) {
+        setHasMore(false);
+      }
 
       // Load like counts for each video
       const videosWithLikes = await Promise.all(
@@ -124,13 +154,35 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
         })
       );
 
-      setVideos(videosWithLikes);
+      if (page === 0) {
+        setVideos(videosWithLikes);
+      } else {
+        setVideos((prev) => [...prev, ...videosWithLikes]);
+      }
     } catch (error) {
       console.error("Error loading videos:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
+
+  // Intersection Observer for infinite scroll
+  const lastVideoRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loading || loadingMore) return;
+      if (observerRef.current) observerRef.current.disconnect();
+
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage((prev) => prev + 1);
+        }
+      });
+
+      if (node) observerRef.current.observe(node);
+    },
+    [loading, loadingMore, hasMore]
+  );
 
   const categories = [
     { id: "popular" as const, label: "인기", icon: Flame },
@@ -159,14 +211,14 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
         ))}
       </div>
 
-      {/* Video List */}
+      {/* Video List - Single Column */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="flex flex-col gap-4">
+          {[...Array(3)].map((_, i) => (
             <div key={i} className="space-y-3">
               <Skeleton className="aspect-video w-full rounded-lg" />
               <div className="flex gap-3">
-                <Skeleton className="w-10 h-10 rounded-full" />
+                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
@@ -184,10 +236,29 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
             : "영상이 없습니다"}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {videos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+        <div className="flex flex-col gap-4">
+          {videos.map((video, index) => (
+            <div
+              key={video.id}
+              ref={index === videos.length - 1 ? lastVideoRef : null}
+            >
+              <VideoCard video={video} />
+            </div>
           ))}
+          
+          {/* Loading More Indicator */}
+          {loadingMore && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          
+          {/* End of List */}
+          {!hasMore && videos.length > 0 && (
+            <div className="text-center py-4 text-sm text-muted-foreground">
+              더 이상 영상이 없습니다
+            </div>
+          )}
         </div>
       )}
     </Card>
