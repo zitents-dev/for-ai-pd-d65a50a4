@@ -799,6 +799,72 @@ export type Database = {
           },
         ]
       }
+      video_evaluations: {
+        Row: {
+          consistency_score: number | null
+          created_at: string
+          id: string
+          probability_score: number | null
+          updated_at: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          consistency_score?: number | null
+          created_at?: string
+          id?: string
+          probability_score?: number | null
+          updated_at?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          consistency_score?: number | null
+          created_at?: string
+          id?: string
+          probability_score?: number | null
+          updated_at?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_evaluations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_evaluations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "video_evaluations_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "trending_videos_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_evaluations_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_details_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_evaluations_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       videos: {
         Row: {
           age_restriction: string[] | null

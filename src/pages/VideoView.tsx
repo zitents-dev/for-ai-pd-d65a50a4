@@ -13,6 +13,7 @@ import { LikeDislikeButtons } from "@/components/LikeDislikeButtons";
 import { ReportDialog } from "@/components/ReportDialog";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
+import { RelatedVideoList } from "@/components/RelatedVideoList";
 import {
   Collapsible,
   CollapsibleContent,
@@ -485,6 +486,13 @@ export default function VideoView() {
                 ))}
               </div>
             )}
+
+            {/* Related Videos */}
+            <RelatedVideoList
+              currentVideoId={video.id}
+              creatorId={video.creator_id}
+              creatorName={video.profiles.name}
+            />
 
             {/* Comments Section */}
             <CommentSection videoId={video.id} creatorId={video.creator_id} />
