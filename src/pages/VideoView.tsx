@@ -61,7 +61,15 @@ export default function VideoView() {
   const [creatorBadges, setCreatorBadges] = useState<Badge[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
-  const [isRelatedOpen, setIsRelatedOpen] = useState(true);
+  const [isRelatedOpen, setIsRelatedOpen] = useState(() => {
+    const saved = localStorage.getItem('relatedVideosOpen');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Persist collapse state
+  useEffect(() => {
+    localStorage.setItem('relatedVideosOpen', JSON.stringify(isRelatedOpen));
+  }, [isRelatedOpen]);
 
   useEffect(() => {
     if (id) {
