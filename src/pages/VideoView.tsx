@@ -506,28 +506,33 @@ export default function VideoView() {
           </div>
 
           {/* Right Side - Related Videos */}
-          <div className={`transition-all duration-300 ${isRelatedOpen ? 'lg:w-96 lg:shrink-0' : 'lg:w-12 lg:shrink-0'}`}>
+          <div 
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              isRelatedOpen ? 'lg:w-96 lg:shrink-0 lg:opacity-100' : 'lg:w-12 lg:shrink-0'
+            }`}
+          >
             <div className="lg:sticky lg:top-4">
-              {isRelatedOpen ? (
+              <div className={`transition-all duration-300 ease-in-out ${isRelatedOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none absolute'}`}>
                 <RelatedVideoList
                   currentVideoId={video.id}
                   creatorId={video.creator_id}
                   creatorName={video.profiles.name}
                   onCollapse={() => setIsRelatedOpen(false)}
                 />
-              ) : (
-                <Card className="p-2 flex items-center justify-center">
+              </div>
+              <div className={`transition-all duration-300 ease-in-out ${!isRelatedOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none absolute'}`}>
+                <Card className="p-2 flex items-center justify-center h-12">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsRelatedOpen(true)}
-                    className="h-10 w-10 p-0"
+                    className="h-10 w-10 p-0 transition-transform duration-200 hover:scale-110"
                     title="관련 영상 열기"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
                 </Card>
-              )}
+              </div>
             </div>
           </div>
         </div>
