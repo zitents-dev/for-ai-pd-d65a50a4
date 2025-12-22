@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoCard } from "@/components/VideoCard";
-import { Flame, Clock, Users, User, Loader2 } from "lucide-react";
+import { Flame, Clock, Users, User, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 type CategoryType = "popular" | "recent" | "subscribed" | "creator";
 
@@ -40,6 +41,7 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const [isOpen, setIsOpen] = useState(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -193,74 +195,89 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
 
   return (
     <Card className="p-4">
-      <h3 className="font-semibold text-foreground mb-4">관련 영상</h3>
-      
-      {/* Category Buttons */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {categories.map((cat) => (
-          <Button
-            key={cat.id}
-            variant={category === cat.id ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCategory(cat.id)}
-            className="gap-2"
-          >
-            <cat.icon className="w-4 h-4" />
-            <span className="truncate max-w-[80px]">{cat.label}</span>
-          </Button>
-        ))}
-      </div>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md p-1 -m-1 transition-colors mb-4">
+            <h3 className="font-semibold text-foreground">관련 영상</h3>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          {/* Category Buttons */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {categories.map((cat) => (
+              <Button
+                key={cat.id}
+                variant={category === cat.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCategory(cat.id)}
+                className="gap-2"
+              >
+                <cat.icon className="w-4 h-4" />
+                <span className="truncate max-w-[80px]">{cat.label}</span>
+              </Button>
+            ))}
+          </div>
 
-      {/* Video List - Single Column */}
-      {loading ? (
-        <div className="flex flex-col gap-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="aspect-video w-full rounded-lg" />
-              <div className="flex gap-3">
-                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+          {/* Video List - Single Column */}
+          {loading ? (
+            <div className="flex flex-col gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-video w-full rounded-lg" />
+                  <div className="flex gap-3">
+                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : videos.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          {category === "subscribed" && !user
-            ? "로그인하여 구독한 크리에이터의 영상을 확인하세요"
-            : category === "subscribed"
-            ? "구독한 크리에이터가 없습니다"
-            : "영상이 없습니다"}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {videos.map((video, index) => (
-            <div
-              key={video.id}
-              ref={index === videos.length - 1 ? lastVideoRef : null}
-            >
-              <VideoCard video={video} />
+          ) : videos.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {category === "subscribed" && !user
+                ? "로그인하여 구독한 크리에이터의 영상을 확인하세요"
+                : category === "subscribed"
+                ? "구독한 크리에이터가 없습니다"
+                : "영상이 없습니다"}
             </div>
-          ))}
-          
-          {/* Loading More Indicator */}
-          {loadingMore && (
-            <div className="flex justify-center py-4">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {videos.map((video, index) => (
+                <div
+                  key={video.id}
+                  ref={index === videos.length - 1 ? lastVideoRef : null}
+                >
+                  <VideoCard video={video} />
+                </div>
+              ))}
+              
+              {/* Loading More Indicator */}
+              {loadingMore && (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              
+              {/* End of List */}
+              {!hasMore && videos.length > 0 && (
+                <div className="text-center py-4 text-sm text-muted-foreground">
+                  더 이상 영상이 없습니다
+                </div>
+              )}
             </div>
           )}
-          
-          {/* End of List */}
-          {!hasMore && videos.length > 0 && (
-            <div className="text-center py-4 text-sm text-muted-foreground">
-              더 이상 영상이 없습니다
-            </div>
-          )}
-        </div>
-      )}
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 };
