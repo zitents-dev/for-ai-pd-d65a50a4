@@ -5,7 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Eye, Calendar, Info, UserPlus, UserCheck } from "lucide-react";
+import { Heart, Eye, Calendar, Info, UserPlus, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -61,6 +61,7 @@ export default function VideoView() {
   const [creatorBadges, setCreatorBadges] = useState<Badge[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
+  const [isRelatedOpen, setIsRelatedOpen] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -337,7 +338,7 @@ export default function VideoView() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Side - Main Content */}
-          <div className="flex-1 space-y-6">
+          <div className={`flex-1 space-y-6 transition-all duration-300 ${!isRelatedOpen ? 'lg:max-w-none' : ''}`}>
             {/* Video Player */}
             <Card className="overflow-hidden">
               <video
@@ -497,13 +498,28 @@ export default function VideoView() {
           </div>
 
           {/* Right Side - Related Videos */}
-          <div className="lg:w-96 lg:shrink-0">
+          <div className={`transition-all duration-300 ${isRelatedOpen ? 'lg:w-96 lg:shrink-0' : 'lg:w-12 lg:shrink-0'}`}>
             <div className="lg:sticky lg:top-4">
-              <RelatedVideoList
-                currentVideoId={video.id}
-                creatorId={video.creator_id}
-                creatorName={video.profiles.name}
-              />
+              {isRelatedOpen ? (
+                <RelatedVideoList
+                  currentVideoId={video.id}
+                  creatorId={video.creator_id}
+                  creatorName={video.profiles.name}
+                  onCollapse={() => setIsRelatedOpen(false)}
+                />
+              ) : (
+                <Card className="p-2 flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsRelatedOpen(true)}
+                    className="h-10 w-10 p-0"
+                    title="관련 영상 열기"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                </Card>
+              )}
             </div>
           </div>
         </div>
