@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoCard } from "@/components/VideoCard";
-import { Flame, Clock, Users, User, Loader2, ChevronDown, ChevronUp } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Flame, Clock, Users, User, Loader2, ChevronRight } from "lucide-react";
 
 type CategoryType = "popular" | "recent" | "subscribed" | "creator";
 
@@ -31,9 +30,10 @@ interface RelatedVideoListProps {
   currentVideoId: string;
   creatorId: string;
   creatorName: string;
+  onCollapse?: () => void;
 }
 
-export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: RelatedVideoListProps) => {
+export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCollapse }: RelatedVideoListProps) => {
   const { user } = useAuth();
   const [category, setCategory] = useState<CategoryType>("popular");
   const [videos, setVideos] = useState<Video[]>([]);
@@ -41,7 +41,6 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const [isOpen, setIsOpen] = useState(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -195,21 +194,20 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
 
   return (
     <Card className="p-4">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md p-1 -m-1 transition-colors mb-4">
-            <h3 className="font-semibold text-foreground">관련 영상</h3>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              {isOpen ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </CollapsibleTrigger>
-        
-        <CollapsibleContent>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-foreground">관련 영상</h3>
+        {onCollapse && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCollapse}
+            className="h-8 w-8 p-0"
+            title="접기"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
           {/* Category Buttons */}
           <div className="flex flex-wrap gap-2 mb-4">
             {categories.map((cat) => (
@@ -276,8 +274,6 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName }: Rel
               )}
             </div>
           )}
-        </CollapsibleContent>
-      </Collapsible>
     </Card>
   );
 };
