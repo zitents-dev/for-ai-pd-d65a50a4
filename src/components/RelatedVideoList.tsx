@@ -15,6 +15,7 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url: string;
   duration: number | null;
   views: number;
   created_at: string;
@@ -72,6 +73,7 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
           id,
           title,
           thumbnail_url,
+          video_url,
           duration,
           views,
           created_at,
