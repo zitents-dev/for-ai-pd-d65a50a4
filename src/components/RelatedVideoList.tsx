@@ -231,7 +231,7 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
             <div className="flex flex-col gap-3">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex gap-2">
-                  <Skeleton className="w-28 h-16 rounded-md shrink-0" />
+                  <Skeleton className="w-40 h-[90px] rounded-md shrink-0" />
                   <div className="flex-1 space-y-2 py-1">
                     <Skeleton className="h-3 w-full" />
                     <Skeleton className="h-3 w-3/4" />

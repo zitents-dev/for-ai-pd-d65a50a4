@@ -65,9 +65,9 @@ export function RelatedVideoCard({ video }: RelatedVideoCardProps) {
       className="flex gap-2 cursor-pointer group"
       onClick={() => navigate(`/video/${video.id}`)}
     >
-      {/* Thumbnail - smaller with video preview */}
+      {/* Thumbnail - medium size with video preview */}
       <div
-        className="relative w-28 h-16 shrink-0 rounded-md overflow-hidden bg-muted"
+        className="relative w-40 h-[90px] shrink-0 rounded-md overflow-hidden bg-muted"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
