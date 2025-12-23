@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { LikeDislikeButtons } from "@/components/LikeDislikeButtons";
 import { ReportDialog } from "@/components/ReportDialog";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
 import { RelatedVideoList } from "@/components/RelatedVideoList";
@@ -348,16 +349,11 @@ export default function VideoView() {
           {/* Left Side - Main Content */}
           <div className={`flex-1 space-y-6 transition-all duration-300 ${!isRelatedOpen ? 'lg:max-w-none' : ''}`}>
             {/* Video Player */}
-            <Card className="overflow-hidden">
-              <video
-                key={video.id}
-                src={video.video_url}
-                controls
-                playsInline
-                className="w-full aspect-video bg-black"
-                autoPlay
-              />
-            </Card>
+            <VideoPlayer
+              videoId={video.id}
+              src={video.video_url}
+              autoPlay
+            />
 
             {/* Video Info */}
             <div className="space-y-4">
