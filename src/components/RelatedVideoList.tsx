@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VideoCard } from "@/components/VideoCard";
+import { RelatedVideoCard } from "@/components/RelatedVideoCard";
 import { Flame, Clock, Users, User, Loader2, ChevronRight } from "lucide-react";
 
 type CategoryType = "popular" | "recent" | "subscribed" | "creator";
@@ -224,18 +224,16 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
             ))}
           </div>
 
-          {/* Video List - Single Column */}
+          {/* Video List - Compact horizontal cards */}
           {loading ? (
-            <div className="flex flex-col gap-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-video w-full rounded-lg" />
-                  <div className="flex gap-3">
-                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
+            <div className="flex flex-col gap-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex gap-2">
+                  <Skeleton className="w-28 h-16 rounded-md shrink-0" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-3/4" />
+                    <Skeleton className="h-2 w-1/2" />
                   </div>
                 </div>
               ))}
@@ -249,13 +247,13 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
                 : "영상이 없습니다"}
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {videos.map((video, index) => (
                 <div
                   key={video.id}
                   ref={index === videos.length - 1 ? lastVideoRef : null}
                 >
-                  <VideoCard video={video} />
+                  <RelatedVideoCard video={video} />
                 </div>
               ))}
               
