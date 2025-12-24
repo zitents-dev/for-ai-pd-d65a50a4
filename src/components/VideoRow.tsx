@@ -10,6 +10,7 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url?: string;
   duration: number | null;
   views: number;
   created_at: string;

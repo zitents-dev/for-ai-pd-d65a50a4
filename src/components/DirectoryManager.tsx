@@ -44,6 +44,7 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url: string;
+  video_url?: string;
   duration: number;
   views: number;
   created_at: string;
@@ -125,6 +126,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
             id,
             title,
             thumbnail_url,
+            video_url,
             duration,
             views,
             created_at,

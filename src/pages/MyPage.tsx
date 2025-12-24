@@ -79,6 +79,7 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url?: string;
   duration: number | null;
   views: number | null;
   created_at: string;
@@ -285,6 +286,7 @@ export default function MyPage() {
         id: v.id!,
         title: v.title || "",
         thumbnail_url: v.thumbnail_url,
+        video_url: v.video_url || undefined,
         duration: v.duration,
         views: v.views,
         created_at: v.created_at || "",
