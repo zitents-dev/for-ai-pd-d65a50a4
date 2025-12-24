@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ interface MyVideoCardProps {
     id: string;
     title: string;
     thumbnail_url?: string | null;
+    video_url?: string;
     duration?: number | null;
     views?: number | null;
     created_at?: string | null;
@@ -74,12 +75,35 @@ export function MyVideoCard({
   onMoveToDirectory,
 }: MyVideoCardProps) {
   const navigate = useNavigate();
+  const [isHovering, setIsHovering] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button, [role='checkbox'], [role='menuitem']")) {
       return;
     }
     navigate(`/video/${video.id}`);
+  };
+
+  const handleMouseEnter = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovering(true);
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
+    }, 500);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setIsHovering(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
   };
 
   return (
@@ -97,27 +121,62 @@ export function MyVideoCard({
         </div>
 
         {/* Thumbnail */}
-        <div className="relative w-32 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted group/thumbnail">
+        <div
+          className="relative w-32 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted group/thumbnail"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {/* Thumbnail Image */}
           {video.thumbnail_url ? (
             <img
               src={video.thumbnail_url}
               alt={video.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover/thumbnail:scale-110"
+              className={`w-full h-full object-cover transition-all duration-300 ${
+                isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
+              }`}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Play className="h-8 w-8 text-muted-foreground" />
             </div>
           )}
-          {/* Hover overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover/thumbnail:bg-black/20 transition-colors duration-300" />
-          {/* Play icon on hover */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300">
-            <div className="w-8 h-8 rounded-full bg-primary/90 flex items-center justify-center backdrop-blur-sm">
-              <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
+
+          {/* Video Preview on Hover */}
+          {video.video_url && (
+            <video
+              ref={videoRef}
+              src={video.video_url}
+              muted
+              loop
+              playsInline
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
+                isHovering ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          )}
+
+          {/* Hover overlay - only show when not previewing video */}
+          {!isHovering && (
+            <div className="absolute inset-0 bg-black/0 group-hover/thumbnail:bg-black/20 transition-colors duration-300" />
+          )}
+          {/* Play icon on hover - only show when not previewing video */}
+          {!isHovering && !video.video_url && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumbnail:opacity-100 transition-opacity duration-300">
+              <div className="w-8 h-8 rounded-full bg-primary/90 flex items-center justify-center backdrop-blur-sm">
+                <Play className="w-4 h-4 text-primary-foreground ml-0.5" fill="currentColor" />
+              </div>
             </div>
-          </div>
-          {video.duration !== null && video.duration !== undefined && (
+          )}
+
+          {/* Preview indicator */}
+          {isHovering && video.video_url && (
+            <div className="absolute top-1 left-1 bg-primary/80 text-primary-foreground text-[8px] px-1 py-0.5 rounded font-medium z-10">
+              미리보기
+            </div>
+          )}
+
+          {/* Duration badge - hide when previewing */}
+          {video.duration !== null && video.duration !== undefined && !isHovering && (
             <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 rounded z-10">
               {formatDuration(video.duration)}
             </span>

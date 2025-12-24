@@ -11,6 +11,7 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url?: string;
   duration: number | null;
   views: number;
   created_at: string;
@@ -103,7 +104,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, duration, views, created_at,
+          id, title, thumbnail_url, video_url, duration, views, created_at,
           profiles (name, avatar_url)
         `,
         )
@@ -143,7 +144,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, duration, views, created_at,
+          id, title, thumbnail_url, video_url, duration, views, created_at,
           profiles (name, avatar_url)
         `,
         )
@@ -196,6 +197,7 @@ export default function Home() {
           id: v.id!,
           title: v.title!,
           thumbnail_url: v.thumbnail_url,
+          video_url: v.video_url || undefined,
           duration: v.duration,
           views: v.views || 0,
           created_at: v.created_at!,
@@ -245,7 +247,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, duration, views, created_at,
+          id, title, thumbnail_url, video_url, duration, views, created_at,
           profiles (name, avatar_url)
         `,
         )

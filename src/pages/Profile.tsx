@@ -43,6 +43,7 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url?: string;
   duration: number | null;
   views: number | null;
   created_at: string;
@@ -175,7 +176,7 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from('videos')
-        .select('id, title, thumbnail_url, duration, views, created_at')
+        .select('id, title, thumbnail_url, video_url, duration, views, created_at')
         .eq('creator_id', userId)
         .order('created_at', { ascending: false });
 

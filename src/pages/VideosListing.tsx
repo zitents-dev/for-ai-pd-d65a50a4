@@ -24,6 +24,7 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url?: string;
   duration: number | null;
   views: number;
   created_at: string;
@@ -130,7 +131,7 @@ export default function VideosListing() {
           
           let query = supabase
             .from("videos")
-            .select(`id, title, thumbnail_url, duration, views, created_at, profiles (name, avatar_url)`)
+            .select(`id, title, thumbnail_url, video_url, duration, views, created_at, profiles (name, avatar_url)`)
             .in("creator_id", mentorIds)
             .order("created_at", { ascending: false });
 
@@ -145,7 +146,7 @@ export default function VideosListing() {
       } else if (section === "recent") {
         let query = supabase
           .from("videos")
-          .select(`id, title, thumbnail_url, duration, views, created_at, profiles (name, avatar_url)`)
+          .select(`id, title, thumbnail_url, video_url, duration, views, created_at, profiles (name, avatar_url)`)
           .order("created_at", { ascending: false });
 
         if (cat !== "all") {
@@ -172,6 +173,7 @@ export default function VideosListing() {
           id: v.id!,
           title: v.title!,
           thumbnail_url: v.thumbnail_url,
+          video_url: v.video_url || undefined,
           duration: v.duration,
           views: v.views || 0,
           created_at: v.created_at!,
@@ -193,7 +195,7 @@ export default function VideosListing() {
           
           let query = supabase
             .from("videos")
-            .select(`id, title, thumbnail_url, duration, views, created_at, profiles (name, avatar_url)`)
+            .select(`id, title, thumbnail_url, video_url, duration, views, created_at, profiles (name, avatar_url)`)
             .in("creator_id", creatorIds)
             .order("created_at", { ascending: false });
 
