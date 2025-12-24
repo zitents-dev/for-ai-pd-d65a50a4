@@ -17,7 +17,6 @@ import {
   Minimize,
   Settings,
   Gauge,
-  RotateCcw,
 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -32,7 +31,6 @@ export function VideoPlayer({ videoId, src, autoPlay = true }: VideoPlayerProps)
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isEnded, setIsEnded] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
@@ -46,10 +44,7 @@ export function VideoPlayer({ videoId, src, autoPlay = true }: VideoPlayerProps)
     const video = videoRef.current;
     if (!video) return;
 
-    const handlePlay = () => {
-      setIsPlaying(true);
-      setIsEnded(false);
-    };
+    const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
     const handleLoadedMetadata = () => setDuration(video.duration);
@@ -57,17 +52,12 @@ export function VideoPlayer({ videoId, src, autoPlay = true }: VideoPlayerProps)
       setVolume(video.volume);
       setIsMuted(video.muted);
     };
-    const handleEnded = () => {
-      setIsPlaying(false);
-      setIsEnded(true);
-    };
 
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("volumechange", handleVolumeChange);
-    video.addEventListener("ended", handleEnded);
 
     return () => {
       video.removeEventListener("play", handlePlay);
@@ -75,7 +65,6 @@ export function VideoPlayer({ videoId, src, autoPlay = true }: VideoPlayerProps)
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("volumechange", handleVolumeChange);
-      video.removeEventListener("ended", handleEnded);
     };
   }, []);
 
@@ -113,15 +102,6 @@ export function VideoPlayer({ videoId, src, autoPlay = true }: VideoPlayerProps)
     } else {
       video.pause();
     }
-  };
-
-  const handleReplay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    
-    video.currentTime = 0;
-    setIsEnded(false);
-    video.play();
   };
 
   const toggleMute = () => {
@@ -314,21 +294,8 @@ export function VideoPlayer({ videoId, src, autoPlay = true }: VideoPlayerProps)
           </div>
         </div>
 
-        {/* Ended Overlay with Replay Button */}
-        {isEnded && (
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 cursor-pointer"
-            onClick={handleReplay}
-          >
-            <div className="bg-primary/90 rounded-full p-5 hover:bg-primary transition-colors mb-4">
-              <RotateCcw className="h-10 w-10 text-primary-foreground" />
-            </div>
-            <span className="text-white text-lg font-medium">다시보기</span>
-          </div>
-        )}
-
-        {/* Center Play Button on Pause (only when not ended) */}
-        {!isPlaying && !isEnded && (
+        {/* Center Play Button on Pause */}
+        {!isPlaying && (
           <div
             className="absolute inset-0 flex items-center justify-center cursor-pointer"
             onClick={togglePlay}
