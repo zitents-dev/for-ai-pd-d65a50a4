@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Eye, ThumbsUp, ThumbsDown } from "lucide-react";
@@ -26,6 +27,7 @@ interface VideoCardProps {
 export const VideoCard = ({ video }: VideoCardProps) => {
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -59,12 +61,18 @@ export const VideoCard = ({ video }: VideoCardProps) => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Skeleton loader */}
+        {!isImageLoaded && (
+          <Skeleton className="absolute inset-0 w-full h-full" />
+        )}
+
         {/* Thumbnail Image */}
         <img
           src={video.thumbnail_url || "/placeholder.svg"}
           alt={video.title}
+          onLoad={() => setIsImageLoaded(true)}
           className={`w-full h-full object-cover transition-all duration-300 ${
-            isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
+            !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
           }`}
         />
 
