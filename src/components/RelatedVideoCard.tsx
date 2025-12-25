@@ -72,19 +72,13 @@ export function RelatedVideoCard({ video }: RelatedVideoCardProps) {
         onMouseLeave={handleMouseLeave}
       >
         {/* Thumbnail Image */}
-        {video.thumbnail_url ? (
-          <img
-            src={video.thumbnail_url}
-            alt={video.title}
-            className={`w-full h-full object-cover transition-opacity duration-200 ${
-              isHovering ? "opacity-0" : "opacity-100"
-            }`}
-          />
-        ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-xs text-muted-foreground">No thumbnail</span>
-          </div>
-        )}
+        <img
+          src={video.thumbnail_url || "/placeholder.svg"}
+          alt={video.title}
+          className={`w-full h-full object-cover transition-opacity duration-200 ${
+            isHovering ? "opacity-0" : "opacity-100"
+          }`}
+        />
 
         {/* Video Preview on Hover */}
         {video.video_url && (
