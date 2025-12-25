@@ -1,8 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
-import { VideoCard } from "@/components/VideoCard";
-import { VideoCardSkeleton } from "@/components/VideoCardSkeleton";
+import { VirtualVideoGrid } from "@/components/VirtualVideoGrid";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import { PullToRefreshIndicator } from "@/components/PullToRefresh";
@@ -63,7 +62,6 @@ export default function VideosListing() {
   const { section } = useParams<{ section: SectionType }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -250,30 +248,13 @@ export default function VideosListing() {
     isEnabled: !loading,
   });
 
-  // Infinite scroll with intersection observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          const nextPage = page + 1;
-          setPage(nextPage);
-          loadVideos(nextPage, category, true);
-        }
-      },
-      { threshold: 0.1, rootMargin: "100px" }
-    );
-
-    const currentRef = loadMoreRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
+  const handleLoadMore = useCallback(() => {
+    if (!loadingMore && !loading && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      loadVideos(nextPage, category, true);
     }
-
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
-    };
-  }, [hasMore, loadingMore, loading, page, category, loadVideos]);
+  }, [loadingMore, loading, hasMore, page, category, loadVideos]);
 
   if (!section || !SECTION_TITLES[section as SectionType]) {
     navigate("/");
@@ -314,38 +295,14 @@ export default function VideosListing() {
           </Select>
         </div>
 
-        {/* Videos Grid */}
-        {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : videos.length === 0 ? (
-          <div className="text-center py-24">
-            <p className="text-muted-foreground text-lg">No videos found in this section.</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {videos.map((video) => (
-                <VideoCard key={video.id} video={video} />
-              ))}
-            </div>
-
-            {/* Infinite scroll trigger */}
-            <div ref={loadMoreRef} className="w-full py-4">
-              {loadingMore && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  <VideoCardSkeleton count={4} variant="grid" />
-                </div>
-              )}
-              {!hasMore && videos.length > 0 && (
-                <p className="text-center text-muted-foreground py-4">
-                  No more videos to load
-                </p>
-              )}
-            </div>
-          </>
-        )}
+        {/* Virtual Video Grid */}
+        <VirtualVideoGrid
+          videos={videos}
+          loading={loading}
+          loadingMore={loadingMore}
+          hasMore={hasMore}
+          onLoadMore={handleLoadMore}
+        />
       </div>
       <ScrollProgressBar />
       <BackToTopButton />
