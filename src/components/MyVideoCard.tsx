@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { useLazyLoad } from "@/hooks/useLazyLoad";
 
 interface MyVideoCardProps {
   video: {
@@ -80,6 +81,7 @@ export function MyVideoCard({
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { ref: lazyRef, isInView } = useLazyLoad<HTMLDivElement>();
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button, [role='checkbox'], [role='menuitem']")) {
@@ -124,24 +126,27 @@ export function MyVideoCard({
 
         {/* Thumbnail */}
         <div
+          ref={lazyRef}
           className="relative w-32 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted group/thumbnail"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
           {/* Skeleton loader */}
-          {!isImageLoaded && (
+          {(!isInView || !isImageLoaded) && (
             <Skeleton className="absolute inset-0 w-full h-full" />
           )}
 
-          {/* Thumbnail Image */}
-          <img
-            src={video.thumbnail_url || "/placeholder.svg"}
-            alt={video.title}
-            onLoad={() => setIsImageLoaded(true)}
-            className={`w-full h-full object-cover transition-all duration-300 ${
-              !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
-            }`}
-          />
+          {/* Thumbnail Image - only load when in view */}
+          {isInView && (
+            <img
+              src={video.thumbnail_url || "/placeholder.svg"}
+              alt={video.title}
+              onLoad={() => setIsImageLoaded(true)}
+              className={`w-full h-full object-cover transition-all duration-300 ${
+                !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
+              }`}
+            />
+          )}
 
           {/* Video Preview on Hover */}
           {video.video_url && (
