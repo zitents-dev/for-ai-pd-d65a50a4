@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RelatedVideoCardProps {
   video: {
@@ -20,6 +21,7 @@ interface RelatedVideoCardProps {
 export function RelatedVideoCard({ video }: RelatedVideoCardProps) {
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -71,12 +73,18 @@ export function RelatedVideoCard({ video }: RelatedVideoCardProps) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Skeleton loader */}
+        {!isImageLoaded && (
+          <Skeleton className="absolute inset-0 w-full h-full" />
+        )}
+
         {/* Thumbnail Image */}
         <img
           src={video.thumbnail_url || "/placeholder.svg"}
           alt={video.title}
+          onLoad={() => setIsImageLoaded(true)}
           className={`w-full h-full object-cover transition-opacity duration-200 ${
-            isHovering ? "opacity-0" : "opacity-100"
+            !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100"
           }`}
         />
 
