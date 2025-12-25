@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLazyLoad } from "@/hooks/useLazyLoad";
 
 interface RelatedVideoCardProps {
   video: {
@@ -24,6 +25,7 @@ export function RelatedVideoCard({ video }: RelatedVideoCardProps) {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { ref: lazyRef, isInView } = useLazyLoad<HTMLDivElement>();
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return "0:00";
@@ -69,24 +71,27 @@ export function RelatedVideoCard({ video }: RelatedVideoCardProps) {
     >
       {/* Thumbnail - medium size with video preview */}
       <div
+        ref={lazyRef}
         className="relative w-40 h-[90px] shrink-0 rounded-md overflow-hidden bg-muted"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         {/* Skeleton loader */}
-        {!isImageLoaded && (
+        {(!isInView || !isImageLoaded) && (
           <Skeleton className="absolute inset-0 w-full h-full" />
         )}
 
-        {/* Thumbnail Image */}
-        <img
-          src={video.thumbnail_url || "/placeholder.svg"}
-          alt={video.title}
-          onLoad={() => setIsImageLoaded(true)}
-          className={`w-full h-full object-cover transition-opacity duration-200 ${
-            !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100"
-          }`}
-        />
+        {/* Thumbnail Image - only load when in view */}
+        {isInView && (
+          <img
+            src={video.thumbnail_url || "/placeholder.svg"}
+            alt={video.title}
+            onLoad={() => setIsImageLoaded(true)}
+            className={`w-full h-full object-cover transition-opacity duration-200 ${
+              !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100"
+            }`}
+          />
+        )}
 
         {/* Video Preview on Hover */}
         {video.video_url && (

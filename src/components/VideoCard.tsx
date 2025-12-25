@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Eye, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useLazyLoad } from "@/hooks/useLazyLoad";
 
 interface VideoCardProps {
   video: {
@@ -30,6 +31,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { ref: lazyRef, isInView } = useLazyLoad<HTMLDivElement>();
 
   const handleMouseEnter = () => {
     hoverTimeoutRef.current = setTimeout(() => {
@@ -57,24 +59,27 @@ export const VideoCard = ({ video }: VideoCardProps) => {
       onClick={() => navigate(`/video/${video.id}`)}
     >
       <div
+        ref={lazyRef}
         className="relative aspect-video bg-muted overflow-hidden group/thumbnail"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         {/* Skeleton loader */}
-        {!isImageLoaded && (
+        {(!isInView || !isImageLoaded) && (
           <Skeleton className="absolute inset-0 w-full h-full" />
         )}
 
-        {/* Thumbnail Image */}
-        <img
-          src={video.thumbnail_url || "/placeholder.svg"}
-          alt={video.title}
-          onLoad={() => setIsImageLoaded(true)}
-          className={`w-full h-full object-cover transition-all duration-300 ${
-            !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
-          }`}
-        />
+        {/* Thumbnail Image - only load when in view */}
+        {isInView && (
+          <img
+            src={video.thumbnail_url || "/placeholder.svg"}
+            alt={video.title}
+            onLoad={() => setIsImageLoaded(true)}
+            className={`w-full h-full object-cover transition-all duration-300 ${
+              !isImageLoaded ? "opacity-0" : isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
+            }`}
+          />
+        )}
 
         {/* Video Preview on Hover */}
         {video.video_url && (
