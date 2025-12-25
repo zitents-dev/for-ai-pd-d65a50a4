@@ -60,17 +60,13 @@ export const VideoCard = ({ video }: VideoCardProps) => {
         onMouseLeave={handleMouseLeave}
       >
         {/* Thumbnail Image */}
-        {video.thumbnail_url ? (
-          <img
-            src={video.thumbnail_url}
-            alt={video.title}
-            className={`w-full h-full object-cover transition-all duration-300 ${
-              isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
-            }`}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-black/90"></div>
-        )}
+        <img
+          src={video.thumbnail_url || "/placeholder.svg"}
+          alt={video.title}
+          className={`w-full h-full object-cover transition-all duration-300 ${
+            isHovering ? "opacity-0" : "opacity-100 group-hover/thumbnail:scale-110"
+          }`}
+        />
 
         {/* Video Preview on Hover */}
         {video.video_url && (
