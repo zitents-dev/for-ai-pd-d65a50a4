@@ -211,14 +211,14 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
         )}
       </div>
           {/* Category Buttons */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
             {categories.map((cat) => (
               <Button
                 key={cat.id}
                 variant={category === cat.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCategory(cat.id)}
-                className="gap-2"
+                className="gap-2 shrink-0"
               >
                 <cat.icon className="w-4 h-4" />
                 <span className="truncate max-w-[80px]">{cat.label}</span>
