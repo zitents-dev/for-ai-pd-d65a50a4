@@ -47,6 +47,15 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  
+  // Touch swipe state for momentum scrolling
+  const touchStartX = useRef(0);
+  const touchStartScrollLeft = useRef(0);
+  const velocity = useRef(0);
+  const lastTouchX = useRef(0);
+  const lastTouchTime = useRef(0);
+  const momentumAnimationRef = useRef<number | null>(null);
+  const isDragging = useRef(false);
 
   // Check scroll position for indicators
   const checkScrollPosition = useCallback(() => {
@@ -82,6 +91,87 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
       });
     }
   };
+
+  // Touch event handlers for momentum scrolling
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    // Cancel any ongoing momentum animation
+    if (momentumAnimationRef.current) {
+      cancelAnimationFrame(momentumAnimationRef.current);
+      momentumAnimationRef.current = null;
+    }
+    
+    isDragging.current = true;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartScrollLeft.current = container.scrollLeft;
+    lastTouchX.current = e.touches[0].clientX;
+    lastTouchTime.current = Date.now();
+    velocity.current = 0;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    const currentX = e.touches[0].clientX;
+    const diff = touchStartX.current - currentX;
+    container.scrollLeft = touchStartScrollLeft.current + diff;
+    
+    // Calculate velocity
+    const now = Date.now();
+    const dt = now - lastTouchTime.current;
+    if (dt > 0) {
+      velocity.current = (lastTouchX.current - currentX) / dt;
+    }
+    lastTouchX.current = currentX;
+    lastTouchTime.current = now;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    isDragging.current = false;
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    // Apply momentum scrolling
+    const friction = 0.95;
+    const minVelocity = 0.01;
+    
+    const animateMomentum = () => {
+      if (Math.abs(velocity.current) < minVelocity) {
+        momentumAnimationRef.current = null;
+        return;
+      }
+      
+      container.scrollLeft += velocity.current * 16; // 16ms per frame
+      velocity.current *= friction;
+      
+      // Stop at boundaries
+      if (container.scrollLeft <= 0 || 
+          container.scrollLeft >= container.scrollWidth - container.clientWidth) {
+        velocity.current = 0;
+        momentumAnimationRef.current = null;
+        return;
+      }
+      
+      momentumAnimationRef.current = requestAnimationFrame(animateMomentum);
+    };
+    
+    if (Math.abs(velocity.current) > minVelocity) {
+      momentumAnimationRef.current = requestAnimationFrame(animateMomentum);
+    }
+  }, []);
+
+  // Cleanup momentum animation on unmount
+  useEffect(() => {
+    return () => {
+      if (momentumAnimationRef.current) {
+        cancelAnimationFrame(momentumAnimationRef.current);
+      }
+    };
+  }, []);
 
   // Reset when category changes
   useEffect(() => {
@@ -264,10 +354,14 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
               </div>
             )}
             
-            {/* Scrollable container */}
+            {/* Scrollable container with touch support */}
             <div 
               ref={categoryScrollRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-1"
+              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-1 touch-pan-x"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {categories.map((cat) => (
                 <Button
