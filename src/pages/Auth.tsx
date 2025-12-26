@@ -73,6 +73,7 @@ export default function Auth() {
       provider: "google",
       options: {
         redirectTo: redirectUrl,
+        scopes: 'https://www.googleapis.com/auth/user.birthday.read',
       },
     });
 
@@ -90,6 +91,7 @@ export default function Auth() {
       provider: "kakao",
       options: {
         redirectTo: redirectUrl,
+        scopes: 'account_email profile_nickname birthday',
       },
     });
 
