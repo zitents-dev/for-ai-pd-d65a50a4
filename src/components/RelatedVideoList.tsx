@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RelatedVideoCard } from "@/components/RelatedVideoCard";
-import { Flame, Clock, Users, User, Loader2, ChevronRight } from "lucide-react";
+import { Flame, Clock, Users, User, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 
 type CategoryType = "popular" | "recent" | "subscribed" | "creator";
 
@@ -44,6 +44,44 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
   const [page, setPage] = useState(0);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Check scroll position for indicators
+  const checkScrollPosition = useCallback(() => {
+    const container = categoryScrollRef.current;
+    if (container) {
+      setCanScrollLeft(container.scrollLeft > 0);
+      setCanScrollRight(
+        container.scrollLeft < container.scrollWidth - container.clientWidth - 1
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    const container = categoryScrollRef.current;
+    if (container) {
+      checkScrollPosition();
+      container.addEventListener("scroll", checkScrollPosition);
+      window.addEventListener("resize", checkScrollPosition);
+      return () => {
+        container.removeEventListener("scroll", checkScrollPosition);
+        window.removeEventListener("resize", checkScrollPosition);
+      };
+    }
+  }, [checkScrollPosition]);
+
+  const scrollCategories = (direction: "left" | "right") => {
+    const container = categoryScrollRef.current;
+    if (container) {
+      const scrollAmount = 120;
+      container.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   // Reset when category changes
   useEffect(() => {
@@ -210,20 +248,54 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
           </Button>
         )}
       </div>
-          {/* Category Buttons */}
-          <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
-            {categories.map((cat) => (
-              <Button
-                key={cat.id}
-                variant={category === cat.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCategory(cat.id)}
-                className="gap-2 shrink-0"
-              >
-                <cat.icon className="w-4 h-4" />
-                <span className="truncate max-w-[80px]">{cat.label}</span>
-              </Button>
-            ))}
+          {/* Category Buttons with scroll indicators */}
+          <div className="relative mb-4">
+            {/* Left scroll indicator */}
+            {canScrollLeft && (
+              <div className="absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-card to-transparent z-10 flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => scrollCategories("left")}
+                  className="h-6 w-6 p-0 bg-card/80 hover:bg-card shadow-sm"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Scrollable container */}
+            <div 
+              ref={categoryScrollRef}
+              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-1"
+            >
+              {categories.map((cat) => (
+                <Button
+                  key={cat.id}
+                  variant={category === cat.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCategory(cat.id)}
+                  className="gap-2 shrink-0"
+                >
+                  <cat.icon className="w-4 h-4" />
+                  <span className="truncate max-w-[80px]">{cat.label}</span>
+                </Button>
+              ))}
+            </div>
+            
+            {/* Right scroll indicator */}
+            {canScrollRight && (
+              <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-card to-transparent z-10 flex items-center justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => scrollCategories("right")}
+                  className="h-6 w-6 p-0 bg-card/80 hover:bg-card shadow-sm"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Video List - Compact horizontal cards */}
