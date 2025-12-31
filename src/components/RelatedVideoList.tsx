@@ -48,14 +48,15 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   
-  // Touch swipe state for momentum scrolling
-  const touchStartX = useRef(0);
-  const touchStartScrollLeft = useRef(0);
+  // Touch/mouse drag state for momentum scrolling
+  const dragStartX = useRef(0);
+  const dragStartScrollLeft = useRef(0);
   const velocity = useRef(0);
-  const lastTouchX = useRef(0);
-  const lastTouchTime = useRef(0);
+  const lastDragX = useRef(0);
+  const lastDragTime = useRef(0);
   const momentumAnimationRef = useRef<number | null>(null);
   const isDragging = useRef(false);
+  const isMouseDragging = useRef(false);
 
   // Check scroll position for indicators
   const checkScrollPosition = useCallback(() => {
@@ -92,50 +93,11 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
     }
   };
 
-  // Touch event handlers for momentum scrolling
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+  // Shared momentum animation
+  const applyMomentum = useCallback(() => {
     const container = categoryScrollRef.current;
     if (!container) return;
     
-    // Cancel any ongoing momentum animation
-    if (momentumAnimationRef.current) {
-      cancelAnimationFrame(momentumAnimationRef.current);
-      momentumAnimationRef.current = null;
-    }
-    
-    isDragging.current = true;
-    touchStartX.current = e.touches[0].clientX;
-    touchStartScrollLeft.current = container.scrollLeft;
-    lastTouchX.current = e.touches[0].clientX;
-    lastTouchTime.current = Date.now();
-    velocity.current = 0;
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging.current) return;
-    const container = categoryScrollRef.current;
-    if (!container) return;
-    
-    const currentX = e.touches[0].clientX;
-    const diff = touchStartX.current - currentX;
-    container.scrollLeft = touchStartScrollLeft.current + diff;
-    
-    // Calculate velocity
-    const now = Date.now();
-    const dt = now - lastTouchTime.current;
-    if (dt > 0) {
-      velocity.current = (lastTouchX.current - currentX) / dt;
-    }
-    lastTouchX.current = currentX;
-    lastTouchTime.current = now;
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    isDragging.current = false;
-    const container = categoryScrollRef.current;
-    if (!container) return;
-    
-    // Apply momentum scrolling
     const friction = 0.95;
     const minVelocity = 0.01;
     
@@ -145,10 +107,9 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
         return;
       }
       
-      container.scrollLeft += velocity.current * 16; // 16ms per frame
+      container.scrollLeft += velocity.current * 16;
       velocity.current *= friction;
       
-      // Stop at boundaries
       if (container.scrollLeft <= 0 || 
           container.scrollLeft >= container.scrollWidth - container.clientWidth) {
         velocity.current = 0;
@@ -163,6 +124,106 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
       momentumAnimationRef.current = requestAnimationFrame(animateMomentum);
     }
   }, []);
+
+  // Touch event handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    if (momentumAnimationRef.current) {
+      cancelAnimationFrame(momentumAnimationRef.current);
+      momentumAnimationRef.current = null;
+    }
+    
+    isDragging.current = true;
+    dragStartX.current = e.touches[0].clientX;
+    dragStartScrollLeft.current = container.scrollLeft;
+    lastDragX.current = e.touches[0].clientX;
+    lastDragTime.current = Date.now();
+    velocity.current = 0;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    const currentX = e.touches[0].clientX;
+    const diff = dragStartX.current - currentX;
+    container.scrollLeft = dragStartScrollLeft.current + diff;
+    
+    const now = Date.now();
+    const dt = now - lastDragTime.current;
+    if (dt > 0) {
+      velocity.current = (lastDragX.current - currentX) / dt;
+    }
+    lastDragX.current = currentX;
+    lastDragTime.current = now;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    isDragging.current = false;
+    applyMomentum();
+  }, [applyMomentum]);
+
+  // Mouse drag event handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    if (momentumAnimationRef.current) {
+      cancelAnimationFrame(momentumAnimationRef.current);
+      momentumAnimationRef.current = null;
+    }
+    
+    isMouseDragging.current = true;
+    dragStartX.current = e.clientX;
+    dragStartScrollLeft.current = container.scrollLeft;
+    lastDragX.current = e.clientX;
+    lastDragTime.current = Date.now();
+    velocity.current = 0;
+    
+    container.style.cursor = 'grabbing';
+    container.style.userSelect = 'none';
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isMouseDragging.current) return;
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    e.preventDefault();
+    const currentX = e.clientX;
+    const diff = dragStartX.current - currentX;
+    container.scrollLeft = dragStartScrollLeft.current + diff;
+    
+    const now = Date.now();
+    const dt = now - lastDragTime.current;
+    if (dt > 0) {
+      velocity.current = (lastDragX.current - currentX) / dt;
+    }
+    lastDragX.current = currentX;
+    lastDragTime.current = now;
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    if (!isMouseDragging.current) return;
+    isMouseDragging.current = false;
+    
+    const container = categoryScrollRef.current;
+    if (container) {
+      container.style.cursor = 'grab';
+      container.style.userSelect = '';
+    }
+    
+    applyMomentum();
+  }, [applyMomentum]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (isMouseDragging.current) {
+      handleMouseUp();
+    }
+  }, [handleMouseUp]);
 
   // Cleanup momentum animation on unmount
   useEffect(() => {
@@ -354,13 +415,17 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
               </div>
             )}
             
-            {/* Scrollable container with touch support */}
+            {/* Scrollable container with touch and mouse drag support */}
             <div 
               ref={categoryScrollRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-1 touch-pan-x"
+              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-1 touch-pan-x cursor-grab"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {categories.map((cat) => (
