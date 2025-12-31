@@ -93,6 +93,41 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
     }
   };
 
+  // Snap to nearest button
+  const snapToNearestButton = useCallback(() => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    
+    const buttons = container.querySelectorAll('button');
+    if (buttons.length === 0) return;
+    
+    const containerLeft = container.getBoundingClientRect().left;
+    const containerScrollLeft = container.scrollLeft;
+    
+    let nearestButton: Element | null = null;
+    let minDistance = Infinity;
+    
+    buttons.forEach((button) => {
+      const buttonRect = button.getBoundingClientRect();
+      const buttonLeft = buttonRect.left - containerLeft + containerScrollLeft;
+      const distance = Math.abs(buttonLeft - containerScrollLeft);
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestButton = button;
+      }
+    });
+    
+    if (nearestButton) {
+      const buttonRect = (nearestButton as HTMLElement).getBoundingClientRect();
+      const buttonLeft = buttonRect.left - containerLeft + containerScrollLeft;
+      container.scrollTo({
+        left: buttonLeft,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
   // Shared momentum animation
   const applyMomentum = useCallback(() => {
     const container = categoryScrollRef.current;
@@ -104,6 +139,7 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
     const animateMomentum = () => {
       if (Math.abs(velocity.current) < minVelocity) {
         momentumAnimationRef.current = null;
+        snapToNearestButton();
         return;
       }
       
@@ -114,6 +150,7 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
           container.scrollLeft >= container.scrollWidth - container.clientWidth) {
         velocity.current = 0;
         momentumAnimationRef.current = null;
+        snapToNearestButton();
         return;
       }
       
@@ -122,8 +159,10 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
     
     if (Math.abs(velocity.current) > minVelocity) {
       momentumAnimationRef.current = requestAnimationFrame(animateMomentum);
+    } else {
+      snapToNearestButton();
     }
-  }, []);
+  }, [snapToNearestButton]);
 
   // Touch event handlers
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -415,10 +454,10 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
               </div>
             )}
             
-            {/* Scrollable container with touch and mouse drag support */}
+            {/* Scrollable container with touch and mouse drag support + snap */}
             <div 
               ref={categoryScrollRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-1 touch-pan-x cursor-grab"
+              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-1 touch-pan-x cursor-grab snap-x snap-mandatory"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -434,7 +473,7 @@ export const RelatedVideoList = ({ currentVideoId, creatorId, creatorName, onCol
                   variant={category === cat.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCategory(cat.id)}
-                  className="gap-2 shrink-0"
+                  className="gap-2 shrink-0 snap-start"
                 >
                   <cat.icon className="w-4 h-4" />
                   <span className="truncate max-w-[80px]">{cat.label}</span>
