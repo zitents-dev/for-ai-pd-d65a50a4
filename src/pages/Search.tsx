@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
-import { VideoCard } from "@/components/VideoCard";
+import { VirtualVideoGrid } from "@/components/VirtualVideoGrid";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -198,17 +198,11 @@ export default function Search() {
               </TabsList>
 
               <TabsContent value="videos" className="mt-6">
-                {videos.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {videos.map((video) => (
-                      <VideoCard key={video.id} video={video} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    작품을 찾을 수 없습니다
-                  </div>
-                )}
+                <VirtualVideoGrid
+                  videos={videos.map(v => ({ ...v, views: v.views ?? 0 }))}
+                  loading={false}
+                  hasMore={false}
+                />
               </TabsContent>
 
               <TabsContent value="creators" className="mt-6">
