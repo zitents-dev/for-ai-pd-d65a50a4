@@ -5,6 +5,7 @@ import { BackToTopButton } from "@/components/BackToTopButton";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { GraduationCap } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Video {
@@ -342,7 +343,7 @@ export default function Home() {
       <div className="py-6">
         {/* Mentor Videos */}
         <VideoRow
-          title="🎓 멘토 영상"
+          title="멘토 영상"
           videos={mentorVideos}
           loading={mentorLoading && mentorVideos.length > 0}
           initialLoading={mentorInitialLoading}
@@ -353,6 +354,7 @@ export default function Home() {
           highlighted
           collapsible
           storageKey="mentor-videos-collapsed"
+          icon={GraduationCap}
           onLoadMore={() => {
             if (!mentorLoading && mentorHasMore) {
               const nextPage = mentorPage + 1;
