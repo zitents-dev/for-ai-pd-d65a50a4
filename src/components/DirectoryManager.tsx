@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy } from "lucide-react";
+import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil } from "lucide-react";
 import { VideoCard } from "./VideoCard";
 import { Badge } from "@/components/ui/badge";
 
@@ -91,6 +91,12 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [bulkCopyDialogOpen, setBulkCopyDialogOpen] = useState(false);
   const [copyTargetDirectoryIds, setCopyTargetDirectoryIds] = useState<Set<string>>(new Set());
   const [isCopying, setIsCopying] = useState(false);
+
+  // Rename directory states
+  const [renameDialogOpen, setRenameDialogOpen] = useState<string | null>(null);
+  const [renameDirName, setRenameDirName] = useState("");
+  const [renameDirDescription, setRenameDirDescription] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
   useEffect(() => {
     loadDirectories();
   }, [user]);
@@ -208,6 +214,48 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
       console.error("Error deleting directory:", error);
       toast.error("디렉토리 삭제에 실패했습니다");
     }
+  };
+
+  const renameDirectory = async (directoryId: string) => {
+    if (!renameDirName.trim()) {
+      toast.error("디렉토리 이름을 입력해주세요");
+      return;
+    }
+
+    setIsRenaming(true);
+
+    try {
+      const { error } = await supabase
+        .from("directories")
+        .update({
+          name: renameDirName.trim(),
+          description: renameDirDescription.trim() || null,
+        })
+        .eq("id", directoryId);
+
+      if (error) throw error;
+
+      toast.success("디렉토리가 수정되었습니다");
+      setRenameDialogOpen(null);
+      setRenameDirName("");
+      setRenameDirDescription("");
+      loadDirectories();
+    } catch (error: any) {
+      console.error("Error renaming directory:", error);
+      if (error.code === "23505") {
+        toast.error("이미 같은 이름의 디렉토리가 있습니다");
+      } else {
+        toast.error("디렉토리 수정에 실패했습니다");
+      }
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const openRenameDialog = (dir: Directory) => {
+    setRenameDirName(dir.name);
+    setRenameDirDescription(dir.description || "");
+    setRenameDialogOpen(dir.id);
   };
 
   const removeVideoFromDirectory = async (videoId: string) => {
@@ -536,58 +584,73 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                           </Badge>
                         )}
                       </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>디렉토리 삭제</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              "{dir.name}" 디렉토리를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <div className="flex items-center space-x-2 py-4">
-                            <Checkbox
-                              id={`dir-delete-agree-${dir.id}`}
-                              checked={deleteAgreed[dir.id] || false}
-                              onCheckedChange={(checked) =>
-                                setDeleteAgreed((prev) => ({ ...prev, [dir.id]: checked === true }))
-                              }
-                            />
-                            <label
-                              htmlFor={`dir-delete-agree-${dir.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      <div className="flex items-center gap-1">
+                        {/* Rename Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRenameDialog(dir);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        {/* Delete Button */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              삭제에 동의합니다
-                            </label>
-                          </div>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel
-                              onClick={() => setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }))}
-                            >
-                              취소
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => {
-                                deleteDirectory(dir.id);
-                                setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }));
-                              }}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              disabled={!deleteAgreed[dir.id]}
-                            >
-                              삭제
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>디렉토리 삭제</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                "{dir.name}" 디렉토리를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="flex items-center space-x-2 py-4">
+                              <Checkbox
+                                id={`dir-delete-agree-${dir.id}`}
+                                checked={deleteAgreed[dir.id] || false}
+                                onCheckedChange={(checked) =>
+                                  setDeleteAgreed((prev) => ({ ...prev, [dir.id]: checked === true }))
+                                }
+                              />
+                              <label
+                                htmlFor={`dir-delete-agree-${dir.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                삭제에 동의합니다
+                              </label>
+                            </div>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                onClick={() => setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }))}
+                              >
+                                취소
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  deleteDirectory(dir.id);
+                                  setDeleteAgreed((prev) => ({ ...prev, [dir.id]: false }));
+                                }}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                disabled={!deleteAgreed[dir.id]}
+                              >
+                                삭제
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                     <h3 className="font-semibold text-sm truncate">{dir.name}</h3>
                     {dir.description && (
@@ -1013,6 +1076,48 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
           </CardContent>
         </Card>
       )}
+
+      {/* Rename Directory Dialog */}
+      <Dialog open={renameDialogOpen !== null} onOpenChange={(open) => !open && setRenameDialogOpen(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>디렉토리 수정</DialogTitle>
+            <DialogDescription>디렉토리 이름과 설명을 수정하세요</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rename-name">디렉토리 이름 *</Label>
+              <Input
+                id="rename-name"
+                value={renameDirName}
+                onChange={(e) => setRenameDirName(e.target.value)}
+                placeholder="예: 교육용 영상"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rename-description">설명 (선택)</Label>
+              <Textarea
+                id="rename-description"
+                value={renameDirDescription}
+                onChange={(e) => setRenameDirDescription(e.target.value)}
+                placeholder="디렉토리에 대한 설명"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(null)}>
+              취소
+            </Button>
+            <Button
+              onClick={() => renameDialogOpen && renameDirectory(renameDialogOpen)}
+              disabled={isRenaming || !renameDirName.trim()}
+            >
+              {isRenaming ? "수정 중..." : "수정하기"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
