@@ -24,7 +24,7 @@ export const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center gap-4 px-4">
-        <NavLink to="/" className="font-bold text-xl flex items-center gap-2">
+        <NavLink to="/" className="font-bold text-xl flex items-center gap-1">
           <img src={logo} alt="Hephai logo" className="h-8 w-9" />
           <img src={str} alt="Hephai string" className="h-8 w-32" />
         </NavLink>
