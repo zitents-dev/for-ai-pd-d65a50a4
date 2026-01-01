@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Heart, Eye, Calendar, Info, UserPlus, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -459,6 +460,7 @@ export default function VideoView() {
                   <span className="font-semibold text-foreground">카테고리</span>
                   <span className="text-muted-foreground capitalize">{video.category || '-'}</span>
                 </div>
+                <Separator className="my-1" />
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">설명</h3>
                   <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description || '-'}</p>
@@ -471,6 +473,7 @@ export default function VideoView() {
                   <span className="font-semibold text-foreground">AI 솔루션</span>
                   <span className="text-muted-foreground">{video.ai_solution || '-'}</span>
                 </div>
+                <Separator className="my-1" />
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">프롬프트 명령어</h3>
                   {video.prompt_command && video.show_prompt ? (
