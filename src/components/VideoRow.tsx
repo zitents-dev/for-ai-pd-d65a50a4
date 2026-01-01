@@ -59,6 +59,7 @@ interface VideoRowProps {
   highlighted?: boolean;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  storageKey?: string;
 }
 
 export const VideoRow = ({
@@ -75,12 +76,30 @@ export const VideoRow = ({
   highlighted = false,
   collapsible = false,
   defaultCollapsed = false,
+  storageKey,
 }: VideoRowProps) => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  
+  // Initialize collapsed state from localStorage if storageKey is provided
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      if (saved !== null) {
+        return saved === 'true';
+      }
+    }
+    return defaultCollapsed;
+  });
+
+  // Save collapsed state to localStorage when it changes
+  useEffect(() => {
+    if (storageKey) {
+      localStorage.setItem(storageKey, String(isCollapsed));
+    }
+  }, [isCollapsed, storageKey]);
 
   const checkScrollButtons = () => {
     const container = scrollContainerRef.current;
@@ -139,7 +158,7 @@ export const VideoRow = ({
     <section
       className={cn(
         "mb-8 transition-all duration-300",
-        highlighted && "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl py-4 border-l-4 border-primary"
+        highlighted && "bg-card/80 backdrop-blur-sm rounded-xl py-4 border border-primary/30 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
       )}
     >
       <div className="flex items-center justify-between px-4 mb-4">

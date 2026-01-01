@@ -352,6 +352,7 @@ export default function Home() {
           sectionType="mentor"
           highlighted
           collapsible
+          storageKey="mentor-videos-collapsed"
           onLoadMore={() => {
             if (!mentorLoading && mentorHasMore) {
               const nextPage = mentorPage + 1;
