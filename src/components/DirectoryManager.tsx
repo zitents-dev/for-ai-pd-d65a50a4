@@ -28,7 +28,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil } from "lucide-react";
+import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil, ArrowUpDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { VideoCard } from "./VideoCard";
 import { Badge } from "@/components/ui/badge";
 
@@ -97,6 +104,31 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [renameDirName, setRenameDirName] = useState("");
   const [renameDirDescription, setRenameDirDescription] = useState("");
   const [isRenaming, setIsRenaming] = useState(false);
+
+  // Directory sorting state
+  type SortOption = "date_desc" | "date_asc" | "name_asc" | "name_desc" | "count_desc" | "count_asc";
+  const [directorySortBy, setDirectorySortBy] = useState<SortOption>("date_desc");
+
+  // Sort directories based on selected option
+  const sortedDirectories = [...directories].sort((a, b) => {
+    switch (directorySortBy) {
+      case "name_asc":
+        return a.name.localeCompare(b.name, "ko");
+      case "name_desc":
+        return b.name.localeCompare(a.name, "ko");
+      case "date_asc":
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "date_desc":
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case "count_desc":
+        return (b.video_count || 0) - (a.video_count || 0);
+      case "count_asc":
+        return (a.video_count || 0) - (b.video_count || 0);
+      default:
+        return 0;
+    }
+  });
+
   useEffect(() => {
     loadDirectories();
   }, [user]);
@@ -557,8 +589,26 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
             </p>
           ) : (
             <>
+              {/* Sorting Options */}
+              <div className="flex items-center justify-end gap-2 mb-4">
+                <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                <Select value={directorySortBy} onValueChange={(value: SortOption) => setDirectorySortBy(value)}>
+                  <SelectTrigger className="w-40 h-8 text-sm">
+                    <SelectValue placeholder="정렬" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    <SelectItem value="date_desc">최신순</SelectItem>
+                    <SelectItem value="date_asc">오래된순</SelectItem>
+                    <SelectItem value="name_asc">이름 오름차순</SelectItem>
+                    <SelectItem value="name_desc">이름 내림차순</SelectItem>
+                    <SelectItem value="count_desc">작품 많은순</SelectItem>
+                    <SelectItem value="count_asc">작품 적은순</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {directories.slice((directoryPage - 1) * itemsPerPage, directoryPage * itemsPerPage).map((dir) => (
+                {sortedDirectories.slice((directoryPage - 1) * itemsPerPage, directoryPage * itemsPerPage).map((dir) => (
                   <div
                     key={dir.id}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -664,7 +714,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
               </div>
 
               {/* Directory Pagination */}
-              {directories.length > itemsPerPage && (
+              {sortedDirectories.length > itemsPerPage && (
                 <div className="flex items-center justify-center gap-2 pt-4">
                   <Button
                     variant="outline"
@@ -675,7 +725,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.ceil(directories.length / itemsPerPage) }, (_, i) => i + 1).map(
+                    {Array.from({ length: Math.ceil(sortedDirectories.length / itemsPerPage) }, (_, i) => i + 1).map(
                       (page) => (
                         <Button
                           key={page}
@@ -693,9 +743,9 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     variant="outline"
                     size="icon"
                     onClick={() =>
-                      setDirectoryPage((prev) => Math.min(Math.ceil(directories.length / itemsPerPage), prev + 1))
+                      setDirectoryPage((prev) => Math.min(Math.ceil(sortedDirectories.length / itemsPerPage), prev + 1))
                     }
-                    disabled={directoryPage === Math.ceil(directories.length / itemsPerPage)}
+                    disabled={directoryPage === Math.ceil(sortedDirectories.length / itemsPerPage)}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
