@@ -29,6 +29,7 @@ interface Video {
   dislikes_count?: number;
   category?: string | null;
   ai_solution?: string | null;
+  creator_id?: string;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -556,7 +557,7 @@ export default function Search() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="relative">
             <div className="flex gap-2">
