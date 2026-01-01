@@ -1,4 +1,4 @@
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, GraduationCap, Clapperboard, PlayCircle, Megaphone, Wand2, Mic, MoreHorizontal } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -8,9 +8,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Constants } from "@/integrations/supabase/types";
-import { getCategoryLabel } from "@/lib/translations";
+import { getCategoryLabel, getCategoryIconColor, type VideoCategory } from "@/lib/translations";
 
 const categories = Constants.public.Enums.video_category;
+
+// Map categories to their icons
+const categoryIcons: Record<VideoCategory, React.ReactNode> = {
+  education: <GraduationCap className="h-4 w-4" />,
+  entertainment: <Clapperboard className="h-4 w-4" />,
+  tutorial: <PlayCircle className="h-4 w-4" />,
+  commercial: <Megaphone className="h-4 w-4" />,
+  fiction: <Wand2 className="h-4 w-4" />,
+  podcast: <Mic className="h-4 w-4" />,
+  other: <MoreHorizontal className="h-4 w-4" />,
+};
 
 interface CategorySelectProps {
   value: string;
@@ -23,6 +34,7 @@ interface CategorySelectProps {
   showAllOption?: boolean;
   allOptionLabel?: string;
   className?: string;
+  showOptionIcons?: boolean;
 }
 
 export function CategorySelect({
@@ -36,6 +48,7 @@ export function CategorySelect({
   showAllOption = false,
   allOptionLabel = "전체 카테고리",
   className,
+  showOptionIcons = true,
 }: CategorySelectProps) {
   const handleValueChange = (newValue: string) => {
     onValueChange(newValue === "__all__" ? "" : newValue);
@@ -59,7 +72,14 @@ export function CategorySelect({
           )}
           {categories.map((cat) => (
             <SelectItem key={cat} value={cat}>
-              {getCategoryLabel(cat)}
+              <span className="flex items-center gap-2">
+                {showOptionIcons && (
+                  <span className={getCategoryIconColor(cat)}>
+                    {categoryIcons[cat]}
+                  </span>
+                )}
+                {getCategoryLabel(cat)}
+              </span>
             </SelectItem>
           ))}
         </SelectContent>
