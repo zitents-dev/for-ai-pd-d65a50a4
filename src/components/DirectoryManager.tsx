@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput } from "lucide-react";
+import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy } from "lucide-react";
 import { VideoCard } from "./VideoCard";
 import { Badge } from "@/components/ui/badge";
 
@@ -86,6 +86,11 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
   const [targetDirectoryId, setTargetDirectoryId] = useState<string | null>(null);
   const [isMoving, setIsMoving] = useState(false);
+
+  // Copy to directory states
+  const [bulkCopyDialogOpen, setBulkCopyDialogOpen] = useState(false);
+  const [copyTargetDirectoryId, setCopyTargetDirectoryId] = useState<string | null>(null);
+  const [isCopying, setIsCopying] = useState(false);
   useEffect(() => {
     loadDirectories();
   }, [user]);
@@ -332,6 +337,42 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
       toast.error("이동에 실패했습니다");
     } finally {
       setIsMoving(false);
+    }
+  };
+
+  const bulkCopyVideosToDirectory = async () => {
+    if (!selectedDirectory || !copyTargetDirectoryId || selectedVideos.size === 0) return;
+
+    setIsCopying(true);
+
+    try {
+      const videoIds = Array.from(selectedVideos);
+      
+      // Add to target directory (skip duplicates) - don't remove from current directory
+      const insertData = videoIds.map((videoId) => ({
+        video_id: videoId,
+        directory_id: copyTargetDirectoryId,
+      }));
+
+      // Use upsert to avoid duplicate key errors
+      const { error: insertError } = await supabase
+        .from("directory_videos")
+        .upsert(insertData, { onConflict: "directory_id,video_id", ignoreDuplicates: true });
+
+      if (insertError) throw insertError;
+
+      const targetDirName = directories.find((d) => d.id === copyTargetDirectoryId)?.name;
+      toast.success(`${videoIds.length}개의 작품을 "${targetDirName}"에 복사했습니다`);
+      
+      setSelectedVideos(new Set());
+      setBulkCopyDialogOpen(false);
+      setCopyTargetDirectoryId(null);
+      loadDirectories();
+    } catch (error) {
+      console.error("Error copying videos:", error);
+      toast.error("복사에 실패했습니다");
+    } finally {
+      setIsCopying(false);
     }
   };
 
@@ -649,6 +690,71 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                         disabled={!targetDirectoryId || isMoving}
                       >
                         {isMoving ? "이동 중..." : "이동하기"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Copy to another directory button */}
+                <Dialog open={bulkCopyDialogOpen} onOpenChange={setBulkCopyDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Copy className="mr-2 h-4 w-4" />
+                      {selectedVideos.size}개 복사
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>다른 디렉토리에 복사</DialogTitle>
+                      <DialogDescription>
+                        선택한 {selectedVideos.size}개의 작품을 복사할 디렉토리를 선택하세요. 원본은 그대로 유지됩니다.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                        {directories
+                          .filter((dir) => dir.id !== selectedDirectory)
+                          .map((dir) => (
+                            <div
+                              key={dir.id}
+                              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                copyTargetDirectoryId === dir.id
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border hover:border-primary/50"
+                              }`}
+                              onClick={() => setCopyTargetDirectoryId(dir.id)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Folder className="w-5 h-5 text-primary" />
+                                <span className="font-medium text-sm truncate">{dir.name}</span>
+                              </div>
+                              {dir.video_count !== undefined && dir.video_count > 0 && (
+                                <p className="text-xs text-muted-foreground mt-1">{dir.video_count}개 작품</p>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                      {directories.filter((dir) => dir.id !== selectedDirectory).length === 0 && (
+                        <p className="text-muted-foreground text-center py-4">
+                          복사할 수 있는 다른 디렉토리가 없습니다
+                        </p>
+                      )}
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setBulkCopyDialogOpen(false);
+                          setCopyTargetDirectoryId(null);
+                        }}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        onClick={bulkCopyVideosToDirectory}
+                        disabled={!copyTargetDirectoryId || isCopying}
+                      >
+                        {isCopying ? "복사 중..." : "복사하기"}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
