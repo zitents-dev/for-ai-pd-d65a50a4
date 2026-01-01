@@ -6,7 +6,7 @@ import { VirtualVideoGrid } from "@/components/VirtualVideoGrid";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search as SearchIcon, Video, User, Users, Loader2 } from "lucide-react";
+import { Search as SearchIcon, Video, User, Users, Loader2, Clock, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
@@ -49,6 +49,9 @@ interface Creator {
   badges?: UserBadge[];
 }
 
+const RECENT_SEARCHES_KEY = "hephai_recent_searches";
+const MAX_RECENT_SEARCHES = 10;
+
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -71,8 +74,69 @@ export default function Search() {
   const [aiSolutionFilter, setAiSolutionFilter] = useState("");
   const [durationFilter, setDurationFilter] = useState<DurationFilter>("");
   
+  // Recent searches state
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  
   const currentSearchQuery = useRef("");
   const creatorsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load recent searches from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse recent searches:", e);
+      }
+    }
+  }, []);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const saveRecentSearch = (searchTerm: string) => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    
+    const updated = [trimmed, ...recentSearches.filter(s => s !== trimmed)].slice(0, MAX_RECENT_SEARCHES);
+    setRecentSearches(updated);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  };
+
+  const removeRecentSearch = (searchTerm: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = recentSearches.filter(s => s !== searchTerm);
+    setRecentSearches(updated);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  };
+
+  const clearAllRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem(RECENT_SEARCHES_KEY);
+  };
+
+  const handleSuggestionClick = (searchTerm: string) => {
+    setQuery(searchTerm);
+    setShowSuggestions(false);
+    setSearchParams({ q: searchTerm });
+  };
 
   useEffect(() => {
     const q = searchParams.get("q");
@@ -404,9 +468,15 @@ export default function Search() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      saveRecentSearch(query.trim());
+      setShowSuggestions(false);
       setSearchParams({ q: query });
     }
   };
+
+  const filteredSuggestions = recentSearches.filter(s => 
+    s.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -414,18 +484,71 @@ export default function Search() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="제목, 크리에이터명, 태그로 검색하세요..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 w-full"
-            />
-            <Button type="submit">
-              <SearchIcon className="w-4 h-4 mr-2" />
-              찾기
-            </Button>
+          <form onSubmit={handleSearch} className="relative">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="제목, 크리에이터명, 태그로 검색하세요..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  className="w-full"
+                />
+                {/* Recent Searches Dropdown */}
+                {showSuggestions && (recentSearches.length > 0 || query) && (
+                  <div 
+                    ref={suggestionsRef}
+                    className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-50 overflow-hidden"
+                  >
+                    {filteredSuggestions.length > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                          <span className="text-xs text-muted-foreground">최근 검색어</span>
+                          <button
+                            type="button"
+                            onClick={clearAllRecentSearches}
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            전체 삭제
+                          </button>
+                        </div>
+                        <ul className="max-h-60 overflow-auto">
+                          {filteredSuggestions.map((search, index) => (
+                            <li
+                              key={index}
+                              onClick={() => handleSuggestionClick(search)}
+                              className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm">{search}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => removeRecentSearch(search, e)}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
+                              >
+                                <X className="w-3 h-3 text-muted-foreground" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : query && recentSearches.length > 0 ? (
+                      <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                        일치하는 검색어가 없습니다
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              <Button type="submit">
+                <SearchIcon className="w-4 h-4 mr-2" />
+                찾기
+              </Button>
+            </div>
           </form>
 
           {/* Filters - Only show when on videos tab and has searched */}
