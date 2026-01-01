@@ -25,11 +25,20 @@ export type SortOption = "recent" | "views" | "likes" | "dislikes" | "comments";
 const AI_SOLUTIONS = Constants.public.Enums.ai_solution;
 const CATEGORIES = Constants.public.Enums.video_category;
 
+export type DurationFilter = "" | "under1" | "1to5" | "over5";
+
 interface Directory {
   id: string;
   name: string;
   video_count?: number;
 }
+
+const DURATION_OPTIONS: { value: DurationFilter; label: string }[] = [
+  { value: "", label: "전체 길이" },
+  { value: "under1", label: "1분 미만" },
+  { value: "1to5", label: "1~5분" },
+  { value: "over5", label: "5분 이상" },
+];
 
 interface VideoFilterSortProps {
   dateRange: DateRange | undefined;
@@ -46,6 +55,8 @@ interface VideoFilterSortProps {
   directoryFilter?: string;
   onDirectoryFilterChange?: (directoryId: string) => void;
   directories?: Directory[];
+  durationFilter?: DurationFilter;
+  onDurationFilterChange?: (duration: DurationFilter) => void;
 }
 
 const sortOptions: { value: SortOption; label: string }[] = [
@@ -70,6 +81,8 @@ export function VideoFilterSort({
   directoryFilter,
   onDirectoryFilterChange,
   directories = [],
+  durationFilter,
+  onDurationFilterChange,
 }: VideoFilterSortProps) {
   const [dateOpen, setDateOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -78,16 +91,17 @@ export function VideoFilterSort({
     onDateRangeChange(undefined);
   };
 
-  const hasActiveFilters = categoryFilter || aiSolutionFilter || directoryFilter;
-  const activeFilterCount = [categoryFilter, aiSolutionFilter, directoryFilter].filter(Boolean).length;
+  const hasActiveFilters = categoryFilter || aiSolutionFilter || directoryFilter || durationFilter;
+  const activeFilterCount = [categoryFilter, aiSolutionFilter, directoryFilter, durationFilter].filter(Boolean).length;
 
   const clearAllFilters = () => {
     onCategoryFilterChange?.("");
     onAiSolutionFilterChange?.("");
     onDirectoryFilterChange?.("");
+    onDurationFilterChange?.("");
   };
 
-  const showFilterRow = onCategoryFilterChange || onAiSolutionFilterChange || (onDirectoryFilterChange && directories.length > 0);
+  const showFilterRow = onCategoryFilterChange || onAiSolutionFilterChange || onDurationFilterChange || (onDirectoryFilterChange && directories.length > 0);
 
   return (
     <div className="space-y-2">
@@ -223,6 +237,25 @@ export function VideoFilterSort({
                   {AI_SOLUTIONS.map((solution) => (
                     <SelectItem key={solution} value={solution}>
                       {solution}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Duration Filter */}
+            {onDurationFilterChange && (
+              <Select 
+                value={durationFilter || "__all__"} 
+                onValueChange={(value) => onDurationFilterChange(value === "__all__" ? "" : value as DurationFilter)}
+              >
+                <SelectTrigger className="w-[120px] h-9">
+                  <SelectValue placeholder="길이" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  {DURATION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value || "__all__"} value={opt.value || "__all__"}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
