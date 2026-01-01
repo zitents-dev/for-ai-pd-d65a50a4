@@ -17,11 +17,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
 import { RelatedVideoList } from "@/components/RelatedVideoList";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Video {
   id: string;
@@ -48,7 +44,17 @@ interface Video {
 }
 
 interface Badge {
-  badge_type: "official" | "amateur" | "semi_pro" | "pro" | "director" | "mentor" | "gold" | "silver" | "bronze" | "buffer";
+  badge_type:
+    | "official"
+    | "amateur"
+    | "semi_pro"
+    | "pro"
+    | "director"
+    | "mentor"
+    | "gold"
+    | "silver"
+    | "bronze"
+    | "buffer";
   award_year?: number | null;
 }
 
@@ -65,13 +71,13 @@ export default function VideoView() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isRelatedOpen, setIsRelatedOpen] = useState(() => {
-    const saved = localStorage.getItem('relatedVideosOpen');
+    const saved = localStorage.getItem("relatedVideosOpen");
     return saved !== null ? JSON.parse(saved) : true;
   });
 
   // Persist collapse state
   useEffect(() => {
-    localStorage.setItem('relatedVideosOpen', JSON.stringify(isRelatedOpen));
+    localStorage.setItem("relatedVideosOpen", JSON.stringify(isRelatedOpen));
   }, [isRelatedOpen]);
 
   useEffect(() => {
@@ -95,30 +101,24 @@ export default function VideoView() {
     try {
       const { data, error } = await supabase
         .from("videos")
-        .select(`
+        .select(
+          `
           *,
           profiles (
             name,
             avatar_url
           )
-        `)
+        `,
+        )
         .eq("id", id)
         .single();
 
       if (error) throw error;
-      
+
       // Load like and dislike counts
       const [likesResult, dislikesResult] = await Promise.all([
-        supabase
-          .from("likes")
-          .select("*", { count: "exact", head: true })
-          .eq("video_id", id)
-          .eq("type", "like"),
-        supabase
-          .from("likes")
-          .select("*", { count: "exact", head: true })
-          .eq("video_id", id)
-          .eq("type", "dislike"),
+        supabase.from("likes").select("*", { count: "exact", head: true }).eq("video_id", id).eq("type", "like"),
+        supabase.from("likes").select("*", { count: "exact", head: true }).eq("video_id", id).eq("type", "dislike"),
       ]);
 
       setVideo({
@@ -126,14 +126,14 @@ export default function VideoView() {
         likes_count: likesResult.count || 0,
         dislikes_count: dislikesResult.count || 0,
       } as Video);
-      
+
       // Load creator badges
       if (data?.creator_id) {
         const { data: badges } = await supabase
           .from("user_badges")
           .select("badge_type, award_year")
           .eq("user_id", data.creator_id);
-        
+
         setCreatorBadges(badges || []);
       }
     } catch (error) {
@@ -202,11 +202,7 @@ export default function VideoView() {
 
     try {
       // Increment view count
-      const { data: currentVideo } = await supabase
-        .from("videos")
-        .select("views")
-        .eq("id", id)
-        .single();
+      const { data: currentVideo } = await supabase.from("videos").select("views").eq("id", id).single();
 
       if (currentVideo) {
         await supabase
@@ -265,18 +261,12 @@ export default function VideoView() {
 
     try {
       if (isSubscribed) {
-        await supabase
-          .from("subscriptions")
-          .delete()
-          .eq("subscriber_id", user.id)
-          .eq("creator_id", video?.creator_id);
+        await supabase.from("subscriptions").delete().eq("subscriber_id", user.id).eq("creator_id", video?.creator_id);
         setIsSubscribed(false);
         setSubscriberCount((prev) => Math.max(0, prev - 1));
         toast.success("구독 취소되었습니다");
       } else {
-        await supabase
-          .from("subscriptions")
-          .insert({ subscriber_id: user.id, creator_id: video?.creator_id });
+        await supabase.from("subscriptions").insert({ subscriber_id: user.id, creator_id: video?.creator_id });
         setIsSubscribed(true);
         setSubscriberCount((prev) => prev + 1);
         toast.success("구독되었습니다");
@@ -296,17 +286,11 @@ export default function VideoView() {
 
     try {
       if (isFavorited) {
-        await supabase
-          .from("favorites")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("video_id", id);
+        await supabase.from("favorites").delete().eq("user_id", user.id).eq("video_id", id);
         setIsFavorited(false);
         toast.success("Removed from favorites");
       } else {
-        await supabase
-          .from("favorites")
-          .insert({ user_id: user.id, video_id: id });
+        await supabase.from("favorites").insert({ user_id: user.id, video_id: id });
         setIsFavorited(true);
         toast.success("Added to favorites");
       }
@@ -349,13 +333,9 @@ export default function VideoView() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Side - Main Content */}
-          <div className={`flex-1 space-y-6 transition-all duration-300 ${!isRelatedOpen ? 'lg:max-w-none' : ''}`}>
+          <div className={`flex-1 space-y-6 transition-all duration-300 ${!isRelatedOpen ? "lg:max-w-none" : ""}`}>
             {/* Video Player */}
-            <VideoPlayer
-              videoId={video.id}
-              src={video.video_url}
-              autoPlay
-            />
+            <VideoPlayer videoId={video.id} src={video.video_url} autoPlay />
 
             {/* Video Info */}
             <div className="space-y-4">
@@ -397,7 +377,7 @@ export default function VideoView() {
               {/* Creator Info */}
               <Card className="p-4">
                 <div className="flex items-center gap-3">
-                  <Avatar 
+                  <Avatar
                     className="w-12 h-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
                     onClick={() => navigate(`/profile/${video.creator_id}`)}
                   >
@@ -406,7 +386,7 @@ export default function VideoView() {
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 
+                      <h3
                         className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
                         onClick={() => navigate(`/profile/${video.creator_id}`)}
                       >
@@ -414,9 +394,7 @@ export default function VideoView() {
                       </h3>
                       <BadgeDisplay badges={creatorBadges} size="sm" />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      구독자 {subscriberCount.toLocaleString()}명
-                    </p>
+                    <p className="text-sm text-muted-foreground">구독자 {subscriberCount.toLocaleString()}명</p>
                   </div>
                   {user?.id !== video.creator_id && (
                     <Button
@@ -445,10 +423,7 @@ export default function VideoView() {
               {video.tags && video.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {video.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
-                    >
+                    <span key={index} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">
                       #{tag}
                     </span>
                   ))}
@@ -460,24 +435,36 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">카테고리</span>
                   {video.category ? (
-                    <Badge 
+                    <Badge
                       className={`${
-                        video.category === 'education' ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30' :
-                        video.category === 'entertainment' ? 'bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30' :
-                        video.category === 'tutorial' ? 'bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30' :
-                        video.category === 'commercial' ? 'bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30' :
-                        video.category === 'fiction' ? 'bg-pink-500/20 text-pink-600 border-pink-500/30 hover:bg-pink-500/30' :
-                        video.category === 'podcast' ? 'bg-cyan-500/20 text-cyan-600 border-cyan-500/30 hover:bg-cyan-500/30' :
-                        'bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30'
+                        video.category === "education"
+                          ? "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30"
+                          : video.category === "entertainment"
+                            ? "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30"
+                            : video.category === "tutorial"
+                              ? "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30"
+                              : video.category === "commercial"
+                                ? "bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30"
+                                : video.category === "fiction"
+                                  ? "bg-pink-500/20 text-pink-600 border-pink-500/30 hover:bg-pink-500/30"
+                                  : video.category === "podcast"
+                                    ? "bg-cyan-500/20 text-cyan-600 border-cyan-500/30 hover:bg-cyan-500/30"
+                                    : "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30"
                       }`}
                     >
-                      {video.category === 'education' ? '교육' :
-                       video.category === 'entertainment' ? '엔터테인먼트' :
-                       video.category === 'tutorial' ? '튜토리얼' :
-                       video.category === 'commercial' ? '광고' :
-                       video.category === 'fiction' ? '픽션' :
-                       video.category === 'podcast' ? '팟캐스트' :
-                       '기타'}
+                      {video.category === "education"
+                        ? "교육"
+                        : video.category === "entertainment"
+                          ? "엔터테인먼트"
+                          : video.category === "tutorial"
+                            ? "튜토리얼"
+                            : video.category === "commercial"
+                              ? "광고"
+                              : video.category === "fiction"
+                                ? "픽션"
+                                : video.category === "podcast"
+                                  ? "팟캐스트"
+                                  : "기타"}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
@@ -486,7 +473,7 @@ export default function VideoView() {
                 <Separator className="my-1" />
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">설명</h3>
-                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description || '-'}</p>
+                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description || "-"}</p>
                 </div>
               </Card>
 
@@ -495,17 +482,22 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">AI 솔루션</span>
                   {video.ai_solution ? (
-                    <Badge 
+                    <Badge
                       className={`${
-                        video.ai_solution === 'Sora' ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30' :
-                        video.ai_solution === 'Runway' ? 'bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30' :
-                        video.ai_solution === 'Veo' ? 'bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30' :
-                        video.ai_solution === 'Pika' ? 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30' :
-                        video.ai_solution === 'NanoBanana' ? 'bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30' :
-                        'bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30'
+                        video.ai_solution === "Sora"
+                          ? "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30"
+                          : video.ai_solution === "Runway"
+                            ? "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30"
+                            : video.ai_solution === "Veo"
+                              ? "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30"
+                              : video.ai_solution === "Pika"
+                                ? "bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30"
+                                : video.ai_solution === "NanoBanana"
+                                  ? "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30"
+                                  : "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30"
                       }`}
                     >
-                      {video.ai_solution}
+                      {video.ai_solution === "etc" ? "가타" : video.ai_solution}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
@@ -540,13 +532,15 @@ export default function VideoView() {
           </div>
 
           {/* Right Side - Related Videos */}
-          <div 
+          <div
             className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isRelatedOpen ? 'lg:w-96 lg:shrink-0 lg:opacity-100' : 'lg:w-12 lg:shrink-0'
+              isRelatedOpen ? "lg:w-96 lg:shrink-0 lg:opacity-100" : "lg:w-12 lg:shrink-0"
             }`}
           >
             <div className="lg:sticky lg:top-4">
-              <div className={`transition-all duration-300 ease-in-out ${isRelatedOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none absolute'}`}>
+              <div
+                className={`transition-all duration-300 ease-in-out ${isRelatedOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none absolute"}`}
+              >
                 <RelatedVideoList
                   currentVideoId={video.id}
                   creatorId={video.creator_id}
@@ -554,7 +548,9 @@ export default function VideoView() {
                   onCollapse={() => setIsRelatedOpen(false)}
                 />
               </div>
-              <div className={`transition-all duration-300 ease-in-out ${!isRelatedOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none absolute'}`}>
+              <div
+                className={`transition-all duration-300 ease-in-out ${!isRelatedOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none absolute"}`}
+              >
                 <Card className="p-2 flex items-center justify-center h-12">
                   <Button
                     variant="ghost"
