@@ -9,6 +9,8 @@ import { useLazyLoad } from "@/hooks/useLazyLoad";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
+import { CategoryBadge } from "@/components/CategoryBadge";
+import { AiSolutionBadge } from "@/components/AiSolutionBadge";
 
 interface VideoCardProps {
   video: {
@@ -22,6 +24,8 @@ interface VideoCardProps {
     likes_count?: number;
     dislikes_count?: number;
     creator_id?: string;
+    category?: string | null;
+    ai_solution?: string | null;
     profiles: {
       name: string;
       avatar_url: string | null;
@@ -134,6 +138,14 @@ export const VideoCard = ({ video }: VideoCardProps) => {
         {isHovering && video.video_url && (
           <div className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5 rounded font-medium z-10">
             미리보기
+          </div>
+        )}
+
+        {/* Category and AI Solution badges - hide when previewing */}
+        {!isHovering && (video.category || video.ai_solution) && (
+          <div className="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
+            {video.category && <CategoryBadge category={video.category} className="text-xs py-0.5 px-1.5" />}
+            {video.ai_solution && <AiSolutionBadge aiSolution={video.ai_solution} className="text-xs py-0.5 px-1.5" />}
           </div>
         )}
 
