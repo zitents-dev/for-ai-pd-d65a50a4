@@ -63,6 +63,7 @@ interface Directory {
   created_at: string;
   video_count?: number;
   color?: string | null;
+  thumbnails?: string[]; // First few video thumbnails for preview
 }
 
 interface Video {
@@ -181,12 +182,29 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
 
       if (error) throw error;
 
-      const directoriesWithCount = (data || []).map((dir: any) => ({
-        ...dir,
-        video_count: dir.directory_videos?.[0]?.count || 0,
-      }));
+      // Fetch thumbnails for each directory
+      const directoriesWithData = await Promise.all(
+        (data || []).map(async (dir: any) => {
+          // Get first 4 video thumbnails for this directory
+          const { data: videoData } = await supabase
+            .from("directory_videos")
+            .select("videos(thumbnail_url)")
+            .eq("directory_id", dir.id)
+            .limit(4);
 
-      setDirectories(directoriesWithCount);
+          const thumbnails = (videoData || [])
+            .map((item: any) => item.videos?.thumbnail_url)
+            .filter((url: string | null) => url && url.trim() !== "");
+
+          return {
+            ...dir,
+            video_count: dir.directory_videos?.[0]?.count || 0,
+            thumbnails,
+          };
+        })
+      );
+
+      setDirectories(directoriesWithData);
     } catch (error) {
       console.error("Error loading directories:", error);
     }
@@ -791,6 +809,29 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                         </AlertDialog>
                       </div>
                     </div>
+                    
+                    {/* Thumbnail Preview Grid */}
+                    {dir.thumbnails && dir.thumbnails.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-1 mb-2 aspect-video rounded-md overflow-hidden bg-muted">
+                        {dir.thumbnails.slice(0, 4).map((thumbnail, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`relative overflow-hidden ${dir.thumbnails!.length === 1 ? 'col-span-2 row-span-2' : dir.thumbnails!.length === 2 ? 'row-span-2' : dir.thumbnails!.length === 3 && idx === 0 ? 'row-span-2' : ''}`}
+                          >
+                            <img 
+                              src={thumbnail} 
+                              alt="" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="aspect-video rounded-md bg-muted flex items-center justify-center mb-2">
+                        <Folder className={`w-8 h-8 ${getColorClasses(dir.color || null).text} opacity-50`} />
+                      </div>
+                    )}
+                    
                     <h3 className="font-semibold text-sm truncate">{dir.name}</h3>
                     {dir.description && (
                       <p className="text-xs text-muted-foreground truncate mt-1">{dir.description}</p>
