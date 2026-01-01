@@ -106,8 +106,8 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">
-            <img src={logo} alt="Hephai logo" className="h-32 w-60 items-center justify-center" />
+          <CardTitle className="text-2xl text-center flex justify-center">
+            <img src={logo} alt="Hephai logo" className="h-32 w-60" />
           </CardTitle>
         </CardHeader>
         <CardContent>
