@@ -453,41 +453,44 @@ export default function VideoView() {
                 </div>
               )}
 
-              {/* Category Card */}
-              {video.category && (
-                <Card className="p-4">
-                  <h3 className="font-semibold text-foreground mb-2">카테고리</h3>
-                  <p className="text-muted-foreground capitalize">{video.category}</p>
-                </Card>
-              )}
-
-              {/* AI Solution & Prompt Card */}
-              {(video.ai_solution || (video.prompt_command && video.show_prompt)) && (
-                <Card className="p-4">
-                  <div className="space-y-3">
-                    {video.ai_solution && (
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-1">AI 솔루션</h3>
-                        <p className="text-muted-foreground">{video.ai_solution}</p>
+              {/* Category & AI Solution Cards - Side by Side */}
+              {(video.category || video.ai_solution || (video.prompt_command && video.show_prompt)) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Category Card */}
+                  <Card className="p-4">
+                    <h3 className="font-semibold text-foreground mb-2">카테고리</h3>
+                    <p className="text-muted-foreground capitalize">{video.category || '-'}</p>
+                    {video.description && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <h4 className="font-semibold text-foreground mb-1">설명</h4>
+                        <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description}</p>
                       </div>
                     )}
+                  </Card>
+
+                  {/* AI Solution & Prompt Card */}
+                  <Card className="p-4">
+                    <h3 className="font-semibold text-foreground mb-2">AI 솔루션</h3>
+                    <p className="text-muted-foreground">{video.ai_solution || '-'}</p>
                     {video.prompt_command && video.show_prompt && (
-                      <Collapsible>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
-                            <Info className="w-4 h-4" />
-                            <span className="text-sm font-semibold">프롬프트 명령어 보기</span>
-                          </Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-2">
-                          <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
-                            {video.prompt_command}
-                          </pre>
-                        </CollapsibleContent>
-                      </Collapsible>
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <Collapsible>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
+                              <Info className="w-4 h-4" />
+                              <span className="text-sm font-semibold">프롬프트 명령어 보기</span>
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-2">
+                            <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
+                              {video.prompt_command}
+                            </pre>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </div>
                     )}
-                  </div>
-                </Card>
+                  </Card>
+                </div>
               )}
 
               {/* Comments Section */}
