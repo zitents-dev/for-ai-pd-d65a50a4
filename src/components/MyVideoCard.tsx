@@ -25,6 +25,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useLazyLoad } from "@/hooks/useLazyLoad";
+import { getCategoryLabel, getCategoryClassName, getAiSolutionClassName } from "@/lib/translations";
 
 interface MyVideoCardProps {
   video: {
@@ -196,13 +197,13 @@ export function MyVideoCard({
             <h3 className="font-medium text-sm truncate mb-1" title={video.title}>{video.title}</h3>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {video.ai_solution && (
-                <Badge variant="outline" className="text-xs h-5">
-                  {video.ai_solution}
+                <Badge className={`text-xs h-5 ${getAiSolutionClassName(video.ai_solution)}`}>
+                  {video.ai_solution === "Other" ? "기타" : video.ai_solution}
                 </Badge>
               )}
               {video.category && (
-                <Badge variant="secondary" className="text-xs h-5">
-                  {video.category}
+                <Badge className={`text-xs h-5 ${getCategoryClassName(video.category)}`}>
+                  {getCategoryLabel(video.category)}
                 </Badge>
               )}
             </div>
