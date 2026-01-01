@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, Film, Play, Zap, Banana, MoreHorizontal } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -8,9 +8,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Constants } from "@/integrations/supabase/types";
-import { getAiSolutionLabel } from "@/lib/translations";
+import { getAiSolutionLabel, getAiSolutionIconColor, type AiSolution } from "@/lib/translations";
 
 const aiSolutions = Constants.public.Enums.ai_solution;
+
+// Map AI solutions to their icons
+const aiSolutionIcons: Record<AiSolution, React.ReactNode> = {
+  Sora: <Sparkles className="h-4 w-4" />,
+  Runway: <Film className="h-4 w-4" />,
+  Veo: <Play className="h-4 w-4" />,
+  Pika: <Zap className="h-4 w-4" />,
+  NanoBanana: <Banana className="h-4 w-4" />,
+  Other: <MoreHorizontal className="h-4 w-4" />,
+};
 
 interface AiSolutionSelectProps {
   value: string;
@@ -23,6 +33,7 @@ interface AiSolutionSelectProps {
   showAllOption?: boolean;
   allOptionLabel?: string;
   className?: string;
+  showOptionIcons?: boolean;
 }
 
 export function AiSolutionSelect({
@@ -36,6 +47,7 @@ export function AiSolutionSelect({
   showAllOption = false,
   allOptionLabel = "전체 솔루션",
   className,
+  showOptionIcons = true,
 }: AiSolutionSelectProps) {
   const handleValueChange = (newValue: string) => {
     onValueChange(newValue === "__all__" ? "" : newValue);
@@ -59,7 +71,14 @@ export function AiSolutionSelect({
           )}
           {aiSolutions.map((solution) => (
             <SelectItem key={solution} value={solution}>
-              {getAiSolutionLabel(solution)}
+              <span className="flex items-center gap-2">
+                {showOptionIcons && (
+                  <span className={getAiSolutionIconColor(solution)}>
+                    {aiSolutionIcons[solution]}
+                  </span>
+                )}
+                {getAiSolutionLabel(solution)}
+              </span>
             </SelectItem>
           ))}
         </SelectContent>
