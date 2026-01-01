@@ -107,7 +107,7 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            <img src={logo} alt="Hephai logo" className="h-24 w-48 items-center justify-center" />
+            <img src={logo} alt="Hephai logo" className="h-32 w-60 items-center justify-center" />
           </CardTitle>
         </CardHeader>
         <CardContent>
