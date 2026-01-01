@@ -1,0 +1,73 @@
+import type { Database } from "@/integrations/supabase/types";
+
+type VideoCategory = Database["public"]["Enums"]["video_category"];
+type AiSolution = Database["public"]["Enums"]["ai_solution"];
+
+// Category translations and styles
+export const categoryConfig: Record<VideoCategory, { label: string; className: string }> = {
+  education: {
+    label: "교육",
+    className: "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30",
+  },
+  entertainment: {
+    label: "엔터테인먼트",
+    className: "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30",
+  },
+  tutorial: {
+    label: "튜토리얼",
+    className: "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30",
+  },
+  commercial: {
+    label: "광고",
+    className: "bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30",
+  },
+  fiction: {
+    label: "픽션",
+    className: "bg-pink-500/20 text-pink-600 border-pink-500/30 hover:bg-pink-500/30",
+  },
+  podcast: {
+    label: "팟캐스트",
+    className: "bg-cyan-500/20 text-cyan-600 border-cyan-500/30 hover:bg-cyan-500/30",
+  },
+  other: {
+    label: "기타",
+    className: "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30",
+  },
+};
+
+// AI Solution styles
+export const aiSolutionConfig: Record<AiSolution, { className: string }> = {
+  Sora: {
+    className: "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30",
+  },
+  Runway: {
+    className: "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30",
+  },
+  Veo: {
+    className: "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30",
+  },
+  Pika: {
+    className: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30",
+  },
+  NanoBanana: {
+    className: "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30",
+  },
+  Other: {
+    className: "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30",
+  },
+};
+
+export function getCategoryLabel(category: VideoCategory | string | null): string {
+  if (!category) return "-";
+  return categoryConfig[category as VideoCategory]?.label || category;
+}
+
+export function getCategoryClassName(category: VideoCategory | string | null): string {
+  if (!category) return "";
+  return categoryConfig[category as VideoCategory]?.className || categoryConfig.other.className;
+}
+
+export function getAiSolutionClassName(aiSolution: AiSolution | string | null): string {
+  if (!aiSolution) return "";
+  return aiSolutionConfig[aiSolution as AiSolution]?.className || aiSolutionConfig.Other.className;
+}

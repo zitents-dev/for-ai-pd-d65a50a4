@@ -18,6 +18,7 @@ import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
 import { RelatedVideoList } from "@/components/RelatedVideoList";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { getCategoryLabel, getCategoryClassName, getAiSolutionClassName } from "@/lib/translations";
 
 interface Video {
   id: string;
@@ -435,36 +436,8 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">카테고리</span>
                   {video.category ? (
-                    <Badge
-                      className={`${
-                        video.category === "education"
-                          ? "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30"
-                          : video.category === "entertainment"
-                            ? "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30"
-                            : video.category === "tutorial"
-                              ? "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30"
-                              : video.category === "commercial"
-                                ? "bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30"
-                                : video.category === "fiction"
-                                  ? "bg-pink-500/20 text-pink-600 border-pink-500/30 hover:bg-pink-500/30"
-                                  : video.category === "podcast"
-                                    ? "bg-cyan-500/20 text-cyan-600 border-cyan-500/30 hover:bg-cyan-500/30"
-                                    : "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30"
-                      }`}
-                    >
-                      {video.category === "education"
-                        ? "교육"
-                        : video.category === "entertainment"
-                          ? "엔터테인먼트"
-                          : video.category === "tutorial"
-                            ? "튜토리얼"
-                            : video.category === "commercial"
-                              ? "광고"
-                              : video.category === "fiction"
-                                ? "픽션"
-                                : video.category === "podcast"
-                                  ? "팟캐스트"
-                                  : "기타"}
+                    <Badge className={getCategoryClassName(video.category)}>
+                      {getCategoryLabel(video.category)}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
@@ -482,21 +455,7 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">AI 솔루션</span>
                   {video.ai_solution ? (
-                    <Badge
-                      className={`${
-                        video.ai_solution === "Sora"
-                          ? "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30"
-                          : video.ai_solution === "Runway"
-                            ? "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30"
-                            : video.ai_solution === "Veo"
-                              ? "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30"
-                              : video.ai_solution === "Pika"
-                                ? "bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30"
-                                : video.ai_solution === "NanoBanana"
-                                  ? "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30"
-                                  : "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30"
-                      }`}
-                    >
+                    <Badge className={getAiSolutionClassName(video.ai_solution)}>
                       {video.ai_solution === "Other" ? "기타" : video.ai_solution}
                     </Badge>
                   ) : (
