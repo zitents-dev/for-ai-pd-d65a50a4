@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { VideoCard } from "./VideoCard";
 import { VideoCardSkeleton } from "./VideoCardSkeleton";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -60,6 +60,7 @@ interface VideoRowProps {
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   storageKey?: string;
+  icon?: LucideIcon;
 }
 
 export const VideoRow = ({
@@ -77,6 +78,7 @@ export const VideoRow = ({
   collapsible = false,
   defaultCollapsed = false,
   storageKey,
+  icon: Icon,
 }: VideoRowProps) => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -163,6 +165,11 @@ export const VideoRow = ({
     >
       <div className="flex items-center justify-between px-4 mb-4">
         <div className="flex items-center gap-2">
+          {Icon && (
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/20 text-primary">
+              <Icon className="h-4 w-4" />
+            </div>
+          )}
           <h2 className={cn(
             "text-xl font-bold text-foreground",
             highlighted && "text-primary"
