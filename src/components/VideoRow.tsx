@@ -160,7 +160,7 @@ export const VideoRow = ({
     <section
       className={cn(
         "mb-8 transition-all duration-300",
-        highlighted && "bg-card/80 backdrop-blur-sm rounded-xl py-4 border border-primary/30 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
+        highlighted && "bg-card/40 backdrop-blur-sm rounded-xl py-4 border border-primary/20 shadow-lg shadow-primary/5 ring-1 ring-primary/10"
       )}
     >
       <div className="flex items-center justify-between px-4 mb-4">
