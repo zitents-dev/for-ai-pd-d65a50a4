@@ -20,6 +20,8 @@ import {
   HardDrive,
   AlertTriangle,
   Camera,
+  LayoutGrid,
+  Sparkles,
 } from "lucide-react";
 import { getAiSolutionLabel, getCategoryLabel, type AiSolution, type VideoCategory } from "@/lib/translations";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
@@ -483,7 +485,10 @@ export default function Upload() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">카테고리 *(필수)</Label>
+                <Label htmlFor="category" className="flex items-center gap-1.5">
+                  <LayoutGrid className="h-4 w-4" />
+                  카테고리 *(필수)
+                </Label>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger id="category">
                     <SelectValue placeholder="카테고리 선택" />
@@ -501,7 +506,10 @@ export default function Upload() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ai_solution">AI 솔루션 *(필수)</Label>
+                <Label htmlFor="ai_solution" className="flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4" />
+                  AI 솔루션 *(필수)
+                </Label>
                 <Select value={aiSolution} onValueChange={setAiSolution}>
                   <SelectTrigger id="ai_solution">
                     <SelectValue placeholder="사용한 AI 솔루션 선택" />
