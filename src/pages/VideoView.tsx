@@ -439,20 +439,36 @@ export default function VideoView() {
                 </div>
               </Card>
 
-              {/* Video Details */}
-              {(video.ai_solution || video.category || (video.prompt_command && video.show_prompt)) && (
+              {/* Tags - under creator info */}
+              {video.tags && video.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {video.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Category Card */}
+              {video.category && (
+                <Card className="p-4">
+                  <h3 className="font-semibold text-foreground mb-2">카테고리</h3>
+                  <p className="text-muted-foreground capitalize">{video.category}</p>
+                </Card>
+              )}
+
+              {/* AI Solution & Prompt Card */}
+              {(video.ai_solution || (video.prompt_command && video.show_prompt)) && (
                 <Card className="p-4">
                   <div className="space-y-3">
                     {video.ai_solution && (
                       <div>
-                        <span className="text-sm font-semibold text-foreground">AI Solution: </span>
-                        <span className="text-sm text-muted-foreground">{video.ai_solution}</span>
-                      </div>
-                    )}
-                    {video.category && (
-                      <div>
-                        <span className="text-sm font-semibold text-foreground">Category: </span>
-                        <span className="text-sm text-muted-foreground capitalize">{video.category}</span>
+                        <h3 className="font-semibold text-foreground mb-1">AI 솔루션</h3>
+                        <p className="text-muted-foreground">{video.ai_solution}</p>
                       </div>
                     )}
                     {video.prompt_command && video.show_prompt && (
@@ -472,28 +488,6 @@ export default function VideoView() {
                     )}
                   </div>
                 </Card>
-              )}
-
-              {/* Description */}
-              {video.description && (
-                <Card className="p-4">
-                  <h3 className="font-semibold text-foreground mb-2">설명</h3>
-                  <p className="text-muted-foreground whitespace-pre-wrap">{video.description}</p>
-                </Card>
-              )}
-
-              {/* Tags */}
-              {video.tags && video.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {video.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
               )}
 
               {/* Comments Section */}
