@@ -461,7 +461,7 @@ export default function VideoView() {
                   <span className="font-semibold text-foreground">카테고리</span>
                   {video.category ? (
                     <Badge 
-                      className={`capitalize ${
+                      className={`${
                         video.category === 'education' ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30' :
                         video.category === 'entertainment' ? 'bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30' :
                         video.category === 'tutorial' ? 'bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30' :
@@ -471,7 +471,13 @@ export default function VideoView() {
                         'bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30'
                       }`}
                     >
-                      {video.category}
+                      {video.category === 'education' ? '교육' :
+                       video.category === 'entertainment' ? '엔터테인먼트' :
+                       video.category === 'tutorial' ? '튜토리얼' :
+                       video.category === 'commercial' ? '광고' :
+                       video.category === 'fiction' ? '픽션' :
+                       video.category === 'podcast' ? '팟캐스트' :
+                       '기타'}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
