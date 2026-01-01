@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { VideoFilterSort, SortOption, DurationFilter } from "@/components/VideoFilterSort";
+import { CreatorFilterSort, CreatorSortOption, SubscriberFilter, VideoCountFilter, BadgeFilter } from "@/components/CreatorFilterSort";
 import { DateRange } from "react-day-picker";
 
 const VIDEOS_PER_PAGE = 12;
@@ -73,6 +74,12 @@ export default function Search() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [aiSolutionFilter, setAiSolutionFilter] = useState("");
   const [durationFilter, setDurationFilter] = useState<DurationFilter>("");
+  
+  // Creator filter states
+  const [creatorSortBy, setCreatorSortBy] = useState<CreatorSortOption>("name");
+  const [subscriberFilter, setSubscriberFilter] = useState<SubscriberFilter>("");
+  const [videoCountFilter, setVideoCountFilter] = useState<VideoCountFilter>("");
+  const [badgeFilter, setBadgeFilter] = useState<BadgeFilter>("");
   
   // Recent searches state
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -211,6 +218,67 @@ export default function Search() {
       })
     );
   };
+
+  // Filter and sort creators based on creator filters
+  const filterAndSortCreators = (creatorsData: Creator[]): Creator[] => {
+    let filtered = [...creatorsData];
+    
+    // Apply subscriber filter
+    if (subscriberFilter) {
+      switch (subscriberFilter) {
+        case "under100":
+          filtered = filtered.filter(c => (c.subscriberCount || 0) < 100);
+          break;
+        case "100to1000":
+          filtered = filtered.filter(c => (c.subscriberCount || 0) >= 100 && (c.subscriberCount || 0) <= 1000);
+          break;
+        case "over1000":
+          filtered = filtered.filter(c => (c.subscriberCount || 0) > 1000);
+          break;
+      }
+    }
+    
+    // Apply video count filter
+    if (videoCountFilter) {
+      switch (videoCountFilter) {
+        case "under10":
+          filtered = filtered.filter(c => (c.videoCount || 0) < 10);
+          break;
+        case "10to50":
+          filtered = filtered.filter(c => (c.videoCount || 0) >= 10 && (c.videoCount || 0) <= 50);
+          break;
+        case "over50":
+          filtered = filtered.filter(c => (c.videoCount || 0) > 50);
+          break;
+      }
+    }
+    
+    // Apply badge filter
+    if (badgeFilter) {
+      filtered = filtered.filter(c => 
+        c.badges?.some(b => b.badge_type === badgeFilter)
+      );
+    }
+    
+    // Apply sorting
+    switch (creatorSortBy) {
+      case "subscribers":
+        filtered.sort((a, b) => (b.subscriberCount || 0) - (a.subscriberCount || 0));
+        break;
+      case "videos":
+        filtered.sort((a, b) => (b.videoCount || 0) - (a.videoCount || 0));
+        break;
+      case "name":
+      default:
+        filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        break;
+    }
+    
+    return filtered;
+  };
+
+  // Memoized filtered creators
+  const filteredCreators = filterAndSortCreators(creators);
 
   const buildVideoQuery = (baseQuery: any, searchQuery: string) => {
     let query = baseQuery.or(`title.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
@@ -551,7 +619,7 @@ export default function Search() {
             </div>
           </form>
 
-          {/* Filters - Only show when on videos tab and has searched */}
+          {/* Filters - Show video filters for videos tab, creator filters for creators tab */}
           {searchParams.get("q") && activeTab === "videos" && (
             <VideoFilterSort
               dateRange={dateRange}
@@ -564,6 +632,19 @@ export default function Search() {
               onAiSolutionFilterChange={(value) => setAiSolutionFilter(value)}
               durationFilter={durationFilter}
               onDurationFilterChange={(value) => setDurationFilter(value)}
+            />
+          )}
+          
+          {searchParams.get("q") && activeTab === "creators" && (
+            <CreatorFilterSort
+              sortBy={creatorSortBy}
+              onSortChange={setCreatorSortBy}
+              subscriberFilter={subscriberFilter}
+              onSubscriberFilterChange={setSubscriberFilter}
+              videoCountFilter={videoCountFilter}
+              onVideoCountFilterChange={setVideoCountFilter}
+              badgeFilter={badgeFilter}
+              onBadgeFilterChange={setBadgeFilter}
             />
           )}
 
@@ -581,7 +662,7 @@ export default function Search() {
                 </TabsTrigger>
                 <TabsTrigger value="creators" className="gap-2">
                   <User className="w-4 h-4" />
-                  크리에이터명 ({totalCreators})
+                  크리에이터명 ({filteredCreators.length !== creators.length ? `${filteredCreators.length}/` : ""}{totalCreators})
                 </TabsTrigger>
               </TabsList>
 
@@ -596,13 +677,13 @@ export default function Search() {
               </TabsContent>
 
               <TabsContent value="creators" className="mt-6">
-                {creators.length > 0 ? (
+                {filteredCreators.length > 0 ? (
                   <div 
                     ref={creatorsContainerRef}
                     className="h-[calc(100vh-300px)] overflow-auto space-y-4"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {creators.map((creator) => (
+                      {filteredCreators.map((creator) => (
                         <Card 
                           key={creator.id} 
                           className="p-4 cursor-pointer hover:bg-accent transition-colors"
