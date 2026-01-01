@@ -454,46 +454,42 @@ export default function VideoView() {
               )}
 
               {/* Category & Caption Card */}
-              <Card className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">카테고리</h3>
-                    <p className="text-muted-foreground capitalize">{video.category || '-'}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">설명</h3>
-                    <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description || '-'}</p>
-                  </div>
+              <Card className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">카테고리</span>
+                  <span className="text-muted-foreground capitalize">{video.category || '-'}</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">설명</h3>
+                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description || '-'}</p>
                 </div>
               </Card>
 
               {/* AI Solution & Prompt Command Card */}
-              <Card className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">AI 솔루션</h3>
-                    <p className="text-muted-foreground">{video.ai_solution || '-'}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-2">프롬프트 명령어</h3>
-                    {video.prompt_command && video.show_prompt ? (
-                      <Collapsible>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
-                            <Info className="w-4 h-4" />
-                            <span className="text-sm">명령어 보기</span>
-                          </Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-2">
-                          <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
-                            {video.prompt_command}
-                          </pre>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    ) : (
-                      <p className="text-muted-foreground">-</p>
-                    )}
-                  </div>
+              <Card className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">AI 솔루션</span>
+                  <span className="text-muted-foreground">{video.ai_solution || '-'}</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">프롬프트 명령어</h3>
+                  {video.prompt_command && video.show_prompt ? (
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
+                          <Info className="w-4 h-4" />
+                          <span className="text-sm">명령어 보기</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
+                          {video.prompt_command}
+                        </pre>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <p className="text-muted-foreground">-</p>
+                  )}
                 </div>
               </Card>
 
