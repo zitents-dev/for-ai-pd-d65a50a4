@@ -11,20 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Loader2, ImagePlus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Constants } from "@/integrations/supabase/types";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
-import { getCategoryLabel, getAiSolutionLabel } from "@/lib/translations";
+import { CategorySelect } from "@/components/CategorySelect";
+import { AiSolutionSelect } from "@/components/AiSolutionSelect";
 
 interface VideoEditDialogProps {
   video: {
@@ -43,8 +36,6 @@ interface VideoEditDialogProps {
   onSaved: () => void;
 }
 
-const aiSolutions = Constants.public.Enums.ai_solution;
-const categories = Constants.public.Enums.video_category;
 
 export function VideoEditDialog({
   video,
@@ -340,37 +331,19 @@ export function VideoEditDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>AI 솔루션</Label>
-              <Select value={aiSolution} onValueChange={setAiSolution}>
-                <SelectTrigger>
-                  <SelectValue placeholder="선택" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  {aiSolutions.map((solution) => (
-                    <SelectItem key={solution} value={solution}>
-                      {getAiSolutionLabel(solution)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <AiSolutionSelect
+              value={aiSolution}
+              onValueChange={setAiSolution}
+              showIcon={false}
+              placeholder="선택"
+            />
 
-            <div className="space-y-2">
-              <Label>카테고리</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="선택" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {getCategoryLabel(cat)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <CategorySelect
+              value={category}
+              onValueChange={setCategory}
+              showIcon={false}
+              placeholder="선택"
+            />
           </div>
 
           <div className="space-y-2">

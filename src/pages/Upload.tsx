@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,16 +13,14 @@ import { toast } from "sonner";
 import {
   Loader2,
   Upload as UploadIcon,
-  Image as ImageIcon,
   X,
   Clock,
   HardDrive,
   AlertTriangle,
   Camera,
-  LayoutGrid,
-  Sparkles,
 } from "lucide-react";
-import { getAiSolutionLabel, getCategoryLabel, type AiSolution, type VideoCategory } from "@/lib/translations";
+import { CategorySelect } from "@/components/CategorySelect";
+import { AiSolutionSelect } from "@/components/AiSolutionSelect";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { Progress } from "@/components/ui/progress";
 
@@ -484,46 +481,18 @@ export default function Upload() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category" className="flex items-center gap-1.5">
-                  <LayoutGrid className="h-4 w-4" />
-                  카테고리 *(필수)
-                </Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="카테고리 선택" />
-                  </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="education">{getCategoryLabel("education")}</SelectItem>
-                    <SelectItem value="commercial">{getCategoryLabel("commercial")}</SelectItem>
-                    <SelectItem value="fiction">{getCategoryLabel("fiction")}</SelectItem>
-                    <SelectItem value="podcast">{getCategoryLabel("podcast")}</SelectItem>
-                    <SelectItem value="entertainment">{getCategoryLabel("entertainment")}</SelectItem>
-                    <SelectItem value="tutorial">{getCategoryLabel("tutorial")}</SelectItem>
-                    <SelectItem value="other">{getCategoryLabel("other")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <CategorySelect
+                value={category}
+                onValueChange={setCategory}
+                required
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="ai_solution" className="flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4" />
-                  AI 솔루션 *(필수)
-                </Label>
-                <Select value={aiSolution} onValueChange={setAiSolution}>
-                  <SelectTrigger id="ai_solution">
-                    <SelectValue placeholder="사용한 AI 솔루션 선택" />
-                  </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="NanoBanana">{getAiSolutionLabel("NanoBanana")}</SelectItem>
-                    <SelectItem value="Veo">{getAiSolutionLabel("Veo")}</SelectItem>
-                    <SelectItem value="Sora">{getAiSolutionLabel("Sora")}</SelectItem>
-                    <SelectItem value="Runway">{getAiSolutionLabel("Runway")}</SelectItem>
-                    <SelectItem value="Pika">{getAiSolutionLabel("Pika")}</SelectItem>
-                    <SelectItem value="Other">{getAiSolutionLabel("Other")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <AiSolutionSelect
+                value={aiSolution}
+                onValueChange={setAiSolution}
+                required
+                placeholder="사용한 AI 솔루션 선택"
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="prompt">프롬프트 명령어 (선택)</Label>
