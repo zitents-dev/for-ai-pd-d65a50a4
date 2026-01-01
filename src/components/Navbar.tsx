@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { Upload, User, Search } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "@/assets/hephai-log.png";
+import logo from "@/assets/hephai-logo.png";
 //import str from "@/assets/hephai-str-only.png";
 import { NotificationDropdown } from "./NotificationDropdown";
 
