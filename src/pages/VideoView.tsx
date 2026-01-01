@@ -460,7 +460,19 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">카테고리</span>
                   {video.category ? (
-                    <Badge variant="secondary" className="capitalize">{video.category}</Badge>
+                    <Badge 
+                      className={`capitalize ${
+                        video.category === 'education' ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30' :
+                        video.category === 'entertainment' ? 'bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30' :
+                        video.category === 'tutorial' ? 'bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30' :
+                        video.category === 'commercial' ? 'bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30' :
+                        video.category === 'fiction' ? 'bg-pink-500/20 text-pink-600 border-pink-500/30 hover:bg-pink-500/30' :
+                        video.category === 'podcast' ? 'bg-cyan-500/20 text-cyan-600 border-cyan-500/30 hover:bg-cyan-500/30' :
+                        'bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30'
+                      }`}
+                    >
+                      {video.category}
+                    </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
