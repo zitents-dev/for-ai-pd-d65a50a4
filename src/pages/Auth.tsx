@@ -1,63 +1,23 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Loader2, Check, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
 import logo from "@/assets/hephai-logo-all.png";
-
-const emailSchema = z.string().email("올바른 이메일 형식이 아닙니다");
-const nameSchema = z.string().min(1, "이름을 입력해주세요").max(50, "이름은 50자 이하여야 합니다");
-
-const getPasswordStrength = (password: string) => {
-  const checks = {
-    length: password.length >= 6,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /[0-9]/.test(password),
-    special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-  };
-  
-  const passedChecks = Object.values(checks).filter(Boolean).length;
-  
-  let strength: "weak" | "medium" | "strong" = "weak";
-  if (passedChecks >= 4) strength = "strong";
-  else if (passedChecks >= 3) strength = "medium";
-  
-  return { checks, strength, passedChecks };
-};
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [touched, setTouched] = useState({ email: false, password: false, name: false });
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
-
-  const emailError = useMemo(() => {
-    if (!touched.email || !email) return null;
-    const result = emailSchema.safeParse(email);
-    return result.success ? null : result.error.errors[0].message;
-  }, [email, touched.email]);
-
-  const nameError = useMemo(() => {
-    if (!touched.name || !name) return null;
-    const result = nameSchema.safeParse(name);
-    return result.success ? null : result.error.errors[0].message;
-  }, [name, touched.name]);
-
-  const passwordStrength = useMemo(() => {
-    if (!password) return null;
-    return getPasswordStrength(password);
-  }, [password]);
 
   useEffect(() => {
     if (user) {
@@ -67,15 +27,8 @@ export default function Auth() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      toast.error(emailResult.error.errors[0].message);
-      return;
-    }
-    
-    if (!password) {
-      toast.error("비밀번호를 입력해주세요");
+    if (!email || !password) {
+      toast.error("이메일과 비밀번호를 입력해주세요");
       return;
     }
 
@@ -92,16 +45,8 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const nameResult = nameSchema.safeParse(name);
-    if (!nameResult.success) {
-      toast.error(nameResult.error.errors[0].message);
-      return;
-    }
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      toast.error(emailResult.error.errors[0].message);
+    if (!email || !password || !name) {
+      toast.error("모든 필드를 입력해주세요");
       return;
     }
 
@@ -157,71 +102,6 @@ export default function Auth() {
     }
   };
 
-  const PasswordStrengthIndicator = () => {
-    if (!touched.password || !passwordStrength) return null;
-    
-    const { checks, strength } = passwordStrength;
-    const strengthColors = {
-      weak: "bg-destructive",
-      medium: "bg-yellow-500",
-      strong: "bg-green-500",
-    };
-    const strengthLabels = {
-      weak: "약함",
-      medium: "보통",
-      strong: "강함",
-    };
-
-    return (
-      <div className="mt-2 space-y-2">
-        <div className="flex gap-1">
-          {[1, 2, 3].map((level) => (
-            <div
-              key={level}
-              className={`h-1.5 flex-1 rounded-full transition-colors ${
-                (strength === "weak" && level === 1) ||
-                (strength === "medium" && level <= 2) ||
-                (strength === "strong" && level <= 3)
-                  ? strengthColors[strength]
-                  : "bg-muted"
-              }`}
-            />
-          ))}
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground">
-            비밀번호 강도: <span className={`font-medium ${
-              strength === "weak" ? "text-destructive" : 
-              strength === "medium" ? "text-yellow-500" : "text-green-500"
-            }`}>{strengthLabels[strength]}</span>
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-1 text-xs">
-          <div className={`flex items-center gap-1 ${checks.length ? "text-green-500" : "text-muted-foreground"}`}>
-            {checks.length ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-            6자 이상
-          </div>
-          <div className={`flex items-center gap-1 ${checks.uppercase ? "text-green-500" : "text-muted-foreground"}`}>
-            {checks.uppercase ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-            대문자
-          </div>
-          <div className={`flex items-center gap-1 ${checks.lowercase ? "text-green-500" : "text-muted-foreground"}`}>
-            {checks.lowercase ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-            소문자
-          </div>
-          <div className={`flex items-center gap-1 ${checks.number ? "text-green-500" : "text-muted-foreground"}`}>
-            {checks.number ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-            숫자
-          </div>
-          <div className={`flex items-center gap-1 ${checks.special ? "text-green-500" : "text-muted-foreground"}`}>
-            {checks.special ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-            특수문자
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <Card className="w-full max-w-md">
@@ -247,13 +127,8 @@ export default function Auth() {
                     placeholder="example@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
                     disabled={loading}
-                    className={emailError ? "border-destructive" : ""}
                   />
-                  {emailError && (
-                    <p className="text-xs text-destructive">{emailError}</p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">비밀번호</Label>
@@ -283,13 +158,8 @@ export default function Auth() {
                     placeholder="홍길동"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
                     disabled={loading}
-                    className={nameError ? "border-destructive" : ""}
                   />
-                  {nameError && (
-                    <p className="text-xs text-destructive">{nameError}</p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">이메일</Label>
@@ -299,13 +169,8 @@ export default function Auth() {
                     placeholder="example@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
                     disabled={loading}
-                    className={emailError ? "border-destructive" : ""}
                   />
-                  {emailError && (
-                    <p className="text-xs text-destructive">{emailError}</p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">비밀번호</Label>
@@ -315,10 +180,8 @@ export default function Auth() {
                     placeholder="6자 이상"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
                     disabled={loading}
                   />
-                  <PasswordStrengthIndicator />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
