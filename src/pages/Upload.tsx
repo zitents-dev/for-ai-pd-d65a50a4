@@ -11,7 +11,16 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload as UploadIcon, Image as ImageIcon, X, Clock, HardDrive, AlertTriangle, Camera } from "lucide-react";
+import {
+  Loader2,
+  Upload as UploadIcon,
+  Image as ImageIcon,
+  X,
+  Clock,
+  HardDrive,
+  AlertTriangle,
+  Camera,
+} from "lucide-react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { Progress } from "@/components/ui/progress";
 
@@ -48,7 +57,7 @@ export default function Upload() {
   const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [promptCommand, setPromptCommand] = useState("");
-  const [showPrompt, setShowPrompt] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(true);
   const [aiSolution, setAiSolution] = useState<string>("");
   const [category, setCategory] = useState<string>("");
 
@@ -65,7 +74,9 @@ export default function Upload() {
   const handleVideoSelect = (file: File) => {
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      toast.error(`파일 크기가 너무 큽니다. 최대 ${formatFileSize(MAX_FILE_SIZE)}까지 업로드 가능합니다. (현재: ${formatFileSize(file.size)})`);
+      toast.error(
+        `파일 크기가 너무 큽니다. 최대 ${formatFileSize(MAX_FILE_SIZE)}까지 업로드 가능합니다. (현재: ${formatFileSize(file.size)})`,
+      );
       return;
     }
 
@@ -73,23 +84,23 @@ export default function Upload() {
     if (videoPreviewUrl) {
       URL.revokeObjectURL(videoPreviewUrl);
     }
-    
+
     setVideoFile(file);
     const objectUrl = URL.createObjectURL(file);
     setVideoPreviewUrl(objectUrl);
-    
+
     // Extract video duration
     const video = document.createElement("video");
     video.preload = "metadata";
     video.onloadedmetadata = () => {
       const duration = Math.round(video.duration);
       setVideoDuration(duration);
-      
+
       // Show warning toast if duration exceeds limit
       if (duration > MAX_DURATION_SECONDS) {
         toast.warning(
-          `동영상 길이가 ${Math.floor(MAX_DURATION_SECONDS / 60)}분을 초과합니다. (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}) 업로드 전 편집이 필요합니다.`,
-          { duration: 5000 }
+          `동영상 길이가 ${Math.floor(MAX_DURATION_SECONDS / 60)}분을 초과합니다. (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, "0")}) 업로드 전 편집이 필요합니다.`,
+          { duration: 5000 },
         );
       }
     };
@@ -121,7 +132,7 @@ export default function Upload() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
@@ -152,7 +163,7 @@ export default function Upload() {
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
+
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       toast.error("프레임을 캡처할 수 없습니다.");
@@ -160,12 +171,12 @@ export default function Upload() {
     }
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+
     // Convert to data URL and open crop dialog
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
     setCropImageSrc(dataUrl);
     setCropDialogOpen(true);
-    
+
     toast.success("현재 프레임이 캡처되었습니다.");
   };
 
@@ -190,11 +201,11 @@ export default function Upload() {
     try {
       // Upload video with progress tracking
       const videoPath = `${user.id}/${Date.now()}-${videoFile.name}`;
-      
+
       // Create XMLHttpRequest for progress tracking
       const uploadPromise = new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        
+
         xhr.upload.addEventListener("progress", (event) => {
           if (event.lengthComputable) {
             const percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -215,7 +226,7 @@ export default function Upload() {
         // Get the upload URL from Supabase
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        
+
         xhr.open("POST", `${supabaseUrl}/storage/v1/object/videos/${videoPath}`);
         xhr.setRequestHeader("Authorization", `Bearer ${supabaseKey}`);
         xhr.setRequestHeader("x-upsert", "true");
@@ -310,7 +321,9 @@ export default function Upload() {
                     }`}
                   >
                     <div className="flex flex-col items-center justify-center gap-3 text-center">
-                      <div className={`p-3 rounded-full transition-colors ${isDragging ? "bg-primary/10" : "bg-muted"}`}>
+                      <div
+                        className={`p-3 rounded-full transition-colors ${isDragging ? "bg-primary/10" : "bg-muted"}`}
+                      >
                         <UploadIcon className={`h-8 w-8 ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
                       </div>
                       <div>
@@ -363,15 +376,13 @@ export default function Upload() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="truncate max-w-[200px]">{videoFile?.name}</span>
                       {videoDuration !== null && (
-                        <span className={`px-2 py-1 rounded flex items-center gap-1 ${
-                          videoDuration > MAX_DURATION_SECONDS 
-                            ? "bg-destructive/10 text-destructive" 
-                            : "bg-muted"
-                        }`}>
-                          {videoDuration > MAX_DURATION_SECONDS && (
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                          )}
-                          {Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, '0')}
+                        <span
+                          className={`px-2 py-1 rounded flex items-center gap-1 ${
+                            videoDuration > MAX_DURATION_SECONDS ? "bg-destructive/10 text-destructive" : "bg-muted"
+                          }`}
+                        >
+                          {videoDuration > MAX_DURATION_SECONDS && <AlertTriangle className="h-3.5 w-3.5" />}
+                          {Math.floor(videoDuration / 60)}:{(videoDuration % 60).toString().padStart(2, "0")}
                         </span>
                       )}
                     </div>
@@ -379,7 +390,7 @@ export default function Upload() {
                       <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                         <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                         <span>
-                          동영상 길이가 최대 허용 시간({Math.floor(MAX_DURATION_SECONDS / 60)}분)을 초과합니다. 
+                          동영상 길이가 최대 허용 시간({Math.floor(MAX_DURATION_SECONDS / 60)}분)을 초과합니다.
                           업로드하려면 동영상을 편집해 주세요.
                         </span>
                       </div>
@@ -404,12 +415,7 @@ export default function Upload() {
                       className="flex-1"
                     />
                     {videoPreviewUrl && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCaptureFrame}
-                        className="flex-shrink-0"
-                      >
+                      <Button type="button" variant="outline" onClick={handleCaptureFrame} className="flex-shrink-0">
                         <Camera className="mr-2 h-4 w-4" />
                         프레임 캡처
                       </Button>
@@ -527,10 +533,16 @@ export default function Upload() {
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={uploading || !videoFile || !category || !aiSolution || (videoDuration !== null && videoDuration > MAX_DURATION_SECONDS)}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={
+                  uploading ||
+                  !videoFile ||
+                  !category ||
+                  !aiSolution ||
+                  (videoDuration !== null && videoDuration > MAX_DURATION_SECONDS)
+                }
               >
                 {uploading ? (
                   <div className="flex items-center gap-2 w-full">
@@ -544,7 +556,7 @@ export default function Upload() {
                   </>
                 )}
               </Button>
-              
+
               {uploading && (
                 <div className="space-y-2">
                   <Progress value={uploadProgress} className="h-2" />
