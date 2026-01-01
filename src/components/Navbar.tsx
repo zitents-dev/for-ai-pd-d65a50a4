@@ -25,8 +25,8 @@ export const Navbar = () => {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center gap-4 px-4">
         <NavLink to="/" className="font-bold text-xl flex items-center gap-2">
-          <img src={logo} alt="Hephai logo" className="h-8 w-8" />
-          <img src={str} alt="Hephai logo" className="h-8 w-32" />
+          <img src={logo} alt="Hephai logo" className="h-8 w-10" />
+          <img src={str} alt="Hephai string" className="h-8 w-32" />
         </NavLink>
 
         <form onSubmit={handleSearch} className="flex-1 max-w-xl flex gap-2">
