@@ -18,14 +18,10 @@ import { CalendarIcon, ArrowUpDown, X, Filter, Search, ChevronRight } from "luci
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
-import { Constants } from "@/integrations/supabase/types";
-import { getCategoryLabel } from "@/lib/translations";
+import { CategorySelect } from "@/components/CategorySelect";
+import { AiSolutionSelect } from "@/components/AiSolutionSelect";
 
 export type SortOption = "recent" | "views" | "likes" | "dislikes" | "comments";
-
-const AI_SOLUTIONS = Constants.public.Enums.ai_solution;
-const CATEGORIES = Constants.public.Enums.video_category;
-
 export type DurationFilter = "" | "under1" | "1to5" | "over5";
 
 interface Directory {
@@ -206,42 +202,26 @@ export function VideoFilterSort({
           <div className={`flex items-center gap-2 overflow-hidden transition-all duration-200 ${isExpanded ? 'opacity-100 max-w-[600px]' : 'opacity-0 max-w-0'}`}>
             {/* Category Filter */}
             {onCategoryFilterChange && (
-              <Select 
-                value={categoryFilter || "__all__"} 
-                onValueChange={(value) => onCategoryFilterChange(value === "__all__" ? "" : value)}
-              >
-                <SelectTrigger className="w-[130px] h-9">
-                  <SelectValue placeholder="카테고리" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="__all__">전체 카테고리</SelectItem>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {getCategoryLabel(cat)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CategorySelect
+                value={categoryFilter || ""}
+                onValueChange={onCategoryFilterChange}
+                showLabel={false}
+                showAllOption
+                placeholder="카테고리"
+                className="w-[130px] h-9"
+              />
             )}
 
             {/* AI Solution Filter */}
             {onAiSolutionFilterChange && (
-              <Select 
-                value={aiSolutionFilter || "__all__"} 
-                onValueChange={(value) => onAiSolutionFilterChange(value === "__all__" ? "" : value)}
-              >
-                <SelectTrigger className="w-[130px] h-9">
-                  <SelectValue placeholder="AI 솔루션" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="__all__">전체 솔루션</SelectItem>
-                  {AI_SOLUTIONS.map((solution) => (
-                    <SelectItem key={solution} value={solution}>
-                      {solution}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AiSolutionSelect
+                value={aiSolutionFilter || ""}
+                onValueChange={onAiSolutionFilterChange}
+                showLabel={false}
+                showAllOption
+                placeholder="AI 솔루션"
+                className="w-[130px] h-9"
+              />
             )}
 
             {/* Duration Filter */}
