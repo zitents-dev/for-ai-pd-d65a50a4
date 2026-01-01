@@ -8,9 +8,10 @@ import { useNavigate } from "react-router-dom";
 import logo from "@/assets/hephai-logo.png";
 import str from "@/assets/hephai-str-only.png";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Navbar = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -43,7 +44,13 @@ export const Navbar = () => {
         </form>
 
         <div className="flex items-center gap-2 ml-auto">
-          {user ? (
+          {loading ? (
+            <>
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </>
+          ) : user ? (
             <>
               <Button asChild variant="ghost" size="sm">
                 <NavLink to="/upload">
