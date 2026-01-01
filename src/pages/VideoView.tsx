@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Heart, Eye, Calendar, Info, UserPlus, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -458,7 +459,11 @@ export default function VideoView() {
               <Card className="p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">카테고리</span>
-                  <span className="text-muted-foreground capitalize">{video.category || '-'}</span>
+                  {video.category ? (
+                    <Badge variant="secondary" className="capitalize">{video.category}</Badge>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </div>
                 <Separator className="my-1" />
                 <div>
@@ -471,7 +476,11 @@ export default function VideoView() {
               <Card className="p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">AI 솔루션</span>
-                  <span className="text-muted-foreground">{video.ai_solution || '-'}</span>
+                  {video.ai_solution ? (
+                    <Badge variant="outline">{video.ai_solution}</Badge>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </div>
                 <Separator className="my-1" />
                 <div>
