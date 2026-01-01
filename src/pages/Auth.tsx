@@ -1,80 +1,80 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/lib/auth';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/hephai-logo-all.png";
 
 export default function Auth() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate("/");
     }
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      toast.error('이메일과 비밀번호를 입력해주세요');
+      toast.error("이메일과 비밀번호를 입력해주세요");
       return;
     }
-    
+
     setLoading(true);
     const { error } = await signIn(email, password);
     setLoading(false);
-    
+
     if (error) {
-      toast.error(error.message || '로그인에 실패했습니다');
+      toast.error(error.message || "로그인에 실패했습니다");
     } else {
-      toast.success('로그인 성공!');
+      toast.success("로그인 성공!");
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || !name) {
-      toast.error('모든 필드를 입력해주세요');
+      toast.error("모든 필드를 입력해주세요");
       return;
     }
-    
+
     if (password.length < 6) {
-      toast.error('비밀번호는 6자 이상이어야 합니다');
+      toast.error("비밀번호는 6자 이상이어야 합니다");
       return;
     }
-    
+
     setLoading(true);
     const { error } = await signUp(email, password, name);
     setLoading(false);
-    
+
     if (error) {
-      toast.error(error.message || '회원가입에 실패했습니다');
+      toast.error(error.message || "회원가입에 실패했습니다");
     } else {
-      toast.success('회원가입 성공! 이메일을 확인해주세요');
+      toast.success("회원가입 성공! 이메일을 확인해주세요");
     }
   };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: redirectUrl,
-        scopes: 'https://www.googleapis.com/auth/user.birthday.read',
+        scopes: "https://www.googleapis.com/auth/user.birthday.read",
       },
     });
 
@@ -92,7 +92,7 @@ export default function Auth() {
       provider: "kakao",
       options: {
         redirectTo: redirectUrl,
-        scopes: 'account_email profile_nickname birthday',
+        scopes: "account_email profile_nickname birthday",
       },
     });
 
@@ -107,11 +107,9 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            <img src={logo} alt="Hephai logo" className="h-24 w-24" />
+            <img src={logo} alt="Hephai logo" className="h-24 w-48" />
           </CardTitle>
-          <CardDescription className="text-center">
-            당신의 작품을 전시하세요!
-          </CardDescription>
+          <CardDescription className="text-center">당신의 작품을 전시하세요!</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -119,7 +117,7 @@ export default function Auth() {
               <TabsTrigger value="signin">로그인</TabsTrigger>
               <TabsTrigger value="signup">회원가입</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
@@ -150,7 +148,7 @@ export default function Auth() {
                 </Button>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
@@ -204,13 +202,7 @@ export default function Auth() {
           </div>
 
           <div className="space-y-3">
-            <Button
-              variant="outline"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full"
-              size="lg"
-            >
+            <Button variant="outline" onClick={handleGoogleSignIn} disabled={loading} className="w-full" size="lg">
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -231,13 +223,7 @@ export default function Auth() {
               </svg>
               구글 계정으로 계속하기
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleKakaoSignIn}
-              disabled={loading}
-              className="w-full"
-              size="lg"
-            >
+            <Button variant="outline" onClick={handleKakaoSignIn} disabled={loading} className="w-full" size="lg">
               <svg className="w-5 h-5 mr-2" viewBox="0 0 256 256">
                 <path
                   fill="#FFE812"
