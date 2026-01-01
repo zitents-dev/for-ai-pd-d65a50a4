@@ -21,7 +21,7 @@ import {
   AlertTriangle,
   Camera,
 } from "lucide-react";
-import { getAiSolutionLabel, type AiSolution } from "@/lib/translations";
+import { getAiSolutionLabel, getCategoryLabel, type AiSolution, type VideoCategory } from "@/lib/translations";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { Progress } from "@/components/ui/progress";
 
@@ -488,14 +488,14 @@ export default function Upload() {
                   <SelectTrigger id="category">
                     <SelectValue placeholder="카테고리 선택" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="education">교육</SelectItem>
-                    <SelectItem value="commercial">광고</SelectItem>
-                    <SelectItem value="fiction">픽션</SelectItem>
-                    <SelectItem value="podcast">팟캐스트</SelectItem>
-                    <SelectItem value="entertainment">엔터테인먼트</SelectItem>
-                    <SelectItem value="tutorial">튜토리얼</SelectItem>
-                    <SelectItem value="other">기타</SelectItem>
+                <SelectContent>
+                    <SelectItem value="education">{getCategoryLabel("education")}</SelectItem>
+                    <SelectItem value="commercial">{getCategoryLabel("commercial")}</SelectItem>
+                    <SelectItem value="fiction">{getCategoryLabel("fiction")}</SelectItem>
+                    <SelectItem value="podcast">{getCategoryLabel("podcast")}</SelectItem>
+                    <SelectItem value="entertainment">{getCategoryLabel("entertainment")}</SelectItem>
+                    <SelectItem value="tutorial">{getCategoryLabel("tutorial")}</SelectItem>
+                    <SelectItem value="other">{getCategoryLabel("other")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
