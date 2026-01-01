@@ -10,6 +10,8 @@ import { Search as SearchIcon, Video, User, Users, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
+import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
+import { DateRange } from "react-day-picker";
 
 const VIDEOS_PER_PAGE = 12;
 const CREATORS_PER_PAGE = 10;
@@ -24,6 +26,8 @@ interface Video {
   created_at: string;
   likes_count?: number;
   dislikes_count?: number;
+  category?: string | null;
+  ai_solution?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -60,6 +64,12 @@ export default function Search() {
   const [totalVideos, setTotalVideos] = useState(0);
   const [totalCreators, setTotalCreators] = useState(0);
   
+  // Filter states
+  const [sortBy, setSortBy] = useState<SortOption>("recent");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [aiSolutionFilter, setAiSolutionFilter] = useState("");
+  
   const currentSearchQuery = useRef("");
   const creatorsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +80,14 @@ export default function Search() {
       performSearch(q);
     }
   }, [searchParams]);
+
+  // Re-search when filters change
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      performSearch(q);
+    }
+  }, [sortBy, dateRange, categoryFilter, aiSolutionFilter]);
 
   const fetchVideosWithCounts = async (videoData: any[]) => {
     if (!videoData || videoData.length === 0) return [];
@@ -129,6 +147,62 @@ export default function Search() {
     );
   };
 
+  const buildVideoQuery = (baseQuery: any, searchQuery: string) => {
+    let query = baseQuery.or(`title.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
+    
+    // Apply category filter
+    if (categoryFilter) {
+      query = query.eq("category", categoryFilter as any);
+    }
+    
+    // Apply AI solution filter
+    if (aiSolutionFilter) {
+      query = query.eq("ai_solution", aiSolutionFilter as any);
+    }
+    
+    // Apply date range filter
+    if (dateRange?.from) {
+      query = query.gte("created_at", dateRange.from.toISOString());
+      if (dateRange.to) {
+        const endDate = new Date(dateRange.to);
+        endDate.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endDate.toISOString());
+      }
+    }
+    
+    // Apply sorting
+    switch (sortBy) {
+      case "views":
+        query = query.order("views", { ascending: false, nullsFirst: false });
+        break;
+      case "likes":
+        // We'll sort after fetching since likes are counted separately
+        query = query.order("created_at", { ascending: false });
+        break;
+      case "dislikes":
+        query = query.order("created_at", { ascending: false });
+        break;
+      case "comments":
+        query = query.order("created_at", { ascending: false });
+        break;
+      case "recent":
+      default:
+        query = query.order("created_at", { ascending: false });
+        break;
+    }
+    
+    return query;
+  };
+
+  const sortVideosByLikesOrDislikes = (videos: Video[], sortType: SortOption) => {
+    if (sortType === "likes") {
+      return [...videos].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+    } else if (sortType === "dislikes") {
+      return [...videos].sort((a, b) => (b.dislikes_count || 0) - (a.dislikes_count || 0));
+    }
+    return videos;
+  };
+
   const performSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
 
@@ -138,12 +212,29 @@ export default function Search() {
     setCreators([]);
     
     try {
-      // Get total counts first
+      // Build count query with filters
+      let countQuery = supabase
+        .from("videos")
+        .select("*", { count: "exact", head: true })
+        .or(`title.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
+      
+      if (categoryFilter) {
+        countQuery = countQuery.eq("category", categoryFilter as any);
+      }
+      if (aiSolutionFilter) {
+        countQuery = countQuery.eq("ai_solution", aiSolutionFilter as any);
+      }
+      if (dateRange?.from) {
+        countQuery = countQuery.gte("created_at", dateRange.from.toISOString());
+        if (dateRange.to) {
+          const endDate = new Date(dateRange.to);
+          endDate.setHours(23, 59, 59, 999);
+          countQuery = countQuery.lte("created_at", endDate.toISOString());
+        }
+      }
+
       const [{ count: videoCount }, { count: creatorCount }] = await Promise.all([
-        supabase
-          .from("videos")
-          .select("*", { count: "exact", head: true })
-          .or(`title.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`),
+        countQuery,
         supabase
           .from("profiles")
           .select("*", { count: "exact", head: true })
@@ -153,8 +244,8 @@ export default function Search() {
       setTotalVideos(videoCount || 0);
       setTotalCreators(creatorCount || 0);
 
-      // Search videos by title or tags (first page)
-      const { data: videoData, error: videoError } = await supabase
+      // Search videos with filters
+      let videoQuery = supabase
         .from("videos")
         .select(`
           *,
@@ -162,14 +253,22 @@ export default function Search() {
             name,
             avatar_url
           )
-        `)
-        .or(`title.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`)
-        .order("created_at", { ascending: false })
-        .range(0, VIDEOS_PER_PAGE - 1);
+        `);
+      
+      videoQuery = buildVideoQuery(videoQuery, searchQuery);
+      videoQuery = videoQuery.range(0, VIDEOS_PER_PAGE - 1);
+
+      const { data: videoData, error: videoError } = await videoQuery;
 
       if (videoError) throw videoError;
 
-      const videosWithCounts = await fetchVideosWithCounts(videoData || []);
+      let videosWithCounts = await fetchVideosWithCounts(videoData || []);
+      
+      // Sort by likes/dislikes if needed (since we can't sort by computed columns in DB)
+      if (sortBy === "likes" || sortBy === "dislikes") {
+        videosWithCounts = sortVideosByLikesOrDislikes(videosWithCounts as Video[], sortBy);
+      }
+      
       setVideos(videosWithCounts as Video[]);
       setHasMoreVideos((videoData?.length || 0) >= VIDEOS_PER_PAGE && (videoCount || 0) > VIDEOS_PER_PAGE);
 
@@ -198,7 +297,7 @@ export default function Search() {
     setLoadingMoreVideos(true);
     try {
       const startIndex = videos.length;
-      const { data: videoData, error } = await supabase
+      let videoQuery = supabase
         .from("videos")
         .select(`
           *,
@@ -206,22 +305,32 @@ export default function Search() {
             name,
             avatar_url
           )
-        `)
-        .or(`title.ilike.%${currentSearchQuery.current}%,tags.cs.{${currentSearchQuery.current}}`)
-        .order("created_at", { ascending: false })
-        .range(startIndex, startIndex + VIDEOS_PER_PAGE - 1);
+        `);
+      
+      videoQuery = buildVideoQuery(videoQuery, currentSearchQuery.current);
+      videoQuery = videoQuery.range(startIndex, startIndex + VIDEOS_PER_PAGE - 1);
+
+      const { data: videoData, error } = await videoQuery;
 
       if (error) throw error;
 
-      const videosWithCounts = await fetchVideosWithCounts(videoData || []);
-      setVideos(prev => [...prev, ...(videosWithCounts as Video[])]);
+      let videosWithCounts = await fetchVideosWithCounts(videoData || []);
+      
+      if (sortBy === "likes" || sortBy === "dislikes") {
+        // For likes/dislikes sorting, we need to merge and re-sort
+        const allVideos = [...videos, ...(videosWithCounts as Video[])];
+        setVideos(sortVideosByLikesOrDislikes(allVideos, sortBy));
+      } else {
+        setVideos(prev => [...prev, ...(videosWithCounts as Video[])]);
+      }
+      
       setHasMoreVideos((videoData?.length || 0) >= VIDEOS_PER_PAGE);
     } catch (error) {
       console.error("Error loading more videos:", error);
     } finally {
       setLoadingMoreVideos(false);
     }
-  }, [loadingMoreVideos, hasMoreVideos, videos.length]);
+  }, [loadingMoreVideos, hasMoreVideos, videos, sortBy, categoryFilter, aiSolutionFilter, dateRange]);
 
   const loadMoreCreators = useCallback(async () => {
     if (loadingMoreCreators || !hasMoreCreators || !currentSearchQuery.current) return;
@@ -289,6 +398,20 @@ export default function Search() {
               찾기
             </Button>
           </form>
+
+          {/* Filters - Only show when on videos tab and has searched */}
+          {searchParams.get("q") && activeTab === "videos" && (
+            <VideoFilterSort
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              categoryFilter={categoryFilter}
+              onCategoryFilterChange={(value) => setCategoryFilter(value)}
+              aiSolutionFilter={aiSolutionFilter}
+              onAiSolutionFilterChange={(value) => setAiSolutionFilter(value)}
+            />
+          )}
 
           {/* Results */}
           {loading ? (
