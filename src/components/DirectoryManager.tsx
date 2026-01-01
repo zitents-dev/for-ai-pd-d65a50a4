@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput } from "lucide-react";
 import { VideoCard } from "./VideoCard";
 import { Badge } from "@/components/ui/badge";
 
@@ -81,6 +81,11 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
   const [bulkRemoveDialogOpen, setBulkRemoveDialogOpen] = useState(false);
   const [bulkRemoveAgreed, setBulkRemoveAgreed] = useState(false);
+
+  // Move to directory states
+  const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
+  const [targetDirectoryId, setTargetDirectoryId] = useState<string | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
   useEffect(() => {
     loadDirectories();
   }, [user]);
@@ -281,6 +286,52 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
       setSelectedVideos(new Set());
     } else {
       setSelectedVideos(new Set(directoryVideos.map((v) => v.id)));
+    }
+  };
+
+  const bulkMoveVideosToDirectory = async () => {
+    if (!selectedDirectory || !targetDirectoryId || selectedVideos.size === 0) return;
+
+    setIsMoving(true);
+
+    try {
+      const videoIds = Array.from(selectedVideos);
+      
+      // First, remove from current directory
+      const { error: removeError } = await supabase
+        .from("directory_videos")
+        .delete()
+        .in("video_id", videoIds)
+        .eq("directory_id", selectedDirectory);
+
+      if (removeError) throw removeError;
+
+      // Then, add to target directory (skip duplicates)
+      const insertData = videoIds.map((videoId) => ({
+        video_id: videoId,
+        directory_id: targetDirectoryId,
+      }));
+
+      // Use upsert to avoid duplicate key errors
+      const { error: insertError } = await supabase
+        .from("directory_videos")
+        .upsert(insertData, { onConflict: "directory_id,video_id", ignoreDuplicates: true });
+
+      if (insertError) throw insertError;
+
+      const targetDirName = directories.find((d) => d.id === targetDirectoryId)?.name;
+      toast.success(`${videoIds.length}개의 작품을 "${targetDirName}"(으)로 이동했습니다`);
+      
+      setSelectedVideos(new Set());
+      setBulkMoveDialogOpen(false);
+      setTargetDirectoryId(null);
+      loadDirectories();
+      loadDirectoryVideos(selectedDirectory);
+    } catch (error) {
+      console.error("Error moving videos:", error);
+      toast.error("이동에 실패했습니다");
+    } finally {
+      setIsMoving(false);
     }
   };
 
@@ -537,13 +588,79 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{directories.find((d) => d.id === selectedDirectory)?.name || "디렉토리"} 작품</CardTitle>
             {selectedVideos.size > 0 && (
-              <AlertDialog open={bulkRemoveDialogOpen} onOpenChange={setBulkRemoveDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {selectedVideos.size}개 제거
-                  </Button>
-                </AlertDialogTrigger>
+              <div className="flex items-center gap-2">
+                {/* Move to another directory button */}
+                <Dialog open={bulkMoveDialogOpen} onOpenChange={setBulkMoveDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" size="sm">
+                      <FolderInput className="mr-2 h-4 w-4" />
+                      {selectedVideos.size}개 이동
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>다른 디렉토리로 이동</DialogTitle>
+                      <DialogDescription>
+                        선택한 {selectedVideos.size}개의 작품을 이동할 디렉토리를 선택하세요
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                        {directories
+                          .filter((dir) => dir.id !== selectedDirectory)
+                          .map((dir) => (
+                            <div
+                              key={dir.id}
+                              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                targetDirectoryId === dir.id
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border hover:border-primary/50"
+                              }`}
+                              onClick={() => setTargetDirectoryId(dir.id)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Folder className="w-5 h-5 text-primary" />
+                                <span className="font-medium text-sm truncate">{dir.name}</span>
+                              </div>
+                              {dir.video_count !== undefined && dir.video_count > 0 && (
+                                <p className="text-xs text-muted-foreground mt-1">{dir.video_count}개 작품</p>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                      {directories.filter((dir) => dir.id !== selectedDirectory).length === 0 && (
+                        <p className="text-muted-foreground text-center py-4">
+                          이동할 수 있는 다른 디렉토리가 없습니다
+                        </p>
+                      )}
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setBulkMoveDialogOpen(false);
+                          setTargetDirectoryId(null);
+                        }}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        onClick={bulkMoveVideosToDirectory}
+                        disabled={!targetDirectoryId || isMoving}
+                      >
+                        {isMoving ? "이동 중..." : "이동하기"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <AlertDialog open={bulkRemoveDialogOpen} onOpenChange={setBulkRemoveDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {selectedVideos.size}개 제거
+                    </Button>
+                  </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>선택한 작품 제거</AlertDialogTitle>
@@ -576,6 +693,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+              </div>
             )}
           </CardHeader>
           <CardContent>
