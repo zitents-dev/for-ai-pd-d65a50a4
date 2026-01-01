@@ -436,9 +436,7 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">카테고리</span>
                   {video.category ? (
-                    <Badge className={getCategoryClassName(video.category)}>
-                      {getCategoryLabel(video.category)}
-                    </Badge>
+                    <Badge className={getCategoryClassName(video.category)}>{getCategoryLabel(video.category)}</Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
@@ -456,7 +454,7 @@ export default function VideoView() {
                   <span className="font-semibold text-foreground">AI 솔루션</span>
                   {video.ai_solution ? (
                     <Badge className={getAiSolutionClassName(video.ai_solution)}>
-                      {video.ai_solution === "Other" ? "기타" : video.ai_solution}
+                      {video.ai_solution === "Other" ? "기타 솔루션" : video.ai_solution}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
