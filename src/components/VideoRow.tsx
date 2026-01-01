@@ -190,57 +190,63 @@ export const VideoRow = ({
 
       <div
         className={cn(
-          "relative group overflow-hidden transition-all duration-300",
-          isCollapsed ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100"
+          "grid transition-all duration-300 ease-out",
+          isCollapsed 
+            ? "grid-rows-[0fr] opacity-0" 
+            : "grid-rows-[1fr] opacity-100"
         )}
       >
-        {/* Left scroll button */}
-        {canScrollLeft && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-            onClick={() => scroll("left")}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-        )}
+        <div className="overflow-hidden">
+          <div className="relative group">
+            {/* Left scroll button */}
+            {canScrollLeft && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                onClick={() => scroll("left")}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+            )}
 
-        {/* Scrollable container */}
-        <div
-          ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 scroll-smooth"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {initialLoading ? (
-            <VideoCardSkeleton count={5} />
-          ) : showEmptyState ? (
-            <div className="flex-shrink-0 w-full text-center py-8 text-muted-foreground">
-              No videos found in this category
-            </div>
-          ) : (
-            <>
-              {videos.map((video) => (
-                <div key={video.id} className="flex-shrink-0 w-72">
-                  <VideoCard video={video} />
+            {/* Scrollable container */}
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 scroll-smooth"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {initialLoading ? (
+                <VideoCardSkeleton count={5} />
+              ) : showEmptyState ? (
+                <div className="flex-shrink-0 w-full text-center py-8 text-muted-foreground">
+                  No videos found in this category
                 </div>
-              ))}
-              {loading && <VideoCardSkeleton count={2} />}
-            </>
-          )}
-        </div>
+              ) : (
+                <>
+                  {videos.map((video) => (
+                    <div key={video.id} className="flex-shrink-0 w-72">
+                      <VideoCard video={video} />
+                    </div>
+                  ))}
+                  {loading && <VideoCardSkeleton count={2} />}
+                </>
+              )}
+            </div>
 
-        {/* Right scroll button */}
-        {(canScrollRight || hasMore) && !showEmptyState && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-            onClick={() => scroll("right")}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        )}
+            {/* Right scroll button */}
+            {(canScrollRight || hasMore) && !showEmptyState && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                onClick={() => scroll("right")}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );
