@@ -5,8 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { Upload, User, Search } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "@/assets/hephai-log.png";
-import logoStr from "@/assets/hephai-str-only.png";
+import logo from "@/assets/hephai-logo.png";
+//import str from "@/assets/hephai-str-only.png";
 import { NotificationDropdown } from "./NotificationDropdown";
 
 export const Navbar = () => {
@@ -26,7 +26,6 @@ export const Navbar = () => {
       <div className="container flex h-16 items-center gap-4 px-4">
         <NavLink to="/" className="font-bold text-xl flex items-center gap-2">
           <img src={logo} alt="Hephai logo" className="h-8 w-8" />
-          <img src={logoStr} alt="Hephai string" className="h-8 w-32" />
         </NavLink>
 
         <form onSubmit={handleSearch} className="flex-1 max-w-xl flex gap-2">
@@ -41,14 +40,13 @@ export const Navbar = () => {
             <Search className="w-4 h-4" />
           </Button>
         </form>
-        
+
         <div className="flex items-center gap-2 ml-auto">
           {user ? (
             <>
               <Button asChild variant="ghost" size="sm">
                 <NavLink to="/upload">
-                  <Upload className="w-4 h-4 mr-2" />
-                  새 작품
+                  <Upload className="w-4 h-4 mr-2" />새 작품
                 </NavLink>
               </Button>
               <NotificationDropdown />
