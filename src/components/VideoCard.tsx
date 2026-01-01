@@ -154,7 +154,7 @@ export const VideoCard = ({ video }: VideoCardProps) => {
             <h3 className="font-semibold text-foreground truncate mb-1" title={video.title}>
               {video.title}
             </h3>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-col gap-0.5">
               <p className="text-sm text-muted-foreground">{video.profiles.name}</p>
               <BadgeDisplay badges={badges} size="sm" />
             </div>
