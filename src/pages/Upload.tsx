@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Camera,
 } from "lucide-react";
+import { getAiSolutionLabel, type AiSolution } from "@/lib/translations";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { Progress } from "@/components/ui/progress";
 
@@ -505,13 +506,13 @@ export default function Upload() {
                   <SelectTrigger id="ai_solution">
                     <SelectValue placeholder="사용한 AI 솔루션 선택" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NanoBanana">NanoBanana</SelectItem>
-                    <SelectItem value="Veo">Veo</SelectItem>
-                    <SelectItem value="Sora">Sora</SelectItem>
-                    <SelectItem value="Runway">Runway</SelectItem>
-                    <SelectItem value="Pika">Pika</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                <SelectContent>
+                    <SelectItem value="NanoBanana">{getAiSolutionLabel("NanoBanana")}</SelectItem>
+                    <SelectItem value="Veo">{getAiSolutionLabel("Veo")}</SelectItem>
+                    <SelectItem value="Sora">{getAiSolutionLabel("Sora")}</SelectItem>
+                    <SelectItem value="Runway">{getAiSolutionLabel("Runway")}</SelectItem>
+                    <SelectItem value="Pika">{getAiSolutionLabel("Pika")}</SelectItem>
+                    <SelectItem value="Other">{getAiSolutionLabel("Other")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
