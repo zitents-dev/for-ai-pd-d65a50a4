@@ -39,12 +39,30 @@ import {
 import { VideoCard } from "./VideoCard";
 import { Badge } from "@/components/ui/badge";
 
+// Predefined directory colors
+const DIRECTORY_COLORS = [
+  { name: "기본", value: null, bg: "bg-primary", text: "text-primary" },
+  { name: "빨강", value: "red", bg: "bg-red-500", text: "text-red-500" },
+  { name: "주황", value: "orange", bg: "bg-orange-500", text: "text-orange-500" },
+  { name: "노랑", value: "yellow", bg: "bg-yellow-500", text: "text-yellow-500" },
+  { name: "초록", value: "green", bg: "bg-green-500", text: "text-green-500" },
+  { name: "파랑", value: "blue", bg: "bg-blue-500", text: "text-blue-500" },
+  { name: "보라", value: "purple", bg: "bg-purple-500", text: "text-purple-500" },
+  { name: "분홍", value: "pink", bg: "bg-pink-500", text: "text-pink-500" },
+];
+
+const getColorClasses = (color: string | null) => {
+  const found = DIRECTORY_COLORS.find((c) => c.value === color);
+  return found || DIRECTORY_COLORS[0];
+};
+
 interface Directory {
   id: string;
   name: string;
   description: string | null;
   created_at: string;
   video_count?: number;
+  color?: string | null;
 }
 
 interface Video {
@@ -72,6 +90,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [directoryVideos, setDirectoryVideos] = useState<Video[]>([]);
   const [newDirName, setNewDirName] = useState("");
   const [newDirDescription, setNewDirDescription] = useState("");
+  const [newDirColor, setNewDirColor] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dragOverDirectory, setDragOverDirectory] = useState<string | null>(null);
@@ -103,6 +122,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [renameDialogOpen, setRenameDialogOpen] = useState<string | null>(null);
   const [renameDirName, setRenameDirName] = useState("");
   const [renameDirDescription, setRenameDirDescription] = useState("");
+  const [renameDirColor, setRenameDirColor] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
 
   // Directory sorting state
@@ -218,6 +238,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
         user_id: user.id,
         name: newDirName.trim(),
         description: newDirDescription.trim() || null,
+        color: newDirColor,
       });
 
       if (error) throw error;
@@ -225,6 +246,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
       toast.success("디렉토리가 생성되었습니다");
       setNewDirName("");
       setNewDirDescription("");
+      setNewDirColor(null);
       setOpen(false);
       loadDirectories();
     } catch (error: any) {
@@ -271,6 +293,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
         .update({
           name: renameDirName.trim(),
           description: renameDirDescription.trim() || null,
+          color: renameDirColor,
         })
         .eq("id", directoryId);
 
@@ -280,6 +303,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
       setRenameDialogOpen(null);
       setRenameDirName("");
       setRenameDirDescription("");
+      setRenameDirColor(null);
       loadDirectories();
     } catch (error: any) {
       console.error("Error renaming directory:", error);
@@ -296,6 +320,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const openRenameDialog = (dir: Directory) => {
     setRenameDirName(dir.name);
     setRenameDirDescription(dir.description || "");
+    setRenameDirColor(dir.color || null);
     setRenameDialogOpen(dir.id);
   };
 
@@ -579,6 +604,28 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     rows={3}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>색상</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {DIRECTORY_COLORS.map((color) => (
+                      <button
+                        key={color.value || "default"}
+                        type="button"
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${color.bg} ${
+                          newDirColor === color.value
+                            ? "ring-2 ring-offset-2 ring-foreground scale-110"
+                            : "hover:scale-105"
+                        }`}
+                        onClick={() => setNewDirColor(color.value)}
+                        title={color.name}
+                      >
+                        {newDirColor === color.value && (
+                          <span className="text-white text-xs font-bold">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>
@@ -668,7 +715,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Folder
-                          className={`w-6 h-6 ${dragOverDirectory === dir.id ? "text-primary animate-pulse" : "text-primary"}`}
+                          className={`w-6 h-6 ${dragOverDirectory === dir.id ? "animate-pulse" : ""} ${getColorClasses(dir.color || null).text}`}
                         />
                         {dir.video_count !== undefined && dir.video_count > 0 && (
                           <Badge variant="secondary" className="text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
@@ -1197,6 +1244,28 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                 placeholder="디렉토리에 대한 설명"
                 rows={3}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>색상</Label>
+              <div className="flex flex-wrap gap-2">
+                {DIRECTORY_COLORS.map((color) => (
+                  <button
+                    key={color.value || "default"}
+                    type="button"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${color.bg} ${
+                      renameDirColor === color.value
+                        ? "ring-2 ring-offset-2 ring-foreground scale-110"
+                        : "hover:scale-105"
+                    }`}
+                    onClick={() => setRenameDirColor(color.value)}
+                    title={color.name}
+                  >
+                    {renameDirColor === color.value && (
+                      <span className="text-white text-xs font-bold">✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
