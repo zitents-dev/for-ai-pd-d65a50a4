@@ -35,33 +35,44 @@ export const categoryConfig: Record<VideoCategory, { label: string; className: s
   },
 };
 
-// AI Solution styles
-export const aiSolutionConfig: Record<AiSolution, { label: string; className: string }> = {
+// AI Solution styles with icon names
+export const aiSolutionConfig: Record<AiSolution, { label: string; className: string; iconColor: string }> = {
   Sora: {
     label: "Sora",
     className: "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30",
+    iconColor: "text-blue-500",
   },
   Runway: {
     label: "Runway",
     className: "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30",
+    iconColor: "text-red-500",
   },
   Veo: {
     label: "Veo",
     className: "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30",
+    iconColor: "text-green-500",
   },
   Pika: {
     label: "Pika",
     className: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30",
+    iconColor: "text-yellow-500",
   },
   NanoBanana: {
     label: "NanoBanana",
     className: "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30",
+    iconColor: "text-purple-500",
   },
   Other: {
     label: "기타",
     className: "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30",
+    iconColor: "text-gray-500",
   },
 };
+
+export function getAiSolutionIconColor(aiSolution: AiSolution | string | null): string {
+  if (!aiSolution) return "text-gray-500";
+  return aiSolutionConfig[aiSolution as AiSolution]?.iconColor || "text-gray-500";
+}
 
 export function getCategoryLabel(category: VideoCategory | string | null): string {
   if (!category) return "-";
