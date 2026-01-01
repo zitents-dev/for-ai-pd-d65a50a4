@@ -75,7 +75,7 @@ export const aiSolutionConfig: Record<AiSolution, { label: string; className: st
     iconColor: "text-purple-500",
   },
   Other: {
-    label: "기타",
+    label: "기타 솔루션",
     className: "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30",
     iconColor: "text-gray-500",
   },
