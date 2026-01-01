@@ -497,7 +497,7 @@ export default function VideoView() {
                                   : "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30"
                       }`}
                     >
-                      {video.ai_solution === "other" ? "기타" : video.ai_solution}
+                      {video.ai_solution === "Other" ? "기타" : video.ai_solution}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">-</span>
