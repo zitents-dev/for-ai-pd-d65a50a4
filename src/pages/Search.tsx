@@ -10,7 +10,7 @@ import { Search as SearchIcon, Video, User, Users, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
-import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
+import { VideoFilterSort, SortOption, DurationFilter } from "@/components/VideoFilterSort";
 import { DateRange } from "react-day-picker";
 
 const VIDEOS_PER_PAGE = 12;
@@ -69,6 +69,7 @@ export default function Search() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [categoryFilter, setCategoryFilter] = useState("");
   const [aiSolutionFilter, setAiSolutionFilter] = useState("");
+  const [durationFilter, setDurationFilter] = useState<DurationFilter>("");
   
   const currentSearchQuery = useRef("");
   const creatorsContainerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +88,7 @@ export default function Search() {
     if (q) {
       performSearch(q);
     }
-  }, [sortBy, dateRange, categoryFilter, aiSolutionFilter]);
+  }, [sortBy, dateRange, categoryFilter, aiSolutionFilter, durationFilter]);
 
   const fetchVideosWithCounts = async (videoData: any[]) => {
     if (!videoData || videoData.length === 0) return [];
@@ -160,6 +161,21 @@ export default function Search() {
       query = query.eq("ai_solution", aiSolutionFilter as any);
     }
     
+    // Apply duration filter (duration is in seconds)
+    if (durationFilter) {
+      switch (durationFilter) {
+        case "under1":
+          query = query.lt("duration", 60);
+          break;
+        case "1to5":
+          query = query.gte("duration", 60).lte("duration", 300);
+          break;
+        case "over5":
+          query = query.gt("duration", 300);
+          break;
+      }
+    }
+    
     // Apply date range filter
     if (dateRange?.from) {
       query = query.gte("created_at", dateRange.from.toISOString());
@@ -223,6 +239,19 @@ export default function Search() {
       }
       if (aiSolutionFilter) {
         countQuery = countQuery.eq("ai_solution", aiSolutionFilter as any);
+      }
+      if (durationFilter) {
+        switch (durationFilter) {
+          case "under1":
+            countQuery = countQuery.lt("duration", 60);
+            break;
+          case "1to5":
+            countQuery = countQuery.gte("duration", 60).lte("duration", 300);
+            break;
+          case "over5":
+            countQuery = countQuery.gt("duration", 300);
+            break;
+        }
       }
       if (dateRange?.from) {
         countQuery = countQuery.gte("created_at", dateRange.from.toISOString());
@@ -330,7 +359,7 @@ export default function Search() {
     } finally {
       setLoadingMoreVideos(false);
     }
-  }, [loadingMoreVideos, hasMoreVideos, videos, sortBy, categoryFilter, aiSolutionFilter, dateRange]);
+  }, [loadingMoreVideos, hasMoreVideos, videos, sortBy, categoryFilter, aiSolutionFilter, dateRange, durationFilter]);
 
   const loadMoreCreators = useCallback(async () => {
     if (loadingMoreCreators || !hasMoreCreators || !currentSearchQuery.current) return;
@@ -410,6 +439,8 @@ export default function Search() {
               onCategoryFilterChange={(value) => setCategoryFilter(value)}
               aiSolutionFilter={aiSolutionFilter}
               onAiSolutionFilterChange={(value) => setAiSolutionFilter(value)}
+              durationFilter={durationFilter}
+              onDurationFilterChange={(value) => setDurationFilter(value)}
             />
           )}
 
