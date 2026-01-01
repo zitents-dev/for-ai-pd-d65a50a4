@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil, ArrowUpDown } from "lucide-react";
+import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil, ArrowUpDown, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -109,25 +109,34 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   type SortOption = "date_desc" | "date_asc" | "name_asc" | "name_desc" | "count_desc" | "count_asc";
   const [directorySortBy, setDirectorySortBy] = useState<SortOption>("date_desc");
 
-  // Sort directories based on selected option
-  const sortedDirectories = [...directories].sort((a, b) => {
-    switch (directorySortBy) {
-      case "name_asc":
-        return a.name.localeCompare(b.name, "ko");
-      case "name_desc":
-        return b.name.localeCompare(a.name, "ko");
-      case "date_asc":
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      case "date_desc":
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      case "count_desc":
-        return (b.video_count || 0) - (a.video_count || 0);
-      case "count_asc":
-        return (a.video_count || 0) - (b.video_count || 0);
-      default:
-        return 0;
-    }
-  });
+  // Directory search state
+  const [directorySearchQuery, setDirectorySearchQuery] = useState("");
+
+  // Filter and sort directories
+  const filteredAndSortedDirectories = [...directories]
+    .filter((dir) => 
+      directorySearchQuery.trim() === "" || 
+      dir.name.toLowerCase().includes(directorySearchQuery.toLowerCase()) ||
+      (dir.description && dir.description.toLowerCase().includes(directorySearchQuery.toLowerCase()))
+    )
+    .sort((a, b) => {
+      switch (directorySortBy) {
+        case "name_asc":
+          return a.name.localeCompare(b.name, "ko");
+        case "name_desc":
+          return b.name.localeCompare(a.name, "ko");
+        case "date_asc":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "date_desc":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "count_desc":
+          return (b.video_count || 0) - (a.video_count || 0);
+        case "count_asc":
+          return (a.video_count || 0) - (b.video_count || 0);
+        default:
+          return 0;
+      }
+    });
 
   useEffect(() => {
     loadDirectories();
@@ -589,26 +598,59 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
             </p>
           ) : (
             <>
-              {/* Sorting Options */}
-              <div className="flex items-center justify-end gap-2 mb-4">
-                <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-                <Select value={directorySortBy} onValueChange={(value: SortOption) => setDirectorySortBy(value)}>
-                  <SelectTrigger className="w-40 h-8 text-sm">
-                    <SelectValue placeholder="정렬" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    <SelectItem value="date_desc">최신순</SelectItem>
-                    <SelectItem value="date_asc">오래된순</SelectItem>
-                    <SelectItem value="name_asc">이름 오름차순</SelectItem>
-                    <SelectItem value="name_desc">이름 내림차순</SelectItem>
-                    <SelectItem value="count_desc">작품 많은순</SelectItem>
-                    <SelectItem value="count_asc">작품 적은순</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Search and Sorting Options */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="디렉토리 검색..."
+                    value={directorySearchQuery}
+                    onChange={(e) => {
+                      setDirectorySearchQuery(e.target.value);
+                      setDirectoryPage(1); // Reset to first page on search
+                    }}
+                    className="pl-9 h-8"
+                  />
+                  {directorySearchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                      onClick={() => setDirectorySearchQuery("")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Sorting */}
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                  <Select value={directorySortBy} onValueChange={(value: SortOption) => setDirectorySortBy(value)}>
+                    <SelectTrigger className="w-40 h-8 text-sm">
+                      <SelectValue placeholder="정렬" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="date_desc">최신순</SelectItem>
+                      <SelectItem value="date_asc">오래된순</SelectItem>
+                      <SelectItem value="name_asc">이름 오름차순</SelectItem>
+                      <SelectItem value="name_desc">이름 내림차순</SelectItem>
+                      <SelectItem value="count_desc">작품 많은순</SelectItem>
+                      <SelectItem value="count_asc">작품 적은순</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {sortedDirectories.slice((directoryPage - 1) * itemsPerPage, directoryPage * itemsPerPage).map((dir) => (
+              {filteredAndSortedDirectories.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  "{directorySearchQuery}" 검색 결과가 없습니다
+                </p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {filteredAndSortedDirectories.slice((directoryPage - 1) * itemsPerPage, directoryPage * itemsPerPage).map((dir) => (
                   <div
                     key={dir.id}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -709,47 +751,49 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     {dragOverDirectory === dir.id && (
                       <p className="text-xs text-primary mt-2 font-medium">여기에 놓으세요</p>
                     )}
+                   </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Directory Pagination */}
-              {sortedDirectories.length > itemsPerPage && (
-                <div className="flex items-center justify-center gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setDirectoryPage((prev) => Math.max(1, prev - 1))}
-                    disabled={directoryPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.ceil(sortedDirectories.length / itemsPerPage) }, (_, i) => i + 1).map(
-                      (page) => (
-                        <Button
-                          key={page}
-                          variant={directoryPage === page ? "default" : "outline"}
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setDirectoryPage(page)}
-                        >
-                          {page}
-                        </Button>
-                      ),
-                    )}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      setDirectoryPage((prev) => Math.min(Math.ceil(sortedDirectories.length / itemsPerPage), prev + 1))
-                    }
-                    disabled={directoryPage === Math.ceil(sortedDirectories.length / itemsPerPage)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                  {/* Directory Pagination */}
+                  {filteredAndSortedDirectories.length > itemsPerPage && (
+                    <div className="flex items-center justify-center gap-2 pt-4">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setDirectoryPage((prev) => Math.max(1, prev - 1))}
+                        disabled={directoryPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.ceil(filteredAndSortedDirectories.length / itemsPerPage) }, (_, i) => i + 1).map(
+                          (page) => (
+                            <Button
+                              key={page}
+                              variant={directoryPage === page ? "default" : "outline"}
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setDirectoryPage(page)}
+                            >
+                              {page}
+                            </Button>
+                          ),
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() =>
+                          setDirectoryPage((prev) => Math.min(Math.ceil(filteredAndSortedDirectories.length / itemsPerPage), prev + 1))
+                        }
+                        disabled={directoryPage === Math.ceil(filteredAndSortedDirectories.length / itemsPerPage)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
