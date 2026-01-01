@@ -107,9 +107,8 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            <img src={logo} alt="Hephai logo" className="h-24 w-48" />
+            <img src={logo} alt="Hephai logo" className="h-24 w-48 items-center justify-center" />
           </CardTitle>
-          <CardDescription className="text-center">당신의 작품을 전시하세요!</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
