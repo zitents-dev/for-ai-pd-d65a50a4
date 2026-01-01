@@ -18,7 +18,8 @@ import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { CommentSection } from "@/components/CommentSection";
 import { RelatedVideoList } from "@/components/RelatedVideoList";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { getCategoryLabel, getCategoryClassName, getAiSolutionClassName } from "@/lib/translations";
+import { CategoryBadge } from "@/components/CategoryBadge";
+import { AiSolutionBadge } from "@/components/AiSolutionBadge";
 
 interface Video {
   id: string;
@@ -436,7 +437,7 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">카테고리</span>
                   {video.category ? (
-                    <Badge className={getCategoryClassName(video.category)}>{getCategoryLabel(video.category)}</Badge>
+                    <CategoryBadge category={video.category} />
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
@@ -453,9 +454,7 @@ export default function VideoView() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">AI 솔루션</span>
                   {video.ai_solution ? (
-                    <Badge className={getAiSolutionClassName(video.ai_solution)}>
-                      {video.ai_solution === "Other" ? "기타 솔루션" : video.ai_solution}
-                    </Badge>
+                    <AiSolutionBadge aiSolution={video.ai_solution} />
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}

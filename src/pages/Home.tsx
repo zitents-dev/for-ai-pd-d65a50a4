@@ -19,6 +19,8 @@ interface Video {
   likes_count?: number;
   dislikes_count?: number;
   creator_id?: string;
+  category?: string | null;
+  ai_solution?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -106,7 +108,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
           profiles (name, avatar_url)
         `,
         )
@@ -146,7 +148,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
           profiles (name, avatar_url)
         `,
         )
@@ -206,6 +208,8 @@ export default function Home() {
           likes_count: Number(v.likes_count) || 0,
           dislikes_count: Number(v.dislikes_count) || 0,
           creator_id: v.creator_id || undefined,
+          category: v.category,
+          ai_solution: undefined, // trending_videos_view doesn't have ai_solution
           profiles: {
             name: v.creator_name || "Unknown",
             avatar_url: v.creator_avatar,
@@ -250,7 +254,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
           profiles (name, avatar_url)
         `,
         )

@@ -18,6 +18,8 @@ interface Video {
   likes_count?: number;
   dislikes_count?: number;
   creator_id?: string;
+  category?: string | null;
+  ai_solution?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
