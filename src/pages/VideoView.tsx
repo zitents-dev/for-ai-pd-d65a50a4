@@ -453,45 +453,51 @@ export default function VideoView() {
                 </div>
               )}
 
-              {/* Category & AI Solution Cards - Side by Side */}
-              {(video.category || video.ai_solution || (video.prompt_command && video.show_prompt)) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Category Card */}
-                  <Card className="p-4">
-                    <h3 className="font-semibold text-foreground mb-2">카테고리</h3>
-                    <p className="text-muted-foreground capitalize">{video.category || '-'}</p>
-                    {video.description && (
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <h4 className="font-semibold text-foreground mb-1">설명</h4>
-                        <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description}</p>
-                      </div>
-                    )}
-                  </Card>
+              {/* Row 1: Category & Caption Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Category Card */}
+                <Card className="p-4">
+                  <h3 className="font-semibold text-foreground mb-2">카테고리</h3>
+                  <p className="text-muted-foreground capitalize">{video.category || '-'}</p>
+                </Card>
 
-                  {/* AI Solution & Prompt Card */}
-                  <Card className="p-4">
-                    <h3 className="font-semibold text-foreground mb-2">AI 솔루션</h3>
-                    <p className="text-muted-foreground">{video.ai_solution || '-'}</p>
-                    {video.prompt_command && video.show_prompt && (
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <Collapsible>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
-                              <Info className="w-4 h-4" />
-                              <span className="text-sm font-semibold">프롬프트 명령어 보기</span>
-                            </Button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-2">
-                            <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
-                              {video.prompt_command}
-                            </pre>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </div>
-                    )}
-                  </Card>
-                </div>
-              )}
+                {/* Caption/Description Card */}
+                <Card className="p-4">
+                  <h3 className="font-semibold text-foreground mb-2">설명</h3>
+                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">{video.description || '-'}</p>
+                </Card>
+              </div>
+
+              {/* Row 2: AI Solution & Prompt Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* AI Solution Card */}
+                <Card className="p-4">
+                  <h3 className="font-semibold text-foreground mb-2">AI 솔루션</h3>
+                  <p className="text-muted-foreground">{video.ai_solution || '-'}</p>
+                </Card>
+
+                {/* Prompt Command Card */}
+                <Card className="p-4">
+                  <h3 className="font-semibold text-foreground mb-2">프롬프트 명령어</h3>
+                  {video.prompt_command && video.show_prompt ? (
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full justify-start gap-2 p-0">
+                          <Info className="w-4 h-4" />
+                          <span className="text-sm">명령어 보기</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        <pre className="text-sm text-muted-foreground bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap">
+                          {video.prompt_command}
+                        </pre>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <p className="text-muted-foreground">-</p>
+                  )}
+                </Card>
+              </div>
 
               {/* Comments Section */}
               <CommentSection videoId={video.id} creatorId={video.creator_id} />
