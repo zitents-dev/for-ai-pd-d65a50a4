@@ -517,21 +517,27 @@ export default function Search() {
     }
   }, [loadingMoreCreators, hasMoreCreators, creators.length]);
 
-  // Infinite scroll for creators
+  // Infinite scroll for creators - trigger when filtered list is short or user scrolls
   useEffect(() => {
     const container = creatorsContainerRef.current;
     if (!container || activeTab !== "creators") return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
+      // Load more when near bottom OR when filtered results are less than visible area
       if (scrollHeight - scrollTop - clientHeight < 200) {
         loadMoreCreators();
       }
     };
 
+    // Also check if we need to load more when filters reduce visible items
+    if (hasMoreCreators && filteredCreators.length < 6 && creators.length > 0) {
+      loadMoreCreators();
+    }
+
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [activeTab, loadMoreCreators]);
+  }, [activeTab, loadMoreCreators, hasMoreCreators, filteredCreators.length, creators.length]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -725,9 +731,18 @@ export default function Search() {
                     )}
                     
                     {/* End of list */}
-                    {!hasMoreCreators && creators.length > 0 && (
+                    {!hasMoreCreators && filteredCreators.length > 0 && (
                       <div className="text-center text-muted-foreground py-4">
                         더 이상 결과가 없습니다
+                      </div>
+                    )}
+                  </div>
+                ) : creators.length > 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    필터 조건에 맞는 크리에이터가 없습니다
+                    {hasMoreCreators && (
+                      <div className="mt-2">
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                       </div>
                     )}
                   </div>
