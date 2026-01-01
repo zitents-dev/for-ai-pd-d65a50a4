@@ -730,10 +730,41 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                      {copyTargetDirectoryIds.size > 0 && (
-                        <p className="text-sm text-muted-foreground">
-                          {copyTargetDirectoryIds.size}개 디렉토리 선택됨
-                        </p>
+                      {directories.filter((dir) => dir.id !== selectedDirectory).length > 0 && (
+                        <div className="flex items-center justify-between">
+                          {copyTargetDirectoryIds.size > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {copyTargetDirectoryIds.size}개 디렉토리 선택됨
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 ml-auto">
+                            <Checkbox
+                              id="select-all-copy-dirs"
+                              checked={
+                                directories.filter((dir) => dir.id !== selectedDirectory).length > 0 &&
+                                directories
+                                  .filter((dir) => dir.id !== selectedDirectory)
+                                  .every((dir) => copyTargetDirectoryIds.has(dir.id))
+                              }
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  const allDirIds = directories
+                                    .filter((dir) => dir.id !== selectedDirectory)
+                                    .map((dir) => dir.id);
+                                  setCopyTargetDirectoryIds(new Set(allDirIds));
+                                } else {
+                                  setCopyTargetDirectoryIds(new Set());
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="select-all-copy-dirs"
+                              className="text-sm font-medium leading-none cursor-pointer"
+                            >
+                              전체 선택
+                            </label>
+                          </div>
+                        </div>
                       )}
                       <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
                         {directories
