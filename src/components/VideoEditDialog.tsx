@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Constants } from "@/integrations/supabase/types";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { getCategoryLabel } from "@/lib/translations";
 
 interface VideoEditDialogProps {
   video: {
@@ -364,7 +365,7 @@ export function VideoEditDialog({
                 <SelectContent className="bg-background">
                   {categories.map((cat) => (
                     <SelectItem key={cat} value={cat}>
-                      {cat}
+                      {getCategoryLabel(cat)}
                     </SelectItem>
                   ))}
                 </SelectContent>

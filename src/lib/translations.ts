@@ -1,7 +1,7 @@
 import type { Database } from "@/integrations/supabase/types";
 
-type VideoCategory = Database["public"]["Enums"]["video_category"];
-type AiSolution = Database["public"]["Enums"]["ai_solution"];
+export type VideoCategory = Database["public"]["Enums"]["video_category"];
+export type AiSolution = Database["public"]["Enums"]["ai_solution"];
 
 // Category translations and styles
 export const categoryConfig: Record<VideoCategory, { label: string; className: string }> = {
@@ -36,23 +36,29 @@ export const categoryConfig: Record<VideoCategory, { label: string; className: s
 };
 
 // AI Solution styles
-export const aiSolutionConfig: Record<AiSolution, { className: string }> = {
+export const aiSolutionConfig: Record<AiSolution, { label: string; className: string }> = {
   Sora: {
+    label: "Sora",
     className: "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30",
   },
   Runway: {
+    label: "Runway",
     className: "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30",
   },
   Veo: {
+    label: "Veo",
     className: "bg-green-500/20 text-green-600 border-green-500/30 hover:bg-green-500/30",
   },
   Pika: {
+    label: "Pika",
     className: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30",
   },
   NanoBanana: {
+    label: "NanoBanana",
     className: "bg-purple-500/20 text-purple-600 border-purple-500/30 hover:bg-purple-500/30",
   },
   Other: {
+    label: "기타",
     className: "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30",
   },
 };
@@ -65,6 +71,11 @@ export function getCategoryLabel(category: VideoCategory | string | null): strin
 export function getCategoryClassName(category: VideoCategory | string | null): string {
   if (!category) return "";
   return categoryConfig[category as VideoCategory]?.className || categoryConfig.other.className;
+}
+
+export function getAiSolutionLabel(aiSolution: AiSolution | string | null): string {
+  if (!aiSolution) return "-";
+  return aiSolutionConfig[aiSolution as AiSolution]?.label || aiSolution;
 }
 
 export function getAiSolutionClassName(aiSolution: AiSolution | string | null): string {

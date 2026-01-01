@@ -488,13 +488,13 @@ export default function Upload() {
                     <SelectValue placeholder="카테고리 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                    <SelectItem value="fiction">Fiction</SelectItem>
-                    <SelectItem value="podcast">Podcast</SelectItem>
-                    <SelectItem value="entertainment">Entertainment</SelectItem>
-                    <SelectItem value="tutorial">Tutorial</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="education">교육</SelectItem>
+                    <SelectItem value="commercial">광고</SelectItem>
+                    <SelectItem value="fiction">픽션</SelectItem>
+                    <SelectItem value="podcast">팟캐스트</SelectItem>
+                    <SelectItem value="entertainment">엔터테인먼트</SelectItem>
+                    <SelectItem value="tutorial">튜토리얼</SelectItem>
+                    <SelectItem value="other">기타</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 import { Constants } from "@/integrations/supabase/types";
+import { getCategoryLabel } from "@/lib/translations";
 
 export type SortOption = "recent" | "views" | "likes" | "dislikes" | "comments";
 
@@ -216,7 +217,7 @@ export function VideoFilterSort({
                   <SelectItem value="__all__">전체 카테고리</SelectItem>
                   {CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>
-                      {cat}
+                      {getCategoryLabel(cat)}
                     </SelectItem>
                   ))}
                 </SelectContent>
