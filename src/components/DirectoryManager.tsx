@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil, ArrowUpDown, Search, GripVertical } from "lucide-react";
+import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil, ArrowUpDown, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -509,20 +509,14 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
     setCopyTargetDirectoryIds(newSet);
   };
 
-  const handleDrop = async (targetDirectoryId: string, videoId: string, videoTitle: string, sourceDirectoryId?: string) => {
+  const handleDrop = async (directoryId: string, videoId: string, videoTitle: string) => {
     try {
-      // If moving from same directory, do nothing
-      if (sourceDirectoryId === targetDirectoryId) {
-        toast.info("같은 디렉토리입니다");
-        return;
-      }
-
-      // Check if already in target directory
+      // Check if already in directory
       const { data: existing } = await supabase
         .from("directory_videos")
         .select("id")
         .eq("video_id", videoId)
-        .eq("directory_id", targetDirectoryId)
+        .eq("directory_id", directoryId)
         .maybeSingle();
 
       if (existing) {
@@ -530,46 +524,25 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
         return;
       }
 
-      // If moving from another directory, remove from source first
-      if (sourceDirectoryId) {
-        const { error: removeError } = await supabase
-          .from("directory_videos")
-          .delete()
-          .eq("video_id", videoId)
-          .eq("directory_id", sourceDirectoryId);
-
-        if (removeError) throw removeError;
-      }
-
-      // Add to target directory
       const { error } = await supabase.from("directory_videos").insert({
         video_id: videoId,
-        directory_id: targetDirectoryId,
+        directory_id: directoryId,
       });
 
       if (error) throw error;
 
-      const dirName = directories.find((d) => d.id === targetDirectoryId)?.name;
-      if (sourceDirectoryId) {
-        toast.success(`"${videoTitle}"을(를) "${dirName}"(으)로 이동했습니다`);
-      } else {
-        toast.success(`"${videoTitle}"을(를) "${dirName}"에 추가했습니다`);
-      }
+      const dirName = directories.find((d) => d.id === directoryId)?.name;
+      toast.success(`"${videoTitle}"을(를) "${dirName}"에 추가했습니다`);
 
       // Refresh directories to update video count
       loadDirectories();
 
-      // Refresh the source directory if it's selected
-      if (selectedDirectory === sourceDirectoryId) {
-        loadDirectoryVideos(sourceDirectoryId);
-      }
-      // Refresh the target directory if it's selected
-      if (selectedDirectory === targetDirectoryId) {
-        loadDirectoryVideos(targetDirectoryId);
+      if (selectedDirectory === directoryId) {
+        loadDirectoryVideos(directoryId);
       }
     } catch (error) {
-      console.error("Error handling video drop:", error);
-      toast.error("디렉토리 작업에 실패했습니다");
+      console.error("Error adding video to directory:", error);
+      toast.error("디렉토리에 추가하는데 실패했습니다");
     }
   };
 
@@ -589,20 +562,10 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
 
     const videoId = e.dataTransfer.getData("videoId");
     const videoTitle = e.dataTransfer.getData("videoTitle");
-    const sourceDirectoryId = e.dataTransfer.getData("sourceDirectoryId");
 
     if (videoId) {
-      handleDrop(directoryId, videoId, videoTitle, sourceDirectoryId || undefined);
+      handleDrop(directoryId, videoId, videoTitle);
     }
-  };
-
-  const handleVideoDragStart = (e: React.DragEvent, video: Video) => {
-    e.dataTransfer.setData("videoId", video.id);
-    e.dataTransfer.setData("videoTitle", video.title);
-    if (selectedDirectory) {
-      e.dataTransfer.setData("sourceDirectoryId", selectedDirectory);
-    }
-    e.dataTransfer.effectAllowed = "move";
   };
 
   return (
@@ -1140,19 +1103,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                   {directoryVideos
                     .slice((directoryVideosPage - 1) * itemsPerPage, directoryVideosPage * itemsPerPage)
                     .map((video) => (
-                      <div 
-                        key={video.id} 
-                        className="relative group cursor-grab active:cursor-grabbing"
-                        draggable
-                        onDragStart={(e) => handleVideoDragStart(e, video)}
-                      >
-                        {/* Drag indicator */}
-                        <div className="absolute top-2 right-10 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs text-muted-foreground flex items-center gap-1">
-                            <GripVertical className="w-3 h-3" />
-                            드래그
-                          </div>
-                        </div>
+                      <div key={video.id} className="relative group">
                         {/* Selection Checkbox */}
                         <div 
                           className="absolute top-2 left-2 z-10"
