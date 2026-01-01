@@ -13,6 +13,7 @@ interface Video {
   created_at: string;
   likes_count?: number;
   dislikes_count?: number;
+  creator_id?: string;
   profiles: {
     name: string;
     avatar_url: string | null;

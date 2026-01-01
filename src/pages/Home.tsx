@@ -18,6 +18,7 @@ interface Video {
   created_at: string;
   likes_count?: number;
   dislikes_count?: number;
+  creator_id?: string;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -105,7 +106,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id,
           profiles (name, avatar_url)
         `,
         )
@@ -145,7 +146,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id,
           profiles (name, avatar_url)
         `,
         )
@@ -204,6 +205,7 @@ export default function Home() {
           created_at: v.created_at!,
           likes_count: Number(v.likes_count) || 0,
           dislikes_count: Number(v.dislikes_count) || 0,
+          creator_id: v.creator_id || undefined,
           profiles: {
             name: v.creator_name || "Unknown",
             avatar_url: v.creator_avatar,
@@ -248,7 +250,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id,
           profiles (name, avatar_url)
         `,
         )
