@@ -350,6 +350,8 @@ export default function Home() {
           selectedCategory={mentorCategory}
           onCategoryChange={handleMentorCategoryChange}
           sectionType="mentor"
+          highlighted
+          collapsible
           onLoadMore={() => {
             if (!mentorLoading && mentorHasMore) {
               const nextPage = mentorPage + 1;

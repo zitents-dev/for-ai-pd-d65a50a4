@@ -2,9 +2,10 @@ import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { VideoCard } from "./VideoCard";
 import { VideoCardSkeleton } from "./VideoCardSkeleton";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface Video {
   id: string;
@@ -55,6 +56,9 @@ interface VideoRowProps {
   onCategoryChange?: (category: VideoCategory) => void;
   showCategoryFilter?: boolean;
   sectionType?: SectionType;
+  highlighted?: boolean;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 export const VideoRow = ({
@@ -68,11 +72,15 @@ export const VideoRow = ({
   onCategoryChange,
   showCategoryFilter = true,
   sectionType,
+  highlighted = false,
+  collapsible = false,
+  defaultCollapsed = false,
 }: VideoRowProps) => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   const checkScrollButtons = () => {
     const container = scrollContainerRef.current;
@@ -128,11 +136,37 @@ export const VideoRow = ({
   const showEmptyState = videos.length === 0 && !loading;
 
   return (
-    <section className="mb-8">
+    <section
+      className={cn(
+        "mb-8 transition-all duration-300",
+        highlighted && "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl py-4 border-l-4 border-primary"
+      )}
+    >
       <div className="flex items-center justify-between px-4 mb-4">
-        <h2 className="text-xl font-bold text-foreground">{title}</h2>
         <div className="flex items-center gap-2">
-          {showCategoryFilter && onCategoryChange && (
+          <h2 className={cn(
+            "text-xl font-bold text-foreground",
+            highlighted && "text-primary"
+          )}>
+            {title}
+          </h2>
+          {collapsible && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="h-8 w-8 p-0"
+            >
+              {isCollapsed ? (
+                <ChevronDown className="h-5 w-5" />
+              ) : (
+                <ChevronUp className="h-5 w-5" />
+              )}
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {showCategoryFilter && onCategoryChange && !isCollapsed && (
             <Select value={selectedCategory} onValueChange={(value) => onCategoryChange(value as VideoCategory)}>
               <SelectTrigger className="w-36 bg-background border-border">
                 <SelectValue placeholder="Category" />
@@ -146,7 +180,7 @@ export const VideoRow = ({
               </SelectContent>
             </Select>
           )}
-          {sectionType && (
+          {sectionType && !isCollapsed && (
             <Button variant="outline" size="sm" onClick={() => navigate(`/videos/${sectionType}`)}>
               View All
             </Button>
@@ -154,7 +188,12 @@ export const VideoRow = ({
         </div>
       </div>
 
-      <div className="relative group">
+      <div
+        className={cn(
+          "relative group overflow-hidden transition-all duration-300",
+          isCollapsed ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100"
+        )}
+      >
         {/* Left scroll button */}
         {canScrollLeft && (
           <Button
