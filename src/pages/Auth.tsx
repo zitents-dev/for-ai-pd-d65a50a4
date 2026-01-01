@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import logo from "@/assets/hephai-logo-all.png";
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -105,7 +106,9 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">AI PD Hub</CardTitle>
+          <CardTitle className="text-2xl text-center">
+            <img src={logo} alt="Hephai logo" className="h-24 w-24" />
+          </CardTitle>
           <CardDescription className="text-center">
             당신의 작품을 전시하세요!
           </CardDescription>

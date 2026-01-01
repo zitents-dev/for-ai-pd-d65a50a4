@@ -279,7 +279,7 @@ export default function Search() {
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input
               type="text"
-              placeholder="제목, PD명, 태그로 검색하세요..."
+              placeholder="제목, 크리에이터명, 태그로 검색하세요..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="flex-1 w-full"
@@ -304,7 +304,7 @@ export default function Search() {
                 </TabsTrigger>
                 <TabsTrigger value="creators" className="gap-2">
                   <User className="w-4 h-4" />
-                  PD명 ({totalCreators})
+                  크리에이터명 ({totalCreators})
                 </TabsTrigger>
               </TabsList>
 
@@ -375,7 +375,7 @@ export default function Search() {
                   </div>
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
-                    PD명을 찾을 수 없습니다
+                    크리에이터를 찾을 수 없습니다
                   </div>
                 )}
               </TabsContent>
