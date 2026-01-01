@@ -89,7 +89,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
 
   // Copy to directory states
   const [bulkCopyDialogOpen, setBulkCopyDialogOpen] = useState(false);
-  const [copyTargetDirectoryId, setCopyTargetDirectoryId] = useState<string | null>(null);
+  const [copyTargetDirectoryIds, setCopyTargetDirectoryIds] = useState<Set<string>>(new Set());
   const [isCopying, setIsCopying] = useState(false);
   useEffect(() => {
     loadDirectories();
@@ -341,18 +341,24 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   };
 
   const bulkCopyVideosToDirectory = async () => {
-    if (!selectedDirectory || !copyTargetDirectoryId || selectedVideos.size === 0) return;
+    if (!selectedDirectory || copyTargetDirectoryIds.size === 0 || selectedVideos.size === 0) return;
 
     setIsCopying(true);
 
     try {
       const videoIds = Array.from(selectedVideos);
+      const targetDirIds = Array.from(copyTargetDirectoryIds);
       
-      // Add to target directory (skip duplicates) - don't remove from current directory
-      const insertData = videoIds.map((videoId) => ({
-        video_id: videoId,
-        directory_id: copyTargetDirectoryId,
-      }));
+      // Create insert data for all video-directory combinations
+      const insertData: { video_id: string; directory_id: string }[] = [];
+      for (const dirId of targetDirIds) {
+        for (const videoId of videoIds) {
+          insertData.push({
+            video_id: videoId,
+            directory_id: dirId,
+          });
+        }
+      }
 
       // Use upsert to avoid duplicate key errors
       const { error: insertError } = await supabase
@@ -361,12 +367,15 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
 
       if (insertError) throw insertError;
 
-      const targetDirName = directories.find((d) => d.id === copyTargetDirectoryId)?.name;
-      toast.success(`${videoIds.length}개의 작품을 "${targetDirName}"에 복사했습니다`);
+      const targetDirNames = directories
+        .filter((d) => copyTargetDirectoryIds.has(d.id))
+        .map((d) => d.name)
+        .join(", ");
+      toast.success(`${videoIds.length}개의 작품을 ${targetDirIds.length}개 디렉토리에 복사했습니다`);
       
       setSelectedVideos(new Set());
       setBulkCopyDialogOpen(false);
-      setCopyTargetDirectoryId(null);
+      setCopyTargetDirectoryIds(new Set());
       loadDirectories();
     } catch (error) {
       console.error("Error copying videos:", error);
@@ -374,6 +383,16 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
     } finally {
       setIsCopying(false);
     }
+  };
+
+  const toggleCopyTargetDirectory = (dirId: string) => {
+    const newSet = new Set(copyTargetDirectoryIds);
+    if (newSet.has(dirId)) {
+      newSet.delete(dirId);
+    } else {
+      newSet.add(dirId);
+    }
+    setCopyTargetDirectoryIds(newSet);
   };
 
   const handleDrop = async (directoryId: string, videoId: string, videoTitle: string) => {
@@ -695,7 +714,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                   </DialogContent>
                 </Dialog>
 
-                {/* Copy to another directory button */}
+                {/* Copy to multiple directories button */}
                 <Dialog open={bulkCopyDialogOpen} onOpenChange={setBulkCopyDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -707,10 +726,15 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     <DialogHeader>
                       <DialogTitle>다른 디렉토리에 복사</DialogTitle>
                       <DialogDescription>
-                        선택한 {selectedVideos.size}개의 작품을 복사할 디렉토리를 선택하세요. 원본은 그대로 유지됩니다.
+                        선택한 {selectedVideos.size}개의 작품을 복사할 디렉토리를 선택하세요. 여러 디렉토리를 선택할 수 있습니다.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
+                      {copyTargetDirectoryIds.size > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {copyTargetDirectoryIds.size}개 디렉토리 선택됨
+                        </p>
+                      )}
                       <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
                         {directories
                           .filter((dir) => dir.id !== selectedDirectory)
@@ -718,18 +742,23 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                             <div
                               key={dir.id}
                               className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                copyTargetDirectoryId === dir.id
+                                copyTargetDirectoryIds.has(dir.id)
                                   ? "border-primary bg-primary/10"
                                   : "border-border hover:border-primary/50"
                               }`}
-                              onClick={() => setCopyTargetDirectoryId(dir.id)}
+                              onClick={() => toggleCopyTargetDirectory(dir.id)}
                             >
                               <div className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={copyTargetDirectoryIds.has(dir.id)}
+                                  onCheckedChange={() => toggleCopyTargetDirectory(dir.id)}
+                                  className="h-4 w-4"
+                                />
                                 <Folder className="w-5 h-5 text-primary" />
                                 <span className="font-medium text-sm truncate">{dir.name}</span>
                               </div>
                               {dir.video_count !== undefined && dir.video_count > 0 && (
-                                <p className="text-xs text-muted-foreground mt-1">{dir.video_count}개 작품</p>
+                                <p className="text-xs text-muted-foreground mt-1 ml-6">{dir.video_count}개 작품</p>
                               )}
                             </div>
                           ))}
@@ -745,16 +774,16 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                         variant="outline"
                         onClick={() => {
                           setBulkCopyDialogOpen(false);
-                          setCopyTargetDirectoryId(null);
+                          setCopyTargetDirectoryIds(new Set());
                         }}
                       >
                         취소
                       </Button>
                       <Button
                         onClick={bulkCopyVideosToDirectory}
-                        disabled={!copyTargetDirectoryId || isCopying}
+                        disabled={copyTargetDirectoryIds.size === 0 || isCopying}
                       >
-                        {isCopying ? "복사 중..." : "복사하기"}
+                        {isCopying ? "복사 중..." : `${copyTargetDirectoryIds.size > 0 ? copyTargetDirectoryIds.size + "개 디렉토리에 " : ""}복사하기`}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
