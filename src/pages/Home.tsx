@@ -178,50 +178,53 @@ export default function Home() {
     }
   }, []);
 
-  // Load popular videos (sorted by likes)
+  // Load popular videos (sorted by net popularity: likes - dislikes)
   const loadPopularVideos = useCallback(async (page: number, category: VideoCategory) => {
     setPopularLoading(true);
 
     try {
+      // Query videos with profiles to get ai_solution
       let query = supabase
-        .from("trending_videos_view")
-        .select("*")
-        .order("likes_count", { ascending: false, nullsFirst: false });
+        .from("videos")
+        .select(
+          `
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
+          profiles (name, avatar_url)
+        `,
+        );
 
       if (category !== "all") {
         query = query.eq("category", category as any);
       }
 
-      const { data, error } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      const { data, error } = await query;
 
       if (error) throw error;
 
       if (data) {
-        const videos: Video[] = data.map((v) => ({
-          id: v.id!,
-          title: v.title!,
-          thumbnail_url: v.thumbnail_url,
-          video_url: v.video_url || undefined,
-          duration: v.duration,
-          views: v.views || 0,
-          created_at: v.created_at!,
-          likes_count: Number(v.likes_count) || 0,
-          dislikes_count: Number(v.dislikes_count) || 0,
-          creator_id: v.creator_id || undefined,
-          category: v.category,
-          ai_solution: undefined, // trending_videos_view doesn't have ai_solution
-          profiles: {
-            name: v.creator_name || "Unknown",
-            avatar_url: v.creator_avatar,
-          },
-        }));
+        // Get like counts for sorting
+        const videosWithCounts = await addLikeCounts(data);
+
+        // Sort by net popularity (likes - dislikes), then by views as tiebreaker
+        const sortedVideos = videosWithCounts.sort((a, b) => {
+          const aNetScore = (a.likes_count || 0) - (a.dislikes_count || 0);
+          const bNetScore = (b.likes_count || 0) - (b.dislikes_count || 0);
+          if (bNetScore !== aNetScore) {
+            return bNetScore - aNetScore;
+          }
+          return (b.views || 0) - (a.views || 0);
+        });
+
+        // Paginate
+        const startIdx = page * PAGE_SIZE;
+        const paginatedVideos = sortedVideos.slice(startIdx, startIdx + PAGE_SIZE);
 
         if (page === 0) {
-          setPopularVideos(videos);
+          setPopularVideos(paginatedVideos);
         } else {
-          setPopularVideos((prev) => [...prev, ...videos]);
+          setPopularVideos((prev) => [...prev, ...paginatedVideos]);
         }
-        setPopularHasMore(data.length === PAGE_SIZE);
+        setPopularHasMore(startIdx + PAGE_SIZE < sortedVideos.length);
       }
     } catch (error) {
       console.error("Error loading popular videos:", error);
