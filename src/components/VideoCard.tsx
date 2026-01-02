@@ -175,22 +175,28 @@ export const VideoCard = ({ video, compact = false }: VideoCardProps) => {
                 <BadgeDisplay badges={badges} size="sm" />
               </div>
             )}
-            <div className={`flex items-center gap-2 text-muted-foreground ${compact ? "text-[10px]" : "text-xs"}`}>
+            <div className={`flex items-center gap-2 text-muted-foreground flex-wrap ${compact ? "text-[10px]" : "text-xs"}`}>
               <span className="flex items-center gap-1">
                 <Eye className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
                 {(video.views || 0).toLocaleString()}
               </span>
-              {!compact && (video.likes_count !== undefined || video.dislikes_count !== undefined) && (
+              {(video.likes_count !== undefined || video.dislikes_count !== undefined) && (
                 <>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <ThumbsUp className="w-3 h-3" />
+                    <ThumbsUp className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
                     {(video.likes_count || 0).toLocaleString()}
                   </span>
                   <span className="flex items-center gap-1">
-                    <ThumbsDown className="w-3 h-3" />
+                    <ThumbsDown className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
                     {(video.dislikes_count || 0).toLocaleString()}
                   </span>
+                </>
+              )}
+              {compact && (
+                <>
+                  <span>•</span>
+                  <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
                 </>
               )}
             </div>

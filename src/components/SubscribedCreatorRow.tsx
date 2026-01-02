@@ -59,6 +59,8 @@ interface CreatorVideo {
   duration: number | null;
   views: number | null;
   created_at: string;
+  likes_count?: number;
+  dislikes_count?: number;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -169,36 +171,20 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
     setLoadingVideos(true);
 
     try {
-      // Fetch popular videos (by likes - dislikes)
+      // Fetch popular videos using video_details_view for likes/dislikes
       const { data: popularData, error: popularError } = await supabase
-        .from("videos")
-        .select(`
-          id,
-          title,
-          thumbnail_url,
-          duration,
-          views,
-          created_at,
-          profiles:creator_id (name, avatar_url)
-        `)
+        .from("video_details_view")
+        .select("*")
         .eq("creator_id", creatorId)
         .order("views", { ascending: false })
         .limit(2);
 
       if (popularError) throw popularError;
 
-      // Fetch recent videos
+      // Fetch recent videos using video_details_view for likes/dislikes
       const { data: recentData, error: recentError } = await supabase
-        .from("videos")
-        .select(`
-          id,
-          title,
-          thumbnail_url,
-          duration,
-          views,
-          created_at,
-          profiles:creator_id (name, avatar_url)
-        `)
+        .from("video_details_view")
+        .select("*")
         .eq("creator_id", creatorId)
         .order("created_at", { ascending: false })
         .limit(2);
@@ -212,7 +198,9 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
         duration: v.duration,
         views: v.views,
         created_at: v.created_at,
-        profiles: v.profiles || { name: "Unknown", avatar_url: null },
+        likes_count: v.likes_count || 0,
+        dislikes_count: v.dislikes_count || 0,
+        profiles: { name: v.creator_name || "Unknown", avatar_url: v.creator_avatar },
       });
 
       setCreatorVideos({
