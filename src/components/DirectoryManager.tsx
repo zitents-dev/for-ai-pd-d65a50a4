@@ -86,6 +86,7 @@ interface DirectoryManagerProps {
 export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) => {
   const { user } = useAuth();
   const [directories, setDirectories] = useState<Directory[]>([]);
+  const [newlyCreatedIds, setNewlyCreatedIds] = useState<Set<string>>(new Set());
   const [selectedDirectory, setSelectedDirectory] = useState<string | null>(null);
   const [directoryVideos, setDirectoryVideos] = useState<Video[]>([]);
   const [newDirName, setNewDirName] = useState("");
@@ -253,6 +254,17 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
         video_count: 0,
       };
       setDirectories((prev) => [newDirectory, ...prev]);
+      
+      // Track newly created directory for animation
+      setNewlyCreatedIds((prev) => new Set(prev).add(newDir.id));
+      // Remove animation class after animation completes
+      setTimeout(() => {
+        setNewlyCreatedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(newDir.id);
+          return next;
+        });
+      }, 500);
 
       toast.success("디렉토리가 생성되었습니다");
       setNewDirName("");
@@ -714,6 +726,8 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                   <div
                     key={dir.id}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      newlyCreatedIds.has(dir.id) ? "animate-scale-in" : ""
+                    } ${
                       dragOverDirectory === dir.id
                         ? "border-primary bg-primary/20 scale-105"
                         : selectedDirectory === dir.id
