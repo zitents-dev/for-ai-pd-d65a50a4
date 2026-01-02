@@ -84,10 +84,26 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
   }>({ popular: [], recent: [] });
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"date" | "name" | "subscribers">("date");
-  const [sortAsc, setSortAsc] = useState(false);
+  const [sortBy, setSortByState] = useState<"date" | "name" | "subscribers">(() => {
+    const saved = localStorage.getItem("subscribedCreatorsSortBy");
+    return (saved as "date" | "name" | "subscribers") || "date";
+  });
+  const [sortAsc, setSortAscState] = useState(() => {
+    const saved = localStorage.getItem("subscribedCreatorsSortAsc");
+    return saved === "true";
+  });
   const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
   const [creatorToUnsubscribe, setCreatorToUnsubscribe] = useState<SubscribedCreator | null>(null);
+
+  const setSortBy = (value: "date" | "name" | "subscribers") => {
+    setSortByState(value);
+    localStorage.setItem("subscribedCreatorsSortBy", value);
+  };
+
+  const setSortAsc = (value: boolean) => {
+    setSortAscState(value);
+    localStorage.setItem("subscribedCreatorsSortAsc", String(value));
+  };
 
   const filteredAndSortedSubscriptions = useMemo(() => {
     let result = [...subscriptions];
