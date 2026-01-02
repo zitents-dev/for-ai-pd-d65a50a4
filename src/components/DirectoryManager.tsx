@@ -698,54 +698,52 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
           ) : (
             <>
               {/* Search and Sorting Options */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
                 {/* Search Input */}
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="디렉토리 검색..."
                     value={directorySearchQuery}
                     onChange={(e) => {
                       setDirectorySearchQuery(e.target.value);
-                      setDirectoryPage(1); // Reset to first page on search
+                      setDirectoryPage(1);
                     }}
-                    className="pl-9 h-8"
+                    className="h-9 w-[180px] pl-8"
                   />
                   {directorySearchQuery && (
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                       onClick={() => setDirectorySearchQuery("")}
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
                 
-                {/* Sorting */}
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-                  <Select value={directorySortBy} onValueChange={(value: SortOption) => setDirectorySortBy(value)}>
-                    <SelectTrigger className="w-40 h-8 text-sm">
-                      <SelectValue placeholder="정렬" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-50">
-                      <SelectItem value="date_desc">최신순</SelectItem>
-                      <SelectItem value="date_asc">오래된순</SelectItem>
-                      <SelectItem value="name_asc">이름 오름차순</SelectItem>
-                      <SelectItem value="name_desc">이름 내림차순</SelectItem>
-                      <SelectItem value="count_desc">작품 많은순</SelectItem>
-                      <SelectItem value="count_asc">작품 적은순</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Sort Select */}
+                <Select value={directorySortBy} onValueChange={(value: SortOption) => setDirectorySortBy(value)}>
+                  <SelectTrigger className="w-[140px] h-9">
+                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="정렬" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background">
+                    <SelectItem value="date_desc">최신순</SelectItem>
+                    <SelectItem value="date_asc">오래된순</SelectItem>
+                    <SelectItem value="name_asc">이름 오름차순</SelectItem>
+                    <SelectItem value="name_desc">이름 내림차순</SelectItem>
+                    <SelectItem value="count_desc">작품 많은순</SelectItem>
+                    <SelectItem value="count_asc">작품 적은순</SelectItem>
+                  </SelectContent>
+                </Select>
                 
                 {/* Refresh Button */}
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
+                  size="sm"
+                  className="h-9"
                   onClick={() => {
                     setInitialLoading(true);
                     loadDirectories();
