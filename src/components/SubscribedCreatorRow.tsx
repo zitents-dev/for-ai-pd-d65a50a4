@@ -27,8 +27,11 @@ import {
   ExternalLink,
   Search,
   X,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 
 interface SubscribedCreator {
   id: string;
@@ -36,6 +39,7 @@ interface SubscribedCreator {
   avatar_url: string | null;
   bio: string | null;
   subscriber_count: number;
+  subscribed_at: string;
 }
 
 interface CreatorVideo {
@@ -351,9 +355,17 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
                 </Avatar>
                 <div>
                   <p className="font-semibold">{expandedCreator.name || "익명"}</p>
-                  {expandedCreator.bio && (
-                    <p className="text-sm text-muted-foreground line-clamp-1">{expandedCreator.bio}</p>
-                  )}
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    {expandedCreator.bio && (
+                      <span className="line-clamp-1">{expandedCreator.bio}</span>
+                    )}
+                    {expandedCreator.subscribed_at && (
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(expandedCreator.subscribed_at), "yyyy년 M월 d일", { locale: ko })} 구독
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
