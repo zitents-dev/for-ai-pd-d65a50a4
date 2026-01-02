@@ -132,6 +132,7 @@ export default function MyPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [favoriteVideos, setFavoriteVideos] = useState<FavoriteVideo[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscribedCreator[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -379,6 +380,7 @@ export default function MyPage() {
   };
 
   const loadSubscriptions = async () => {
+    setSubscriptionsLoading(true);
     try {
       const { data, error } = await supabase
         .from("subscriptions")
@@ -414,6 +416,8 @@ export default function MyPage() {
       }
     } catch (error) {
       console.error("Error loading subscriptions:", error);
+    } finally {
+      setSubscriptionsLoading(false);
     }
   };
 
@@ -1411,6 +1415,7 @@ export default function MyPage() {
           <SubscribedCreatorRow
             subscriptions={subscriptions}
             onUnsubscribe={loadSubscriptions}
+            loading={subscriptionsLoading}
           />
         </div>
       </div>
