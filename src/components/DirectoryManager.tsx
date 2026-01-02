@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { VideoCard } from "./VideoCard";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Predefined directory colors
 const DIRECTORY_COLORS = [
@@ -94,6 +95,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
   const [newDirColor, setNewDirColor] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [dragOverDirectory, setDragOverDirectory] = useState<string | null>(null);
 
   // Pagination states
@@ -190,6 +192,8 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
       setDirectories(directoriesWithCount);
     } catch (error) {
       console.error("Error loading directories:", error);
+    } finally {
+      setInitialLoading(false);
     }
   };
 
@@ -715,7 +719,20 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                 </div>
               </div>
 
-              {filteredAndSortedDirectories.length === 0 ? (
+              {initialLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Array.from({ length: itemsPerPage }).map((_, index) => (
+                    <div key={index} className="p-4 rounded-lg border-2 border-border">
+                      <div className="flex items-start justify-between mb-2">
+                        <Skeleton className="h-6 w-6 rounded" />
+                        <Skeleton className="h-6 w-12" />
+                      </div>
+                      <Skeleton className="h-4 w-3/4 mb-2" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              ) : filteredAndSortedDirectories.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
                   "{directorySearchQuery}" 검색 결과가 없습니다
                 </p>
