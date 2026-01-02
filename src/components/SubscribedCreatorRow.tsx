@@ -294,15 +294,15 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
   return (
     <div className="space-y-4">
       {/* Search and Sort controls */}
-      <div className="flex items-center gap-3">
-        <div className="relative max-w-xs flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="크리에이터 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9"
+            className="h-9 w-[180px] pl-8"
             maxLength={50}
           />
           {searchQuery && (
@@ -317,10 +317,11 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
           )}
         </div>
         <Select value={sortBy} onValueChange={(value: "date" | "name" | "subscribers") => setSortBy(value)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px] h-9">
+            <ArrowUpDown className="mr-2 h-4 w-4" />
             <SelectValue placeholder="정렬" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background">
             <SelectItem value="date">구독일순</SelectItem>
             <SelectItem value="name">이름순</SelectItem>
             <SelectItem value="subscribers">구독자순</SelectItem>
@@ -328,7 +329,8 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
         </Select>
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
+          className="h-9"
           onClick={() => setSortAsc(!sortAsc)}
           title={sortAsc ? "오름차순" : "내림차순"}
         >
