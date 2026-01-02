@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { VideoCard } from "@/components/VideoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -74,16 +81,34 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
   }>({ popular: [], recent: [] });
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "name" | "subscribers">("date");
   const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
   const [creatorToUnsubscribe, setCreatorToUnsubscribe] = useState<SubscribedCreator | null>(null);
 
-  const filteredSubscriptions = useMemo(() => {
-    if (!searchQuery.trim()) return subscriptions;
-    const query = searchQuery.toLowerCase().trim();
-    return subscriptions.filter(
-      (creator) => creator.name?.toLowerCase().includes(query)
-    );
-  }, [subscriptions, searchQuery]);
+  const filteredAndSortedSubscriptions = useMemo(() => {
+    let result = [...subscriptions];
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter((creator) => creator.name?.toLowerCase().includes(query));
+    }
+    
+    // Sort
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return (a.name || "").localeCompare(b.name || "", "ko");
+        case "subscribers":
+          return b.subscriber_count - a.subscriber_count;
+        case "date":
+        default:
+          return new Date(b.subscribed_at).getTime() - new Date(a.subscribed_at).getTime();
+      }
+    });
+    
+    return result;
+  }, [subscriptions, searchQuery, sortBy]);
 
   const checkScrollable = () => {
     if (scrollRef.current) {
@@ -97,7 +122,7 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
     checkScrollable();
     window.addEventListener("resize", checkScrollable);
     return () => window.removeEventListener("resize", checkScrollable);
-  }, [filteredSubscriptions]);
+  }, [filteredAndSortedSubscriptions]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -217,7 +242,7 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
     );
   }
 
-  const expandedCreator = filteredSubscriptions.find((c) => c.id === expandedCreatorId);
+  const expandedCreator = filteredAndSortedSubscriptions.find((c) => c.id === expandedCreatorId);
 
   // Loading skeleton
   if (loading) {
@@ -243,30 +268,42 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
 
   return (
     <div className="space-y-4">
-      {/* Search input */}
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="크리에이터 검색..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 pr-9"
-          maxLength={50}
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={() => setSearchQuery("")}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+      {/* Search and Sort controls */}
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-xs flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="크리에이터 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9"
+            maxLength={50}
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <Select value={sortBy} onValueChange={(value: "date" | "name" | "subscribers") => setSortBy(value)}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="정렬" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="date">구독일순</SelectItem>
+            <SelectItem value="name">이름순</SelectItem>
+            <SelectItem value="subscribers">구독자순</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {filteredSubscriptions.length === 0 ? (
+      {filteredAndSortedSubscriptions.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
@@ -298,7 +335,7 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
             onScroll={checkScrollable}
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {filteredSubscriptions.map((creator) => (
+            {filteredAndSortedSubscriptions.map((creator) => (
             <Card
               key={creator.id}
               className={`shrink-0 w-[220px] cursor-pointer transition-all hover:bg-accent/50 ${
