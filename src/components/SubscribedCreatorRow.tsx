@@ -35,6 +35,9 @@ import {
   Search,
   X,
   Calendar,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { format } from "date-fns";
@@ -82,6 +85,7 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "name" | "subscribers">("date");
+  const [sortAsc, setSortAsc] = useState(false);
   const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
   const [creatorToUnsubscribe, setCreatorToUnsubscribe] = useState<SubscribedCreator | null>(null);
 
@@ -96,19 +100,24 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
     
     // Sort
     result.sort((a, b) => {
+      let comparison = 0;
       switch (sortBy) {
         case "name":
-          return (a.name || "").localeCompare(b.name || "", "ko");
+          comparison = (a.name || "").localeCompare(b.name || "", "ko");
+          break;
         case "subscribers":
-          return b.subscriber_count - a.subscriber_count;
+          comparison = b.subscriber_count - a.subscriber_count;
+          break;
         case "date":
         default:
-          return new Date(b.subscribed_at).getTime() - new Date(a.subscribed_at).getTime();
+          comparison = new Date(b.subscribed_at).getTime() - new Date(a.subscribed_at).getTime();
+          break;
       }
+      return sortAsc ? -comparison : comparison;
     });
     
     return result;
-  }, [subscriptions, searchQuery, sortBy]);
+  }, [subscriptions, searchQuery, sortBy, sortAsc]);
 
   const checkScrollable = () => {
     if (scrollRef.current) {
@@ -301,6 +310,14 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
             <SelectItem value="subscribers">구독자순</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setSortAsc(!sortAsc)}
+          title={sortAsc ? "오름차순" : "내림차순"}
+        >
+          {sortAsc ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+        </Button>
       </div>
 
       {filteredAndSortedSubscriptions.length === 0 ? (
