@@ -19,7 +19,7 @@ interface VideoCardProps {
     thumbnail_url: string | null;
     video_url?: string;
     duration: number | null;
-    views: number;
+    views: number | null;
     created_at: string;
     likes_count?: number;
     dislikes_count?: number;
@@ -31,9 +31,10 @@ interface VideoCardProps {
       avatar_url: string | null;
     };
   };
+  compact?: boolean;
 }
 
-export const VideoCard = ({ video }: VideoCardProps) => {
+export const VideoCard = ({ video, compact = false }: VideoCardProps) => {
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
@@ -156,26 +157,30 @@ export const VideoCard = ({ video }: VideoCardProps) => {
           </span>
         )}
       </div>
-      <div className="p-4">
-        <div className="flex gap-3">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={video.profiles.avatar_url || ""} />
-            <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
-          </Avatar>
+      <div className={compact ? "p-2" : "p-4"}>
+        <div className={`flex ${compact ? "gap-2" : "gap-3"}`}>
+          {!compact && (
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={video.profiles.avatar_url || ""} />
+              <AvatarFallback>{video.profiles.name[0]}</AvatarFallback>
+            </Avatar>
+          )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate mb-1" title={video.title}>
+            <h3 className={`font-semibold text-foreground truncate ${compact ? "text-sm mb-0.5" : "mb-1"}`} title={video.title}>
               {video.title}
             </h3>
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <p className="text-sm text-muted-foreground truncate">{video.profiles.name}</p>
-              <BadgeDisplay badges={badges} size="sm" />
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {!compact && (
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <p className="text-sm text-muted-foreground truncate">{video.profiles.name}</p>
+                <BadgeDisplay badges={badges} size="sm" />
+              </div>
+            )}
+            <div className={`flex items-center gap-2 text-muted-foreground ${compact ? "text-[10px]" : "text-xs"}`}>
               <span className="flex items-center gap-1">
-                <Eye className="w-3 h-3" />
-                {video.views.toLocaleString()}
+                <Eye className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
+                {(video.views || 0).toLocaleString()}
               </span>
-              {(video.likes_count !== undefined || video.dislikes_count !== undefined) && (
+              {!compact && (video.likes_count !== undefined || video.dislikes_count !== undefined) && (
                 <>
                   <span>•</span>
                   <span className="flex items-center gap-1">
@@ -189,9 +194,11 @@ export const VideoCard = ({ video }: VideoCardProps) => {
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
-            </div>
+            {!compact && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

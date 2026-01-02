@@ -51,6 +51,7 @@ import { VideoEditDialog } from "@/components/VideoEditDialog";
 import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
 import { BulkEditDialog } from "@/components/BulkEditDialog";
 import { BulkMoveToDirectoryDialog } from "@/components/BulkMoveToDirectoryDialog";
+import { SubscribedCreatorRow } from "@/components/SubscribedCreatorRow";
 import { DateRange } from "react-day-picker";
 
 interface Profile {
@@ -1407,107 +1408,10 @@ export default function MyPage() {
             <h2 className="text-2xl font-bold">구독 중인 크리에이터</h2>
           </div>
 
-          {subscriptions.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">구독 중인 크리에이터가 없습니다</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {subscriptions
-                  .slice((subscriptionsPage - 1) * subscriptionsPerPage, subscriptionsPage * subscriptionsPerPage)
-                  .map((creator) => (
-                    <Card key={creator.id} className="hover:bg-accent/50 transition-colors">
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <a href={`/profile/${creator.id}`} className="flex items-center gap-4 flex-1 min-w-0">
-                          <Avatar className="h-14 w-14 shrink-0">
-                            <AvatarImage src={creator.avatar_url || undefined} />
-                            <AvatarFallback>{(creator.name || "?")[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{creator.name || "익명"}</p>
-                            <p className="text-xs text-muted-foreground">
-                              구독자 {creator.subscriber_count.toLocaleString()}명
-                            </p>
-                            {creator.bio && (
-                              <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{creator.bio}</p>
-                            )}
-                          </div>
-                        </a>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            try {
-                              const { error } = await supabase
-                                .from("subscriptions")
-                                .delete()
-                                .eq("subscriber_id", user!.id)
-                                .eq("creator_id", creator.id);
-                              if (error) throw error;
-                              toast.success("구독이 취소되었습니다");
-                              loadSubscriptions();
-                            } catch (error) {
-                              toast.error("구독 취소에 실패했습니다");
-                              console.error("Error unsubscribing:", error);
-                            }
-                          }}
-                          title="구독 취소"
-                        >
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-
-              {/* Subscriptions Pagination */}
-              {subscriptions.length > subscriptionsPerPage && (
-                <div className="flex items-center justify-center gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setSubscriptionsPage((prev) => Math.max(1, prev - 1))}
-                    disabled={subscriptionsPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from(
-                      { length: Math.ceil(subscriptions.length / subscriptionsPerPage) },
-                      (_, i) => i + 1,
-                    ).map((page) => (
-                      <Button
-                        key={page}
-                        variant={subscriptionsPage === page ? "default" : "outline"}
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setSubscriptionsPage(page)}
-                      >
-                        {page}
-                      </Button>
-                    ))}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      setSubscriptionsPage((prev) =>
-                        Math.min(Math.ceil(subscriptions.length / subscriptionsPerPage), prev + 1),
-                      )
-                    }
-                    disabled={subscriptionsPage === Math.ceil(subscriptions.length / subscriptionsPerPage)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
+          <SubscribedCreatorRow
+            subscriptions={subscriptions}
+            onUnsubscribe={loadSubscriptions}
+          />
         </div>
       </div>
 
