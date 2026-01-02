@@ -668,10 +668,33 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
           </Dialog>
         </CardHeader>
         <CardContent>
-          {directories.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              아직 디렉토리가 없습니다. 새 디렉토리를 만들어보세요!
-            </p>
+          {directories.length === 0 && !initialLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-24 h-24 mb-4 rounded-full bg-muted/50 flex items-center justify-center">
+                <Folder className="w-12 h-12 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">디렉토리가 없습니다</h3>
+              <p className="text-muted-foreground text-sm mb-4 max-w-xs">
+                디렉토리를 만들어 작품을 체계적으로 정리해보세요
+              </p>
+              <Button onClick={() => setOpen(true)} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                첫 디렉토리 만들기
+              </Button>
+            </div>
+          ) : directories.length === 0 && initialLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: itemsPerPage }).map((_, index) => (
+                <div key={index} className="p-4 rounded-lg border-2 border-border">
+                  <div className="flex items-start justify-between mb-2">
+                    <Skeleton className="h-6 w-6 rounded" />
+                    <Skeleton className="h-6 w-12" />
+                  </div>
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))}
+            </div>
           ) : (
             <>
               {/* Search and Sorting Options */}
@@ -747,9 +770,12 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                   ))}
                 </div>
               ) : filteredAndSortedDirectories.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  "{directorySearchQuery}" 검색 결과가 없습니다
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Search className="w-10 h-10 text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">
+                    "{directorySearchQuery}" 검색 결과가 없습니다
+                  </p>
+                </div>
               ) : (
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
