@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { VideoCard } from "@/components/VideoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -43,9 +44,10 @@ interface CreatorVideo {
 interface SubscribedCreatorRowProps {
   subscriptions: SubscribedCreator[];
   onUnsubscribe: () => void;
+  loading?: boolean;
 }
 
-export function SubscribedCreatorRow({ subscriptions, onUnsubscribe }: SubscribedCreatorRowProps) {
+export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = false }: SubscribedCreatorRowProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -190,6 +192,28 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe }: Subscribe
   }
 
   const expandedCreator = filteredSubscriptions.find((c) => c.id === expandedCreatorId);
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-64" />
+        <div className="flex gap-3 overflow-hidden">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Card key={i} className="shrink-0">
+              <CardContent className="p-3 flex items-center gap-3 min-w-[200px] max-w-[280px]">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
