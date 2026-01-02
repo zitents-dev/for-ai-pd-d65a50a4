@@ -200,12 +200,12 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
         <Skeleton className="h-10 w-64" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Card key={i} className="shrink-0">
-              <CardContent className="p-3 flex items-center gap-3 min-w-[200px] max-w-[280px]">
+            <Card key={i} className="shrink-0 w-[220px]">
+              <CardContent className="p-3 flex flex-col items-center gap-2 h-[120px]">
                 <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-16" />
+                <div className="w-full space-y-1.5">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-3 w-20 mx-auto" />
                 </div>
               </CardContent>
             </Card>
@@ -275,23 +275,23 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
             {filteredSubscriptions.map((creator) => (
             <Card
               key={creator.id}
-              className={`shrink-0 cursor-pointer transition-all hover:bg-accent/50 ${
+              className={`shrink-0 w-[220px] cursor-pointer transition-all hover:bg-accent/50 ${
                 expandedCreatorId === creator.id ? "ring-2 ring-primary bg-accent/30" : ""
               }`}
               onClick={() => handleCreatorClick(creator.id)}
             >
-              <CardContent className="p-3 flex items-center gap-3 min-w-[200px] max-w-[280px]">
+              <CardContent className="p-3 flex flex-col items-center gap-2 h-[120px]">
                 <Avatar className="h-12 w-12 shrink-0">
                   <AvatarImage src={creator.avatar_url || undefined} />
                   <AvatarFallback>{(creator.name || "?")[0]}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
+                <div className="w-full text-center min-w-0">
                   <p className="font-medium truncate text-sm">{creator.name || "익명"}</p>
                   <p className="text-xs text-muted-foreground">
                     구독자 {creator.subscriber_count.toLocaleString()}명
                   </p>
                 </div>
-                <div className="shrink-0 flex items-center gap-1">
+                <div className="shrink-0">
                   {expandedCreatorId === creator.id ? (
                     <ChevronUp className="h-4 w-4 text-muted-foreground" />
                   ) : (
@@ -344,13 +344,13 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
                   더 보기
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
                   onClick={(e) => handleUnsubscribe(e, expandedCreator.id)}
-                  title="구독 취소"
                 >
-                  <UserMinus className="h-4 w-4" />
+                  <UserMinus className="h-4 w-4 mr-1" />
+                  구독 취소
                 </Button>
               </div>
             </div>
