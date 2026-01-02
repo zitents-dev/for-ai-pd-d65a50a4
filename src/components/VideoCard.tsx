@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Eye, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Eye, ThumbsUp, ThumbsDown, Clock } from "lucide-react";
 import { useLazyLoad } from "@/hooks/useLazyLoad";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -190,6 +190,15 @@ export const VideoCard = ({ video, compact = false }: VideoCardProps) => {
                   <span className="flex items-center gap-1">
                     <ThumbsDown className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
                     {(video.dislikes_count || 0).toLocaleString()}
+                  </span>
+                </>
+              )}
+              {compact && video.duration !== null && video.duration !== undefined && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" />
+                    {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, "0")}
                   </span>
                 </>
               )}
