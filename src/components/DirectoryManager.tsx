@@ -234,21 +234,34 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("directories").insert({
-        user_id: user.id,
-        name: newDirName.trim(),
-        description: newDirDescription.trim() || null,
-        color: newDirColor,
-      });
+      const { data: newDir, error } = await supabase
+        .from("directories")
+        .insert({
+          user_id: user.id,
+          name: newDirName.trim(),
+          description: newDirDescription.trim() || null,
+          color: newDirColor,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Immediately add the new directory to state for instant UI update
+      const newDirectory: Directory = {
+        ...newDir,
+        video_count: 0,
+      };
+      setDirectories((prev) => [newDirectory, ...prev]);
 
       toast.success("디렉토리가 생성되었습니다");
       setNewDirName("");
       setNewDirDescription("");
       setNewDirColor(null);
       setOpen(false);
-      loadDirectories();
+      
+      // Reset pagination to first page to show the new directory
+      setDirectoryPage(1);
     } catch (error: any) {
       console.error("Error creating directory:", error);
       if (error.code === "23505") {
