@@ -114,6 +114,7 @@ interface SubscribedCreator {
   avatar_url: string | null;
   bio: string | null;
   subscriber_count: number;
+  subscribed_at: string;
 }
 
 const countries = ["대한민국", "미국", "일본", "중국", "영국", "독일", "프랑스", "캐나다", "호주", "기타"];
@@ -384,7 +385,7 @@ export default function MyPage() {
     try {
       const { data, error } = await supabase
         .from("subscriptions")
-        .select("creator_id")
+        .select("creator_id, created_at")
         .eq("subscriber_id", user!.id)
         .order("created_at", { ascending: false });
 
@@ -392,6 +393,8 @@ export default function MyPage() {
 
       if (data && data.length > 0) {
         const creatorIds = data.map((s) => s.creator_id);
+        const subscriptionDates = new Map(data.map((s) => [s.creator_id, s.created_at]));
+        
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, name, avatar_url, bio")
@@ -406,8 +409,17 @@ export default function MyPage() {
               .from("subscriptions")
               .select("*", { count: "exact", head: true })
               .eq("creator_id", profile.id);
-            return { ...profile, subscriber_count: count || 0 };
+            return { 
+              ...profile, 
+              subscriber_count: count || 0,
+              subscribed_at: subscriptionDates.get(profile.id) || ""
+            };
           }),
+        );
+
+        // Sort by subscription date (most recent first)
+        creatorsWithCounts.sort((a, b) => 
+          new Date(b.subscribed_at).getTime() - new Date(a.subscribed_at).getTime()
         );
 
         setSubscriptions(creatorsWithCounts);
