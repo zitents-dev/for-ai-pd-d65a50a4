@@ -9,6 +9,16 @@ import { VideoCard } from "@/components/VideoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ChevronLeft,
   ChevronRight,
   UserMinus,
@@ -60,6 +70,8 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
   }>({ popular: [], recent: [] });
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
+  const [creatorToUnsubscribe, setCreatorToUnsubscribe] = useState<SubscribedCreator | null>(null);
 
   const filteredSubscriptions = useMemo(() => {
     if (!searchQuery.trim()) return subscriptions;
@@ -161,23 +173,33 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
     }
   };
 
-  const handleUnsubscribe = async (e: React.MouseEvent, creatorId: string) => {
+  const openUnsubscribeDialog = (e: React.MouseEvent, creator: SubscribedCreator) => {
     e.stopPropagation();
+    setCreatorToUnsubscribe(creator);
+    setUnsubscribeDialogOpen(true);
+  };
+
+  const handleUnsubscribeConfirm = async () => {
+    if (!creatorToUnsubscribe) return;
+    
     try {
       const { error } = await supabase
         .from("subscriptions")
         .delete()
         .eq("subscriber_id", user!.id)
-        .eq("creator_id", creatorId);
+        .eq("creator_id", creatorToUnsubscribe.id);
       if (error) throw error;
       toast.success("구독이 취소되었습니다");
-      if (expandedCreatorId === creatorId) {
+      if (expandedCreatorId === creatorToUnsubscribe.id) {
         setExpandedCreatorId(null);
       }
       onUnsubscribe();
     } catch (error) {
       toast.error("구독 취소에 실패했습니다");
       console.error("Error unsubscribing:", error);
+    } finally {
+      setUnsubscribeDialogOpen(false);
+      setCreatorToUnsubscribe(null);
     }
   };
 
@@ -268,7 +290,7 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
 
           <div
             ref={scrollRef}
-            className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
+            className="flex gap-3 overflow-x-auto overflow-y-visible scrollbar-hide py-1 px-0.5"
             onScroll={checkScrollable}
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
@@ -347,7 +369,7 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
                   variant="outline"
                   size="sm"
                   className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                  onClick={(e) => handleUnsubscribe(e, expandedCreator.id)}
+                  onClick={(e) => openUnsubscribeDialog(e, expandedCreator)}
                 >
                   <UserMinus className="h-4 w-4 mr-1" />
                   구독 취소
@@ -399,6 +421,27 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe, loading = f
       )}
         </>
       )}
+
+      {/* Unsubscribe confirmation dialog */}
+      <AlertDialog open={unsubscribeDialogOpen} onOpenChange={setUnsubscribeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>구독을 취소하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {creatorToUnsubscribe?.name || "이 크리에이터"}의 구독을 취소하면 새 콘텐츠 알림을 받지 못합니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleUnsubscribeConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              구독 취소
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
