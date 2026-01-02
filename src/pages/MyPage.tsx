@@ -1410,6 +1410,7 @@ export default function MyPage() {
           <div className="flex items-center gap-2">
             <Users className="h-6 w-6" />
             <h2 className="text-2xl font-bold">구독 중인 크리에이터</h2>
+            <span className="text-muted-foreground text-lg">({subscriptions.length})</span>
           </div>
 
           <SubscribedCreatorRow
