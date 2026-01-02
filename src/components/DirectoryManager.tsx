@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil, ArrowUpDown, Search } from "lucide-react";
+import { Folder, Plus, Trash2, X, ChevronLeft, ChevronRight, FolderInput, Copy, Pencil, ArrowUpDown, Search, RefreshCw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -717,6 +717,20 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Refresh Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => {
+                    setInitialLoading(true);
+                    loadDirectories();
+                  }}
+                  disabled={initialLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${initialLoading ? "animate-spin" : ""}`} />
+                </Button>
               </div>
 
               {initialLoading ? (
