@@ -33,7 +33,7 @@ export const Navbar = () => {
         <form onSubmit={handleSearch} className="flex-1 max-w-xl flex gap-2">
           <Input
             type="search"
-            placeholder="제목, PD명, 태그...."
+            placeholder="제목, 크리에이터 명, 태그...."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full"
