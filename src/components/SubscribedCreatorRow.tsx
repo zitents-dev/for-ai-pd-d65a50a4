@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { VideoCard } from "@/components/VideoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,10 +11,11 @@ import {
   ChevronLeft,
   ChevronRight,
   UserMinus,
-  Users,
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Search,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
@@ -55,6 +57,15 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe }: Subscribe
     recent: CreatorVideo[];
   }>({ popular: [], recent: [] });
   const [loadingVideos, setLoadingVideos] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredSubscriptions = useMemo(() => {
+    if (!searchQuery.trim()) return subscriptions;
+    const query = searchQuery.toLowerCase().trim();
+    return subscriptions.filter(
+      (creator) => creator.name?.toLowerCase().includes(query)
+    );
+  }, [subscriptions, searchQuery]);
 
   const checkScrollable = () => {
     if (scrollRef.current) {
@@ -68,7 +79,7 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe }: Subscribe
     checkScrollable();
     window.addEventListener("resize", checkScrollable);
     return () => window.removeEventListener("resize", checkScrollable);
-  }, [subscriptions]);
+  }, [filteredSubscriptions]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -178,12 +189,47 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe }: Subscribe
     );
   }
 
-  const expandedCreator = subscriptions.find((c) => c.id === expandedCreatorId);
+  const expandedCreator = filteredSubscriptions.find((c) => c.id === expandedCreatorId);
 
   return (
     <div className="space-y-4">
-      {/* Scrollable creator row */}
-      <div className="relative group">
+      {/* Search input */}
+      <div className="relative max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="크리에이터 검색..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 pr-9"
+          maxLength={50}
+        />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+            onClick={() => setSearchQuery("")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {filteredSubscriptions.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              {subscriptions.length === 0
+                ? "구독 중인 크리에이터가 없습니다"
+                : "검색 결과가 없습니다"}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Scrollable creator row */}
+          <div className="relative group">
         {/* Left scroll button */}
         {canScrollLeft && (
           <Button
@@ -196,14 +242,13 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe }: Subscribe
           </Button>
         )}
 
-        {/* Scrollable container */}
-        <div
-          ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
-          onScroll={checkScrollable}
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {subscriptions.map((creator) => (
+          <div
+            ref={scrollRef}
+            className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
+            onScroll={checkScrollable}
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {filteredSubscriptions.map((creator) => (
             <Card
               key={creator.id}
               className={`shrink-0 cursor-pointer transition-all hover:bg-accent/50 ${
@@ -327,6 +372,8 @@ export function SubscribedCreatorRow({ subscriptions, onUnsubscribe }: Subscribe
             )}
           </CardContent>
         </Card>
+      )}
+        </>
       )}
     </div>
   );
