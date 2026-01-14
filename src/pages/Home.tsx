@@ -364,6 +364,7 @@ export default function Home() {
           collapsible
           storageKey="mentor-videos-collapsed"
           icon={GraduationCap}
+          rows={1}
           onLoadMore={() => {
             if (!mentorLoading && mentorHasMore) {
               const nextPage = mentorPage + 1;

@@ -64,6 +64,7 @@ interface VideoRowProps {
   defaultCollapsed?: boolean;
   storageKey?: string;
   icon?: LucideIcon;
+  rows?: 1 | 2;
 }
 
 export const VideoRow = ({
@@ -82,6 +83,7 @@ export const VideoRow = ({
   defaultCollapsed = false,
   storageKey,
   icon: Icon,
+  rows = 2,
 }: VideoRowProps) => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -246,21 +248,27 @@ export const VideoRow = ({
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {initialLoading ? (
-                <div className="grid grid-rows-2 grid-flow-col gap-4 auto-cols-[320px]">
-                  <VideoCardSkeleton count={8} />
+                <div className={cn(
+                  "grid grid-flow-col gap-4 auto-cols-[320px]",
+                  rows === 1 ? "grid-rows-1" : "grid-rows-2"
+                )}>
+                  <VideoCardSkeleton count={rows === 1 ? 4 : 8} />
                 </div>
               ) : showEmptyState ? (
                 <div className="w-full text-center py-8 text-muted-foreground">
                   No videos found in this category
                 </div>
               ) : (
-                <div className="grid grid-rows-2 grid-flow-col gap-4 auto-cols-[320px]">
+                <div className={cn(
+                  "grid grid-flow-col gap-4 auto-cols-[320px]",
+                  rows === 1 ? "grid-rows-1" : "grid-rows-2"
+                )}>
                   {videos.map((video) => (
                     <div key={video.id}>
                       <VideoCard video={video} />
                     </div>
                   ))}
-                  {loading && <VideoCardSkeleton count={4} />}
+                  {loading && <VideoCardSkeleton count={rows === 1 ? 2 : 4} />}
                 </div>
               )}
             </div>
