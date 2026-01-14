@@ -125,6 +125,9 @@ interface MyReply {
   video_id: string;
   video_title: string;
   video_thumbnail: string | null;
+  parent_id: string | null;
+  parent_content: string | null;
+  parent_user_name: string | null;
 }
 
 const countries = ["대한민국", "미국", "일본", "중국", "영국", "독일", "프랑스", "캐나다", "호주", "기타"];
@@ -457,6 +460,7 @@ export default function MyPage() {
           content,
           created_at,
           video_id,
+          parent_id,
           videos (
             title,
             thumbnail_url
@@ -467,6 +471,33 @@ export default function MyPage() {
 
       if (error) throw error;
 
+      // Fetch parent comments for nested replies
+      const parentIds = (data || [])
+        .filter((c: any) => c.parent_id)
+        .map((c: any) => c.parent_id);
+
+      let parentComments: Record<string, { content: string; user_name: string }> = {};
+      if (parentIds.length > 0) {
+        const { data: parents } = await supabase
+          .from("comments")
+          .select(`
+            id,
+            content,
+            profiles (name)
+          `)
+          .in("id", parentIds);
+
+        if (parents) {
+          parentComments = parents.reduce((acc: any, p: any) => {
+            acc[p.id] = {
+              content: p.content,
+              user_name: p.profiles?.name || "알 수 없음",
+            };
+            return acc;
+          }, {});
+        }
+      }
+
       const formattedReplies: MyReply[] = (data || []).map((comment: any) => ({
         id: comment.id,
         content: comment.content,
@@ -474,6 +505,9 @@ export default function MyPage() {
         video_id: comment.video_id,
         video_title: comment.videos?.title || "삭제된 영상",
         video_thumbnail: comment.videos?.thumbnail_url || null,
+        parent_id: comment.parent_id,
+        parent_content: comment.parent_id ? parentComments[comment.parent_id]?.content || null : null,
+        parent_user_name: comment.parent_id ? parentComments[comment.parent_id]?.user_name || null : null,
       }));
 
       setMyReplies(formattedReplies);
@@ -1526,6 +1560,11 @@ export default function MyPage() {
                         <p className="text-sm text-muted-foreground mb-1 truncate">
                           {reply.video_title}
                         </p>
+                        {reply.parent_id && reply.parent_content && (
+                          <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 mb-1 line-clamp-1">
+                            <span className="font-medium">{reply.parent_user_name}</span>님에게 답글: "{reply.parent_content}"
+                          </div>
+                        )}
                         <p className="text-sm line-clamp-2">{reply.content}</p>
                         <p className="text-xs text-muted-foreground mt-2">
                           {new Date(reply.created_at).toLocaleDateString("ko-KR", {
