@@ -213,7 +213,7 @@ export const VideoRow = ({
           )}
           {sectionType && !isCollapsed && (
             <Button variant="outline" size="sm" onClick={() => navigate(`/videos/${sectionType}`)}>
-              View All
+              모두 보기
             </Button>
           )}
         </div>
