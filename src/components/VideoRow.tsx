@@ -239,27 +239,29 @@ export const VideoRow = ({
               </Button>
             )}
 
-            {/* Scrollable container */}
+            {/* Scrollable container with 2-row grid */}
             <div
               ref={scrollContainerRef}
-              className="flex gap-4 overflow-x-auto scrollbar-hide px-4 pb-4 scroll-smooth"
+              className="overflow-x-auto scrollbar-hide px-4 pb-4 scroll-smooth"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {initialLoading ? (
-                <VideoCardSkeleton count={5} />
+                <div className="grid grid-rows-2 grid-flow-col gap-4 auto-cols-[320px]">
+                  <VideoCardSkeleton count={8} />
+                </div>
               ) : showEmptyState ? (
-                <div className="flex-shrink-0 w-full text-center py-8 text-muted-foreground">
+                <div className="w-full text-center py-8 text-muted-foreground">
                   No videos found in this category
                 </div>
               ) : (
-                <>
+                <div className="grid grid-rows-2 grid-flow-col gap-4 auto-cols-[320px]">
                   {videos.map((video) => (
-                    <div key={video.id} className="flex-shrink-0 w-72">
+                    <div key={video.id}>
                       <VideoCard video={video} />
                     </div>
                   ))}
-                  {loading && <VideoCardSkeleton count={2} />}
-                </>
+                  {loading && <VideoCardSkeleton count={4} />}
+                </div>
               )}
             </div>
 
