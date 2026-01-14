@@ -40,6 +40,7 @@ import {
   Users,
   UserMinus,
   FolderInput,
+  MessageSquare,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
@@ -117,6 +118,15 @@ interface SubscribedCreator {
   subscribed_at: string;
 }
 
+interface MyReply {
+  id: string;
+  content: string;
+  created_at: string;
+  video_id: string;
+  video_title: string;
+  video_thumbnail: string | null;
+}
+
 const countries = ["대한민국", "미국", "일본", "중국", "영국", "독일", "프랑스", "캐나다", "호주", "기타"];
 
 const genders = [
@@ -134,6 +144,9 @@ export default function MyPage() {
   const [favoriteVideos, setFavoriteVideos] = useState<FavoriteVideo[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscribedCreator[]>([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
+  const [myReplies, setMyReplies] = useState<MyReply[]>([]);
+  const [myRepliesLoading, setMyRepliesLoading] = useState(true);
+  const [showAllReplies, setShowAllReplies] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -227,6 +240,7 @@ export default function MyPage() {
       loadFavorites();
       loadSubscriptions();
       loadUserDirectories();
+      loadMyReplies();
     }
   }, [user]);
 
@@ -430,6 +444,43 @@ export default function MyPage() {
       console.error("Error loading subscriptions:", error);
     } finally {
       setSubscriptionsLoading(false);
+    }
+  };
+
+  const loadMyReplies = async () => {
+    setMyRepliesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("comments")
+        .select(`
+          id,
+          content,
+          created_at,
+          video_id,
+          videos (
+            title,
+            thumbnail_url
+          )
+        `)
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const formattedReplies: MyReply[] = (data || []).map((comment: any) => ({
+        id: comment.id,
+        content: comment.content,
+        created_at: comment.created_at,
+        video_id: comment.video_id,
+        video_title: comment.videos?.title || "삭제된 영상",
+        video_thumbnail: comment.videos?.thumbnail_url || null,
+      }));
+
+      setMyReplies(formattedReplies);
+    } catch (error) {
+      console.error("Error loading my replies:", error);
+    } finally {
+      setMyRepliesLoading(false);
     }
   };
 
@@ -1430,6 +1481,77 @@ export default function MyPage() {
             onUnsubscribe={loadSubscriptions}
             loading={subscriptionsLoading}
           />
+        </div>
+
+        <Separator className="my-8" />
+
+        {/* My Replies Section */}
+        <div className="mt-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-6 w-6" />
+            <h2 className="text-2xl font-bold">내가 작성한 댓글</h2>
+            <span className="text-muted-foreground text-lg">({myReplies.length})</span>
+          </div>
+
+          {myRepliesLoading ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+              </CardContent>
+            </Card>
+          ) : myReplies.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground">작성한 댓글이 없습니다</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {(showAllReplies ? myReplies : myReplies.slice(0, 5)).map((reply) => (
+                <Card
+                  key={reply.id}
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => navigate(`/video/${reply.video_id}`)}
+                >
+                  <CardContent className="py-4">
+                    <div className="flex gap-4">
+                      {reply.video_thumbnail && (
+                        <img
+                          src={reply.video_thumbnail}
+                          alt={reply.video_title}
+                          className="w-24 h-16 object-cover rounded flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-muted-foreground mb-1 truncate">
+                          {reply.video_title}
+                        </p>
+                        <p className="text-sm line-clamp-2">{reply.content}</p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {new Date(reply.created_at).toLocaleDateString("ko-KR", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {myReplies.length > 5 && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAllReplies(!showAllReplies)}
+                  >
+                    {showAllReplies ? "접기" : `더보기 (${myReplies.length - 5}개 더)`}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
