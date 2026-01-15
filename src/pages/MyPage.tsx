@@ -205,6 +205,7 @@ export default function MyPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [aiSolutionFilter, setAiSolutionFilter] = useState<string>("");
   const [directoryFilter, setDirectoryFilter] = useState<string>("");
+  const [publicPromptFilter, setPublicPromptFilter] = useState<boolean>(false);
 
   // Directories for filter
   const [userDirectories, setUserDirectories] = useState<{ id: string; name: string; video_count?: number }[]>([]);
@@ -792,6 +793,11 @@ export default function MyPage() {
     if (directoryFilter) {
       result = result.filter((v) => directoryVideoIds.has(v.id));
     }
+
+    // Apply public prompt filter
+    if (publicPromptFilter) {
+      result = result.filter((v) => v.show_prompt === true && v.prompt_command);
+    }
     
     // Apply sorting
     result.sort((a, b) => {
@@ -812,7 +818,7 @@ export default function MyPage() {
     });
     
     return result;
-  }, [videos, dateRange, sortBy, searchQuery, categoryFilter, aiSolutionFilter, directoryFilter, directoryVideoIds]);
+  }, [videos, dateRange, sortBy, searchQuery, categoryFilter, aiSolutionFilter, directoryFilter, directoryVideoIds, publicPromptFilter]);
 
   const currentPageVideos = filteredAndSortedVideos.slice((workPage - 1) * worksPerPage, workPage * worksPerPage);
   const allCurrentPageSelected =
@@ -1372,6 +1378,8 @@ export default function MyPage() {
               directoryFilter={directoryFilter}
               onDirectoryFilterChange={setDirectoryFilter}
               directories={userDirectories}
+              publicPromptFilter={publicPromptFilter}
+              onPublicPromptFilterChange={setPublicPromptFilter}
             />
 
             {filteredAndSortedVideos.length === 0 ? (
