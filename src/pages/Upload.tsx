@@ -199,6 +199,14 @@ export default function Upload() {
     setUploadProgress(0);
 
     try {
+      // Get user's access token for authenticated upload
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      
+      if (!accessToken) {
+        throw new Error("인증 세션이 만료되었습니다. 다시 로그인해주세요.");
+      }
+
       // Upload video with progress tracking
       const videoPath = `${user.id}/${Date.now()}-${videoFile.name}`;
 
@@ -225,10 +233,9 @@ export default function Upload() {
 
         // Get the upload URL from Supabase
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
         xhr.open("POST", `${supabaseUrl}/storage/v1/object/videos/${videoPath}`);
-        xhr.setRequestHeader("Authorization", `Bearer ${supabaseKey}`);
+        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
         xhr.setRequestHeader("x-upsert", "true");
         xhr.send(videoFile);
       });
