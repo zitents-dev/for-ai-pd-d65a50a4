@@ -75,6 +75,7 @@ export default function Search() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [aiSolutionFilter, setAiSolutionFilter] = useState("");
   const [durationFilter, setDurationFilter] = useState<DurationFilter>("");
+  const [publicPromptFilter, setPublicPromptFilter] = useState(false);
   
   // Creator filter states
   const [creatorSortBy, setCreatorSortBy] = useState<CreatorSortOption>("name");
@@ -160,7 +161,7 @@ export default function Search() {
     if (q) {
       performSearch(q);
     }
-  }, [sortBy, dateRange, categoryFilter, aiSolutionFilter, durationFilter]);
+  }, [sortBy, dateRange, categoryFilter, aiSolutionFilter, durationFilter, publicPromptFilter]);
 
   const fetchVideosWithCounts = async (videoData: any[]) => {
     if (!videoData || videoData.length === 0) return [];
@@ -309,6 +310,11 @@ export default function Search() {
       }
     }
     
+    // Apply public prompt filter
+    if (publicPromptFilter) {
+      query = query.eq("show_prompt", true).not("prompt_command", "is", null);
+    }
+    
     // Apply date range filter
     if (dateRange?.from) {
       query = query.gte("created_at", dateRange.from.toISOString());
@@ -385,6 +391,9 @@ export default function Search() {
             countQuery = countQuery.gt("duration", 300);
             break;
         }
+      }
+      if (publicPromptFilter) {
+        countQuery = countQuery.eq("show_prompt", true).not("prompt_command", "is", null);
       }
       if (dateRange?.from) {
         countQuery = countQuery.gte("created_at", dateRange.from.toISOString());
@@ -492,7 +501,7 @@ export default function Search() {
     } finally {
       setLoadingMoreVideos(false);
     }
-  }, [loadingMoreVideos, hasMoreVideos, videos, sortBy, categoryFilter, aiSolutionFilter, dateRange, durationFilter]);
+  }, [loadingMoreVideos, hasMoreVideos, videos, sortBy, categoryFilter, aiSolutionFilter, dateRange, durationFilter, publicPromptFilter]);
 
   const loadMoreCreators = useCallback(async () => {
     if (loadingMoreCreators || !hasMoreCreators || !currentSearchQuery.current) return;
@@ -639,6 +648,8 @@ export default function Search() {
               onAiSolutionFilterChange={(value) => setAiSolutionFilter(value)}
               durationFilter={durationFilter}
               onDurationFilterChange={(value) => setDurationFilter(value)}
+              publicPromptFilter={publicPromptFilter}
+              onPublicPromptFilterChange={setPublicPromptFilter}
             />
           )}
           

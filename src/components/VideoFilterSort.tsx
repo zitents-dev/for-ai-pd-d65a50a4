@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { CalendarIcon, ArrowUpDown, X, Filter, Search, ChevronRight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CalendarIcon, ArrowUpDown, X, Filter, Search, ChevronRight, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
@@ -54,6 +55,8 @@ interface VideoFilterSortProps {
   directories?: Directory[];
   durationFilter?: DurationFilter;
   onDurationFilterChange?: (duration: DurationFilter) => void;
+  publicPromptFilter?: boolean;
+  onPublicPromptFilterChange?: (checked: boolean) => void;
 }
 
 const sortOptions: { value: SortOption; label: string }[] = [
@@ -80,6 +83,8 @@ export function VideoFilterSort({
   directories = [],
   durationFilter,
   onDurationFilterChange,
+  publicPromptFilter,
+  onPublicPromptFilterChange,
 }: VideoFilterSortProps) {
   const [dateOpen, setDateOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -88,17 +93,18 @@ export function VideoFilterSort({
     onDateRangeChange(undefined);
   };
 
-  const hasActiveFilters = categoryFilter || aiSolutionFilter || directoryFilter || durationFilter;
-  const activeFilterCount = [categoryFilter, aiSolutionFilter, directoryFilter, durationFilter].filter(Boolean).length;
+  const hasActiveFilters = categoryFilter || aiSolutionFilter || directoryFilter || durationFilter || publicPromptFilter;
+  const activeFilterCount = [categoryFilter, aiSolutionFilter, directoryFilter, durationFilter, publicPromptFilter].filter(Boolean).length;
 
   const clearAllFilters = () => {
     onCategoryFilterChange?.("");
     onAiSolutionFilterChange?.("");
     onDirectoryFilterChange?.("");
     onDurationFilterChange?.("");
+    onPublicPromptFilterChange?.(false);
   };
 
-  const showFilterRow = onCategoryFilterChange || onAiSolutionFilterChange || onDurationFilterChange || (onDirectoryFilterChange && directories.length > 0);
+  const showFilterRow = onCategoryFilterChange || onAiSolutionFilterChange || onDurationFilterChange || onPublicPromptFilterChange || (onDirectoryFilterChange && directories.length > 0);
 
   return (
     <div className="space-y-2">
@@ -264,6 +270,18 @@ export function VideoFilterSort({
                   ))}
                 </SelectContent>
               </Select>
+            )}
+
+            {/* Public Prompt Filter */}
+            {onPublicPromptFilterChange && (
+              <label className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background cursor-pointer hover:bg-accent/50 transition-colors">
+                <Checkbox
+                  checked={publicPromptFilter || false}
+                  onCheckedChange={(checked) => onPublicPromptFilterChange(checked === true)}
+                />
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm whitespace-nowrap">프롬프트 공개</span>
+              </label>
             )}
 
             {/* Clear All Filters */}
