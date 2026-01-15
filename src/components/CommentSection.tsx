@@ -119,8 +119,30 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
         return null;
       };
 
+      // Find the index of the top-level parent comment
+      const findTopLevelIndex = (commentList: Comment[], targetId: string): number => {
+        for (let i = 0; i < commentList.length; i++) {
+          const comment = commentList[i];
+          if (comment.id === targetId) return i;
+          if (comment.replies) {
+            const found = findComment(comment.replies, targetId);
+            if (found) return i;
+          }
+        }
+        return -1;
+      };
+
       const targetComment = findComment(comments, highlightCommentId);
       if (targetComment) {
+        // Find top-level index to ensure the comment is visible
+        const unpinnedComments = comments.filter(c => !c.pinned_at);
+        const topLevelIndex = findTopLevelIndex(unpinnedComments, highlightCommentId);
+        
+        // Ensure visibleCount includes this comment
+        if (topLevelIndex >= 0 && topLevelIndex >= visibleCount) {
+          setVisibleCount(topLevelIndex + 1);
+        }
+
         // Expand parent threads if it's a nested reply
         if (targetComment.parent_id) {
           // Find and expand all parent threads
@@ -164,7 +186,7 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
         }, 300);
       }
     }
-  }, [comments, highlightCommentId]);
+  }, [comments, highlightCommentId, visibleCount]);
 
   useEffect(() => {
     if (comments.length > 0) {
