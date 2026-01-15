@@ -1585,7 +1585,7 @@ export default function MyPage() {
                 <Card
                   key={reply.id}
                   className="cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => navigate(`/video/${reply.video_id}`)}
+                  onClick={() => navigate(`/video/${reply.video_id}?commentId=${reply.id}`)}
                 >
                   <CardContent className="py-4">
                     <div className="flex gap-4">
