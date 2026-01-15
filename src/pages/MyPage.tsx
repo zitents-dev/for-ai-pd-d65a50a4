@@ -128,6 +128,7 @@ interface MyReply {
   parent_id: string | null;
   parent_content: string | null;
   parent_user_name: string | null;
+  parent_user_id: string | null;
 }
 
 const countries = ["대한민국", "미국", "일본", "중국", "영국", "독일", "프랑스", "캐나다", "호주", "기타"];
@@ -476,13 +477,14 @@ export default function MyPage() {
         .filter((c: any) => c.parent_id)
         .map((c: any) => c.parent_id);
 
-      let parentComments: Record<string, { content: string; user_name: string }> = {};
+      let parentComments: Record<string, { content: string; user_name: string; user_id: string }> = {};
       if (parentIds.length > 0) {
         const { data: parents } = await supabase
           .from("comments")
           .select(`
             id,
             content,
+            user_id,
             profiles (name)
           `)
           .in("id", parentIds);
@@ -492,6 +494,7 @@ export default function MyPage() {
             acc[p.id] = {
               content: p.content,
               user_name: p.profiles?.name || "알 수 없음",
+              user_id: p.user_id,
             };
             return acc;
           }, {});
@@ -508,6 +511,7 @@ export default function MyPage() {
         parent_id: comment.parent_id,
         parent_content: comment.parent_id ? parentComments[comment.parent_id]?.content || null : null,
         parent_user_name: comment.parent_id ? parentComments[comment.parent_id]?.user_name || null : null,
+        parent_user_id: comment.parent_id ? parentComments[comment.parent_id]?.user_id || null : null,
       }));
 
       setMyReplies(formattedReplies);
@@ -1562,7 +1566,18 @@ export default function MyPage() {
                         </p>
                         {reply.parent_id && reply.parent_content && (
                           <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 mb-1 line-clamp-1">
-                            @{reply.parent_user_name}님의 댓글에 대한 답글: '{reply.parent_content}'
+                            <span
+                              className="text-primary hover:underline cursor-pointer font-medium"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (reply.parent_user_id) {
+                                  navigate(`/profile/${reply.parent_user_id}`);
+                                }
+                              }}
+                            >
+                              @{reply.parent_user_name}
+                            </span>
+                            님의 댓글에 대한 답글: '{reply.parent_content}'
                           </div>
                         )}
                         <p className="text-sm line-clamp-2">{reply.content}</p>
