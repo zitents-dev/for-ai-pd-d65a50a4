@@ -21,6 +21,8 @@ interface Video {
   creator_id?: string;
   category?: string | null;
   ai_solution?: string | null;
+  show_prompt?: boolean | null;
+  prompt_command?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -108,7 +110,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution, show_prompt, prompt_command,
           profiles (name, avatar_url)
         `,
         )
@@ -148,7 +150,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution, show_prompt, prompt_command,
           profiles (name, avatar_url)
         `,
         )
@@ -188,7 +190,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution, show_prompt, prompt_command,
           profiles (name, avatar_url)
         `,
         );
@@ -257,7 +259,7 @@ export default function Home() {
         .from("videos")
         .select(
           `
-          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution,
+          id, title, thumbnail_url, video_url, duration, views, created_at, creator_id, category, ai_solution, show_prompt, prompt_command,
           profiles (name, avatar_url)
         `,
         )

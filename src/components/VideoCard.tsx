@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Eye, ThumbsUp, ThumbsDown, Clock } from "lucide-react";
+import { Eye, ThumbsUp, ThumbsDown, Clock, FileText, EyeOff } from "lucide-react";
 import { useLazyLoad } from "@/hooks/useLazyLoad";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,8 @@ interface VideoCardProps {
     creator_id?: string;
     category?: string | null;
     ai_solution?: string | null;
+    show_prompt?: boolean | null;
+    prompt_command?: string | null;
     profiles: {
       name: string;
       avatar_url: string | null;
@@ -142,11 +144,28 @@ export const VideoCard = ({ video, compact = false }: VideoCardProps) => {
           </div>
         )}
 
-        {/* Category and AI Solution badges - hide when previewing */}
-        {!isHovering && (video.category || video.ai_solution) && (
+        {/* Category, AI Solution, and Prompt badges - hide when previewing */}
+        {!isHovering && (video.category || video.ai_solution || video.prompt_command) && (
           <div className="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
             {video.category && <CategoryBadge category={video.category} className="text-xs py-0.5 px-1.5" />}
             {video.ai_solution && <AiSolutionBadge aiSolution={video.ai_solution} className="text-xs py-0.5 px-1.5" />}
+            {video.prompt_command && (
+              <span
+                className={`inline-flex items-center gap-1 text-xs py-0.5 px-1.5 rounded font-medium ${
+                  video.show_prompt
+                    ? "bg-emerald-500/80 text-white"
+                    : "bg-zinc-600/80 text-white"
+                }`}
+                title={video.show_prompt ? "프롬프트 공개" : "프롬프트 비공개"}
+              >
+                {video.show_prompt ? (
+                  <FileText className="w-3 h-3" />
+                ) : (
+                  <EyeOff className="w-3 h-3" />
+                )}
+                {video.show_prompt ? "공개" : "비공개"}
+              </span>
+            )}
           </div>
         )}
 
