@@ -14,6 +14,8 @@ interface Video {
   likes_count?: number;
   dislikes_count?: number;
   creator_id?: string;
+  show_prompt?: boolean | null;
+  prompt_command?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;

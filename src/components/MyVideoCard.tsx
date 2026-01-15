@@ -21,6 +21,8 @@ import {
   Pencil,
   Trash2,
   FolderPlus,
+  FileText,
+  EyeOff,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -195,7 +197,7 @@ export function MyVideoCard({
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div>
             <h3 className="font-medium text-sm truncate mb-1" title={video.title}>{video.title}</h3>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
               {video.ai_solution && (
                 <Badge className={`text-xs h-5 ${getAiSolutionClassName(video.ai_solution)}`}>
                   {video.ai_solution === "Other" ? "기타" : video.ai_solution}
@@ -205,6 +207,20 @@ export function MyVideoCard({
                 <Badge className={`text-xs h-5 ${getCategoryClassName(video.category)}`}>
                   {getCategoryLabel(video.category)}
                 </Badge>
+              )}
+              {/* Public Prompt Label */}
+              {video.prompt_command && (
+                video.show_prompt ? (
+                  <Badge className="text-xs h-5 bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30">
+                    <FileText className="h-3 w-3 mr-1" />
+                    공개
+                  </Badge>
+                ) : (
+                  <Badge className="text-xs h-5 bg-muted text-muted-foreground border-muted-foreground/30">
+                    <EyeOff className="h-3 w-3 mr-1" />
+                    비공개
+                  </Badge>
+                )
               )}
             </div>
           </div>

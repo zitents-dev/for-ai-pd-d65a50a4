@@ -30,6 +30,8 @@ interface Video {
   category?: string | null;
   ai_solution?: string | null;
   creator_id?: string;
+  show_prompt?: boolean | null;
+  prompt_command?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
