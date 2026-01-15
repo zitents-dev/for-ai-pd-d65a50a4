@@ -1562,7 +1562,7 @@ export default function MyPage() {
                         </p>
                         {reply.parent_id && reply.parent_content && (
                           <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 mb-1 line-clamp-1">
-                            <span className="font-medium">{reply.parent_user_name}</span>님에게 답글: "{reply.parent_content}"
+                            @{reply.parent_user_name}님의 댓글에 대한 답글: '{reply.parent_content}'
                           </div>
                         )}
                         <p className="text-sm line-clamp-2">{reply.content}</p>
