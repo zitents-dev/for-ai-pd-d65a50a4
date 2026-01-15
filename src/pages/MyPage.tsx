@@ -151,6 +151,11 @@ export default function MyPage() {
   const [myReplies, setMyReplies] = useState<MyReply[]>([]);
   const [myRepliesLoading, setMyRepliesLoading] = useState(true);
   const [showAllReplies, setShowAllReplies] = useState(false);
+  const [repliesPage, setRepliesPage] = useState(0);
+  const [hasMoreReplies, setHasMoreReplies] = useState(true);
+  const [loadingMoreReplies, setLoadingMoreReplies] = useState(false);
+  const [totalRepliesCount, setTotalRepliesCount] = useState(0);
+  const REPLIES_PER_PAGE = 10;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -451,9 +456,26 @@ export default function MyPage() {
     }
   };
 
-  const loadMyReplies = async () => {
-    setMyRepliesLoading(true);
+  // Load my replies with pagination
+  const loadMyReplies = async (page: number = 0, append: boolean = false) => {
+    if (!user) return;
+    
+    if (append) {
+      setLoadingMoreReplies(true);
+    } else {
+      setMyRepliesLoading(true);
+    }
+    
     try {
+      // Get total count first (only on initial load)
+      if (!append) {
+        const { count } = await supabase
+          .from("comments")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        setTotalRepliesCount(count || 0);
+      }
+
       const { data, error } = await supabase
         .from("comments")
         .select(`
@@ -467,10 +489,14 @@ export default function MyPage() {
             thumbnail_url
           )
         `)
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .range(page * REPLIES_PER_PAGE, (page + 1) * REPLIES_PER_PAGE - 1);
 
       if (error) throw error;
+
+      // Check if there are more replies
+      setHasMoreReplies((data || []).length === REPLIES_PER_PAGE);
 
       // Fetch parent comments for nested replies
       const parentIds = (data || [])
@@ -514,12 +540,22 @@ export default function MyPage() {
         parent_user_id: comment.parent_id ? parentComments[comment.parent_id]?.user_id || null : null,
       }));
 
-      setMyReplies(formattedReplies);
+      if (append) {
+        setMyReplies(prev => [...prev, ...formattedReplies]);
+      } else {
+        setMyReplies(formattedReplies);
+      }
+      setRepliesPage(page);
     } catch (error) {
       console.error("Error loading my replies:", error);
     } finally {
       setMyRepliesLoading(false);
+      setLoadingMoreReplies(false);
     }
+  };
+
+  const loadMoreReplies = () => {
+    loadMyReplies(repliesPage + 1, true);
   };
 
   const handleSaveField = async (field: string, value: any) => {
@@ -1528,7 +1564,7 @@ export default function MyPage() {
           <div className="flex items-center gap-2">
             <MessageSquare className="h-6 w-6" />
             <h2 className="text-2xl font-bold">내가 작성한 댓글</h2>
-            <span className="text-muted-foreground text-lg">({myReplies.length})</span>
+            <span className="text-muted-foreground text-lg">({totalRepliesCount})</span>
           </div>
 
           {myRepliesLoading ? (
@@ -1594,16 +1630,40 @@ export default function MyPage() {
                 </Card>
               ))}
 
-              {myReplies.length > 5 && (
-                <div className="flex justify-center pt-2">
+              <div className="flex justify-center gap-2 pt-2">
+                {!showAllReplies && myReplies.length > 5 && (
                   <Button
                     variant="outline"
-                    onClick={() => setShowAllReplies(!showAllReplies)}
+                    onClick={() => setShowAllReplies(true)}
                   >
-                    {showAllReplies ? "접기" : `더보기 (${myReplies.length - 5}개 더)`}
+                    전체 보기 ({myReplies.length}개)
                   </Button>
-                </div>
-              )}
+                )}
+                {showAllReplies && myReplies.length > 5 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAllReplies(false)}
+                  >
+                    접기
+                  </Button>
+                )}
+                {showAllReplies && hasMoreReplies && (
+                  <Button
+                    variant="outline"
+                    onClick={loadMoreReplies}
+                    disabled={loadingMoreReplies}
+                  >
+                    {loadingMoreReplies ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        로딩 중...
+                      </>
+                    ) : (
+                      `더 불러오기`
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
