@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,10 @@ const AUTO_COLLAPSE_THRESHOLD = 3;
 
 export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const highlightCommentId = searchParams.get('commentId');
+  const commentRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const hasScrolledToComment = useRef(false);
   const isCreator = user?.id === creatorId;
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -98,6 +103,68 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
   useEffect(() => {
     loadComments();
   }, [videoId]);
+
+  // Scroll to highlighted comment when loaded
+  useEffect(() => {
+    if (highlightCommentId && comments.length > 0 && !hasScrolledToComment.current) {
+      // Find if the comment exists (could be a nested reply)
+      const findComment = (commentList: Comment[], targetId: string): Comment | null => {
+        for (const comment of commentList) {
+          if (comment.id === targetId) return comment;
+          if (comment.replies) {
+            const found = findComment(comment.replies, targetId);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const targetComment = findComment(comments, highlightCommentId);
+      if (targetComment) {
+        // Expand parent threads if it's a nested reply
+        if (targetComment.parent_id) {
+          // Find and expand all parent threads
+          const expandParentThreads = (commentList: Comment[], targetId: string, parentIds: string[] = []): string[] => {
+            for (const comment of commentList) {
+              if (comment.id === targetId) {
+                return parentIds;
+              }
+              if (comment.replies) {
+                const result = expandParentThreads(comment.replies, targetId, [...parentIds, comment.id]);
+                if (result.length > 0 || comment.replies.some(r => r.id === targetId)) {
+                  return [...parentIds, comment.id];
+                }
+              }
+            }
+            return [];
+          };
+
+          const parentsToExpand = expandParentThreads(comments, highlightCommentId);
+          if (parentsToExpand.length > 0) {
+            setCollapsedThreads(prev => {
+              const newSet = new Set(prev);
+              parentsToExpand.forEach(id => newSet.delete(id));
+              return newSet;
+            });
+          }
+        }
+
+        // Wait for DOM to update, then scroll
+        setTimeout(() => {
+          const element = commentRefs.current[highlightCommentId];
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add highlight animation
+            element.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+            setTimeout(() => {
+              element.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+            }, 3000);
+            hasScrolledToComment.current = true;
+          }
+        }, 300);
+      }
+    }
+  }, [comments, highlightCommentId]);
 
   useEffect(() => {
     if (comments.length > 0) {
@@ -509,10 +576,13 @@ export function CommentSection({ videoId, creatorId }: CommentSectionProps) {
         : 'animate-fade-out'
       : '';
     
+    const isHighlighted = comment.id === highlightCommentId;
+    
     return (
       <div key={comment.id} className="space-y-2">
         <Card 
-          className={`p-4 transition-all duration-300 ${depth > 0 ? "border-l-2 border-primary/20" : ""} ${isPinned && isPinnedSection ? "border-primary bg-primary/5" : ""} ${pinAnimationClass}`}
+          ref={(el) => { commentRefs.current[comment.id] = el; }}
+          className={`p-4 transition-all duration-300 ${depth > 0 ? "border-l-2 border-primary/20" : ""} ${isPinned && isPinnedSection ? "border-primary bg-primary/5" : ""} ${pinAnimationClass} ${isHighlighted ? "ring-2 ring-primary ring-offset-2" : ""}`}
           style={{ marginLeft: `${indentLevel * 24}px` }}
         >
           <div className="flex gap-3">
