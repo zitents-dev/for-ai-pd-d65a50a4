@@ -29,6 +29,8 @@ interface Video {
   created_at: string;
   likes_count?: number;
   dislikes_count?: number;
+  show_prompt?: boolean | null;
+  prompt_command?: string | null;
   profiles: {
     name: string;
     avatar_url: string | null;
@@ -129,7 +131,7 @@ export default function VideosListing() {
           
           let query = supabase
             .from("videos")
-            .select(`id, title, thumbnail_url, video_url, duration, views, created_at, profiles (name, avatar_url)`)
+            .select(`id, title, thumbnail_url, video_url, duration, views, created_at, show_prompt, prompt_command, profiles (name, avatar_url)`)
             .in("creator_id", mentorIds)
             .order("created_at", { ascending: false });
 
@@ -144,7 +146,7 @@ export default function VideosListing() {
       } else if (section === "recent") {
         let query = supabase
           .from("videos")
-          .select(`id, title, thumbnail_url, video_url, duration, views, created_at, profiles (name, avatar_url)`)
+          .select(`id, title, thumbnail_url, video_url, duration, views, created_at, show_prompt, prompt_command, profiles (name, avatar_url)`)
           .order("created_at", { ascending: false });
 
         if (cat !== "all") {
@@ -193,7 +195,7 @@ export default function VideosListing() {
           
           let query = supabase
             .from("videos")
-            .select(`id, title, thumbnail_url, video_url, duration, views, created_at, profiles (name, avatar_url)`)
+            .select(`id, title, thumbnail_url, video_url, duration, views, created_at, show_prompt, prompt_command, profiles (name, avatar_url)`)
             .in("creator_id", creatorIds)
             .order("created_at", { ascending: false });
 
