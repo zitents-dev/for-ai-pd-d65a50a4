@@ -751,6 +751,29 @@ export default function MyPage() {
     setSelectedVideos(newSelected);
   };
 
+  const handleTogglePromptVisibility = async (videoId: string, currentVisibility: boolean) => {
+    try {
+      const newVisibility = !currentVisibility;
+      const { error } = await supabase
+        .from("videos")
+        .update({ show_prompt: newVisibility })
+        .eq("id", videoId)
+        .eq("creator_id", user!.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setVideos(prev => prev.map(v => 
+        v.id === videoId ? { ...v, show_prompt: newVisibility } : v
+      ));
+
+      toast.success(newVisibility ? "프롬프트가 공개로 변경되었습니다" : "프롬프트가 비공개로 변경되었습니다");
+    } catch (error: any) {
+      toast.error("프롬프트 공개 설정 변경에 실패했습니다");
+      console.error("Error toggling prompt visibility:", error);
+    }
+  };
+
   // Filter and sort videos
   const filteredAndSortedVideos = useMemo(() => {
     let result = [...videos];
@@ -1434,6 +1457,7 @@ export default function MyPage() {
                       onSelect={handleToggleVideoSelect}
                       onEdit={handleEditVideo}
                       onDelete={handleDeleteVideo}
+                      onTogglePromptVisibility={handleTogglePromptVisibility}
                     />
                   ))}
                 </div>

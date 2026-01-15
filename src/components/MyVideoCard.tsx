@@ -53,6 +53,7 @@ interface MyVideoCardProps {
   onEdit: (video: MyVideoCardProps["video"]) => void;
   onDelete: (id: string) => void;
   onMoveToDirectory?: (id: string) => void;
+  onTogglePromptVisibility?: (id: string, currentVisibility: boolean) => void;
 }
 
 const formatDuration = (seconds: number): string => {
@@ -78,6 +79,7 @@ export function MyVideoCard({
   onEdit,
   onDelete,
   onMoveToDirectory,
+  onTogglePromptVisibility,
 }: MyVideoCardProps) {
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
@@ -208,18 +210,41 @@ export function MyVideoCard({
                   {getCategoryLabel(video.category)}
                 </Badge>
               )}
-              {/* Public Prompt Label */}
+              {/* Public Prompt Label with Toggle */}
               {video.prompt_command && (
-                video.show_prompt ? (
-                  <Badge className="text-xs h-5 bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30">
-                    <FileText className="h-3 w-3 mr-1" />
-                    공개
-                  </Badge>
+                onTogglePromptVisibility ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTogglePromptVisibility(video.id, video.show_prompt || false);
+                    }}
+                    className="inline-flex items-center transition-colors hover:opacity-80"
+                    title={video.show_prompt ? "클릭하여 비공개로 변경" : "클릭하여 공개로 변경"}
+                  >
+                    {video.show_prompt ? (
+                      <Badge className="text-xs h-5 bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30 cursor-pointer hover:bg-green-500/30">
+                        <FileText className="h-3 w-3 mr-1" />
+                        공개
+                      </Badge>
+                    ) : (
+                      <Badge className="text-xs h-5 bg-muted text-muted-foreground border-muted-foreground/30 cursor-pointer hover:bg-muted/80">
+                        <EyeOff className="h-3 w-3 mr-1" />
+                        비공개
+                      </Badge>
+                    )}
+                  </button>
                 ) : (
-                  <Badge className="text-xs h-5 bg-muted text-muted-foreground border-muted-foreground/30">
-                    <EyeOff className="h-3 w-3 mr-1" />
-                    비공개
-                  </Badge>
+                  video.show_prompt ? (
+                    <Badge className="text-xs h-5 bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30">
+                      <FileText className="h-3 w-3 mr-1" />
+                      공개
+                    </Badge>
+                  ) : (
+                    <Badge className="text-xs h-5 bg-muted text-muted-foreground border-muted-foreground/30">
+                      <EyeOff className="h-3 w-3 mr-1" />
+                      비공개
+                    </Badge>
+                  )
                 )
               )}
             </div>
