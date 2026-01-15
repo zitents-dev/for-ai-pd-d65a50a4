@@ -155,6 +155,8 @@ export default function MyPage() {
   const [hasMoreReplies, setHasMoreReplies] = useState(true);
   const [loadingMoreReplies, setLoadingMoreReplies] = useState(false);
   const [totalRepliesCount, setTotalRepliesCount] = useState(0);
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
+  const [replyToDelete, setReplyToDelete] = useState<string | null>(null);
   const REPLIES_PER_PAGE = 10;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -556,6 +558,29 @@ export default function MyPage() {
 
   const loadMoreReplies = () => {
     loadMyReplies(repliesPage + 1, true);
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    setDeletingReplyId(replyId);
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", replyId)
+        .eq("user_id", user!.id);
+
+      if (error) throw error;
+
+      setMyReplies(prev => prev.filter(r => r.id !== replyId));
+      setTotalRepliesCount(prev => prev - 1);
+      toast.success("댓글이 삭제되었습니다");
+    } catch (error) {
+      console.error("Error deleting reply:", error);
+      toast.error("댓글 삭제에 실패했습니다");
+    } finally {
+      setDeletingReplyId(null);
+      setReplyToDelete(null);
+    }
   };
 
   const handleSaveField = async (field: string, value: any) => {
@@ -1597,9 +1622,22 @@ export default function MyPage() {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-muted-foreground mb-1 truncate">
-                          {reply.video_title}
-                        </p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm text-muted-foreground mb-1 truncate flex-1">
+                            {reply.video_title}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReplyToDelete(reply.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                         {reply.parent_id && reply.parent_content && (
                           <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 mb-1 line-clamp-1">
                             <span
@@ -1707,6 +1745,35 @@ export default function MyPage() {
           setSelectedVideos(new Set());
         }}
       />
+
+      {/* Delete Reply Confirmation Dialog */}
+      <AlertDialog open={!!replyToDelete} onOpenChange={(open) => !open && setReplyToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>댓글을 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              이 작업은 되돌릴 수 없습니다. 댓글이 영구적으로 삭제됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => replyToDelete && handleDeleteReply(replyToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={!!deletingReplyId}
+            >
+              {deletingReplyId ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  삭제 중...
+                </>
+              ) : (
+                "삭제"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
