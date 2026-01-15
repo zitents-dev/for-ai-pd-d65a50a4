@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import {
   HardDrive,
   AlertTriangle,
   Camera,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react";
 import { CategorySelect } from "@/components/CategorySelect";
 import { AiSolutionSelect } from "@/components/AiSolutionSelect";
@@ -27,6 +29,17 @@ import { Progress } from "@/components/ui/progress";
 // Maximum file size: 500MB, Maximum duration: 3 minutes
 const MAX_FILE_SIZE = 500 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 180;
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 2000;
+
+const isNetworkError = (error: any): boolean => {
+  if (!navigator.onLine) return true;
+  if (error?.message?.toLowerCase().includes('network')) return true;
+  if (error?.message?.toLowerCase().includes('failed to fetch')) return true;
+  if (error?.message?.toLowerCase().includes('timeout')) return true;
+  if (error?.message?.toLowerCase().includes('abort')) return true;
+  return false;
+};
 
 const formatFileSize = (bytes: number): string => {
   if (bytes >= 1024 * 1024 * 1024) {
@@ -60,6 +73,11 @@ export default function Upload() {
   const [showPrompt, setShowPrompt] = useState(true);
   const [aiSolution, setAiSolution] = useState<string>("");
   const [category, setCategory] = useState<string>("");
+
+  // Retry state
+  const [retryCount, setRetryCount] = useState(0);
+  const [uploadError, setUploadError] = useState<{ message: string; isNetworkError: boolean } | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   // Crop dialog state
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
@@ -185,8 +203,57 @@ export default function Upload() {
     setThumbnailPreview(URL.createObjectURL(croppedBlob));
   };
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const uploadVideoWithRetry = useCallback(async (
+    file: File,
+    videoPath: string,
+    accessToken: string,
+    attempt: number = 1
+  ): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      });
+
+      xhr.addEventListener("load", () => {
+        xhrRef.current = null;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener("error", () => {
+        xhrRef.current = null;
+        reject(new Error("네트워크 오류로 업로드에 실패했습니다."));
+      });
+
+      xhr.addEventListener("abort", () => {
+        xhrRef.current = null;
+        reject(new Error("업로드가 취소되었습니다."));
+      });
+
+      xhr.addEventListener("timeout", () => {
+        xhrRef.current = null;
+        reject(new Error("업로드 시간이 초과되었습니다."));
+      });
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      xhr.open("POST", `${supabaseUrl}/storage/v1/object/videos/${videoPath}`);
+      xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+      xhr.setRequestHeader("x-upsert", "true");
+      xhr.timeout = 300000; // 5 minute timeout
+      xhr.send(file);
+    });
+  }, []);
+
+  const performUpload = useCallback(async (isRetry: boolean = false) => {
     if (!videoFile || !user) return;
 
     // Validate duration before upload
@@ -197,6 +264,15 @@ export default function Upload() {
 
     setUploading(true);
     setUploadProgress(0);
+    setUploadError(null);
+
+    const currentAttempt = isRetry ? retryCount + 1 : 1;
+    if (isRetry) {
+      setRetryCount(currentAttempt);
+      toast.info(`재시도 중... (${currentAttempt}/${MAX_RETRY_ATTEMPTS})`);
+    } else {
+      setRetryCount(0);
+    }
 
     try {
       // Get user's access token for authenticated upload
@@ -210,37 +286,18 @@ export default function Upload() {
       // Upload video with progress tracking
       const videoPath = `${user.id}/${Date.now()}-${videoFile.name}`;
 
-      // Create XMLHttpRequest for progress tracking
-      const uploadPromise = new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener("progress", (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percentComplete);
-          }
-        });
-
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error("Upload failed"));
-          }
-        });
-
-        xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-
-        // Get the upload URL from Supabase
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-        xhr.open("POST", `${supabaseUrl}/storage/v1/object/videos/${videoPath}`);
-        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
-        xhr.setRequestHeader("x-upsert", "true");
-        xhr.send(videoFile);
-      });
-
-      await uploadPromise;
+      try {
+        await uploadVideoWithRetry(videoFile, videoPath, accessToken, currentAttempt);
+      } catch (uploadError: any) {
+        // Check if it's a network error and we can auto-retry
+        if (isNetworkError(uploadError) && currentAttempt < MAX_RETRY_ATTEMPTS) {
+          setUploading(false);
+          toast.warning(`네트워크 오류 발생. ${RETRY_DELAY_MS / 1000}초 후 자동으로 재시도합니다...`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+          return performUpload(true);
+        }
+        throw uploadError;
+      }
 
       const {
         data: { publicUrl: videoUrl },
@@ -287,12 +344,43 @@ export default function Upload() {
       if (dbError) throw dbError;
 
       toast.success("Video uploaded successfully!");
+      setRetryCount(0);
+      setUploadError(null);
       navigate("/my-page");
     } catch (error: any) {
-      toast.error(error.message);
+      const networkErr = isNetworkError(error);
+      setUploadError({
+        message: error.message || "업로드에 실패했습니다.",
+        isNetworkError: networkErr,
+      });
+      
+      if (networkErr) {
+        toast.error("네트워크 연결을 확인하고 다시 시도해주세요.");
+      } else {
+        toast.error(error.message);
+      }
     } finally {
       setUploading(false);
     }
+  }, [videoFile, user, videoDuration, retryCount, thumbnailBlob, title, description, tags, promptCommand, showPrompt, aiSolution, category, navigate, uploadVideoWithRetry]);
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performUpload(false);
+  };
+
+  const handleRetry = () => {
+    performUpload(true);
+  };
+
+  const handleCancelUpload = () => {
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      xhrRef.current = null;
+    }
+    setUploading(false);
+    setUploadProgress(0);
+    toast.info("업로드가 취소되었습니다.");
   };
 
   if (authLoading) {
@@ -518,34 +606,76 @@ export default function Upload() {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={
-                  uploading ||
-                  !videoFile ||
-                  !category ||
-                  !aiSolution ||
-                  (videoDuration !== null && videoDuration > MAX_DURATION_SECONDS)
-                }
-              >
-                {uploading ? (
-                  <div className="flex items-center gap-2 w-full">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>업로드 중... {uploadProgress}%</span>
+              {/* Upload Error with Retry */}
+              {uploadError && !uploading && (
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <WifiOff className="h-5 w-5 text-destructive flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-destructive">
+                      {uploadError.isNetworkError ? "네트워크 오류" : "업로드 실패"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {uploadError.message}
+                    </p>
                   </div>
-                ) : (
-                  <>
-                    <UploadIcon className="mr-2 h-4 w-4" />
-                    작품 업로드
-                  </>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="flex-shrink-0"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    재시도
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={
+                    uploading ||
+                    !videoFile ||
+                    !category ||
+                    !aiSolution ||
+                    (videoDuration !== null && videoDuration > MAX_DURATION_SECONDS)
+                  }
+                >
+                  {uploading ? (
+                    <div className="flex items-center gap-2 w-full">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>업로드 중... {uploadProgress}%</span>
+                    </div>
+                  ) : (
+                    <>
+                      <UploadIcon className="mr-2 h-4 w-4" />
+                      작품 업로드
+                    </>
+                  )}
+                </Button>
+
+                {uploading && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelUpload}
+                    className="flex-shrink-0"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    취소
+                  </Button>
                 )}
-              </Button>
+              </div>
 
               {uploading && (
                 <div className="space-y-2">
                   <Progress value={uploadProgress} className="h-2" />
                   <p className="text-sm text-center text-muted-foreground">
+                    {retryCount > 0 && (
+                      <span className="text-amber-600 mr-2">재시도 {retryCount}/{MAX_RETRY_ATTEMPTS}</span>
+                    )}
                     {uploadProgress < 100 ? "동영상 업로드 중..." : "처리 중..."}
                   </p>
                 </div>
