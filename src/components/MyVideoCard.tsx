@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -121,13 +121,24 @@ export function MyVideoCard({
       onClick={handleCardClick}
     >
       <div className="flex gap-3 p-3">
-        {/* Checkbox */}
-        <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={() => onSelect(video.id)}
-          />
-        </div>
+        {/* Checkbox - Large clickable area */}
+        <button
+          className={`flex items-center justify-center w-8 h-8 rounded-md transition-all border-2 flex-shrink-0 self-center ${
+            isSelected 
+              ? 'bg-primary border-primary text-primary-foreground' 
+              : 'bg-background border-muted-foreground/30 hover:border-primary/50 hover:bg-accent'
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(video.id);
+          }}
+        >
+          {isSelected && (
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </button>
 
         {/* Thumbnail */}
         <div
