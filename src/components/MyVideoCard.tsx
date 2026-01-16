@@ -117,7 +117,6 @@ export function MyVideoCard({
 
   return (
     <Card
-      data-video-id={video.id}
       className={`group relative overflow-hidden transition-colors cursor-pointer ${
         isSelected 
           ? 'bg-primary/15 hover:bg-primary/20' 
