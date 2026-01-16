@@ -230,6 +230,8 @@ export default function MyPage() {
   // Bulk edit state
   const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
   const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
+  const [bulkPromptDialogOpen, setBulkPromptDialogOpen] = useState(false);
+  const [bulkPromptMakePublic, setBulkPromptMakePublic] = useState(true);
 
   // Name change alert state
   const [nameChangeAlertOpen, setNameChangeAlertOpen] = useState(false);
@@ -1362,19 +1364,45 @@ export default function MyPage() {
               <div className="flex items-center gap-2">
                 {selectedVideos.size > 0 && (
                   <>
+                    <AlertDialog open={bulkPromptDialogOpen} onOpenChange={setBulkPromptDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBulkPromptMakePublic(true)}
+                          title="선택한 동영상의 프롬프트를 공개로 변경"
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          공개
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            프롬프트 {bulkPromptMakePublic ? "공개" : "비공개"} 설정
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            선택한 {selectedVideos.size}개 동영상 중 프롬프트가 있는 동영상의 프롬프트를{" "}
+                            {bulkPromptMakePublic ? "공개" : "비공개"}로 변경하시겠습니까?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleBulkPromptVisibility(bulkPromptMakePublic)}
+                          >
+                            {bulkPromptMakePublic ? "공개로 변경" : "비공개로 변경"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleBulkPromptVisibility(true)}
-                      title="선택한 동영상의 프롬프트를 공개로 변경"
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      공개
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleBulkPromptVisibility(false)}
+                      onClick={() => {
+                        setBulkPromptMakePublic(false);
+                        setBulkPromptDialogOpen(true);
+                      }}
                       title="선택한 동영상의 프롬프트를 비공개로 변경"
                     >
                       <EyeOff className="mr-2 h-4 w-4" />
