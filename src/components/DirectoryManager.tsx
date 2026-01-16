@@ -585,10 +585,55 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
     setDragOverDirectory(null);
   };
 
-  const handleDropOnDirectory = (e: React.DragEvent, directoryId: string) => {
+  const handleDropOnDirectory = async (e: React.DragEvent, directoryId: string) => {
     e.preventDefault();
     setDragOverDirectory(null);
 
+    // Try new JSON format first (from belt selector drag)
+    const jsonData = e.dataTransfer.getData("application/json");
+    if (jsonData) {
+      try {
+        const { videoIds, sourceDirectoryId } = JSON.parse(jsonData);
+        if (videoIds && videoIds.length > 0 && sourceDirectoryId && sourceDirectoryId !== directoryId) {
+          // Move videos from source directory to target directory
+          const { error: removeError } = await supabase
+            .from("directory_videos")
+            .delete()
+            .in("video_id", videoIds)
+            .eq("directory_id", sourceDirectoryId);
+
+          if (removeError) throw removeError;
+
+          // Add to target directory
+          const insertData = videoIds.map((videoId: string) => ({
+            video_id: videoId,
+            directory_id: directoryId,
+          }));
+
+          const { error: insertError } = await supabase
+            .from("directory_videos")
+            .upsert(insertData, { onConflict: "directory_id,video_id", ignoreDuplicates: true });
+
+          if (insertError) throw insertError;
+
+          const targetDirName = directories.find((d) => d.id === directoryId)?.name;
+          toast.success(`${videoIds.length}개의 작품을 "${targetDirName}"(으)로 이동했습니다`);
+          
+          setSelectedVideos(new Set());
+          loadDirectories();
+          if (selectedDirectory) {
+            loadDirectoryVideos(selectedDirectory);
+          }
+          return;
+        }
+      } catch (error) {
+        console.error("Error moving videos via drag:", error);
+        toast.error("이동에 실패했습니다");
+        return;
+      }
+    }
+
+    // Fall back to old format (from MyVideoCard drag)
     const videoId = e.dataTransfer.getData("videoId");
     const videoTitle = e.dataTransfer.getData("videoTitle");
 
@@ -1187,39 +1232,40 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     .map((video) => (
                       <div 
                         key={video.id} 
-                        className={`relative group rounded-lg overflow-hidden transition-colors ${
+                        className={`relative group rounded-lg overflow-hidden transition-all ${
                           selectedVideos.has(video.id) 
-                            ? 'bg-primary/15' 
-                            : ''
+                            ? 'bg-primary/15 ring-2 ring-primary/30' 
+                            : 'hover:shadow-lg'
                         }`}
                       >
-                        {/* Horizontal Belt-style Selector */}
-                        <button
-                          className={`absolute left-0 right-0 top-0 h-3 w-full transition-all z-10 overflow-hidden ${
+                        {/* Vertical Belt-style Selector with long-press drag */}
+                        <div
+                          className={`absolute left-0 top-0 bottom-0 w-3 transition-all z-20 overflow-hidden cursor-pointer rounded-l-lg ${
                             selectedVideos.has(video.id)
-                              ? 'bg-primary'
-                              : 'bg-muted-foreground/20 hover:bg-primary/50'
+                              ? 'bg-primary shadow-[2px_0_8px_rgba(var(--primary),0.3)]'
+                              : 'bg-muted/60 hover:bg-primary/50'
                           }`}
+                          draggable={selectedVideos.has(video.id)}
                           onClick={(e) => {
                             e.stopPropagation();
                             
-                            // Create horizontal ripple effect
+                            // Create vertical ripple effect
                             const button = e.currentTarget;
                             const rect = button.getBoundingClientRect();
                             const ripple = document.createElement('span');
-                            const size = Math.max(rect.width, rect.height * 4);
-                            const x = e.clientX - rect.left - size / 2;
+                            const size = Math.max(rect.height, rect.width * 4);
+                            const y = e.clientY - rect.top - size / 2;
                             
                             ripple.style.cssText = `
                               position: absolute;
-                              left: ${x}px;
-                              top: 50%;
+                              left: 50%;
+                              top: ${y}px;
                               width: ${size}px;
                               height: ${size}px;
-                              transform: translateY(-50%) scale(0);
+                              transform: translateX(-50%) scale(0);
                               border-radius: 50%;
                               background: ${selectedVideos.has(video.id) ? 'rgba(255,255,255,0.4)' : 'hsl(var(--primary) / 0.6)'};
-                              animation: ripple-animation-horizontal 0.6s ease-out forwards;
+                              animation: ripple-animation 0.6s ease-out forwards;
                               pointer-events: none;
                             `;
                             
@@ -1228,9 +1274,27 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                             
                             toggleVideoSelection(video.id);
                           }}
+                          onDragStart={(e) => {
+                            if (!selectedVideos.has(video.id)) {
+                              e.preventDefault();
+                              return;
+                            }
+                            // Set drag data with video IDs
+                            const dragIds = selectedVideos.size > 0 ? Array.from(selectedVideos) : [video.id];
+                            e.dataTransfer.setData("application/json", JSON.stringify({ videoIds: dragIds, sourceDirectoryId: selectedDirectory }));
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          title={selectedVideos.has(video.id) ? "선택됨 - 드래그하여 다른 폴더로 이동" : "클릭하여 선택"}
                           aria-label={selectedVideos.has(video.id) ? "선택 해제" : "선택"}
-                        />
-                        <div className="pt-3">
+                        >
+                          {/* Visual drag hint when selected */}
+                          {selectedVideos.has(video.id) && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-1.5 h-8 bg-primary-foreground/40 rounded-full" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="pl-3">
                           <VideoCard video={video} />
                         </div>
                         <AlertDialog>
