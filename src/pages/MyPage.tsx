@@ -37,19 +37,12 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Users,
   UserMinus,
   FolderInput,
   MessageSquare,
   FileText,
-  CheckSquare,
 } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
 import { DirectoryManager } from "@/components/DirectoryManager";
@@ -1368,130 +1361,116 @@ export default function MyPage() {
           <div className="md:col-span-2 space-y-6">
             <div className="space-y-3">
               <h2 className="text-2xl font-bold">내 작품</h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button asChild size="sm">
                   <a href="/upload">
                     <Upload className="mr-2 h-4 w-4" />새 작품
                   </a>
                 </Button>
-              </div>
-              
-              {selectedVideos.size > 0 && (
-                <Collapsible defaultOpen className="border rounded-lg p-3 bg-muted/30">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <CheckSquare className="h-4 w-4" />
-                        {selectedVideos.size}개 선택됨 - 일괄 작업
-                      </span>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <AlertDialog open={bulkPromptDialogOpen} onOpenChange={setBulkPromptDialogOpen}>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setBulkPromptMakePublic(true)}
-                            title="선택한 동영상의 프롬프트를 공개로 변경"
+                {selectedVideos.size > 0 && (
+                  <>
+                    <AlertDialog open={bulkPromptDialogOpen} onOpenChange={setBulkPromptDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBulkPromptMakePublic(true)}
+                          title="선택한 동영상의 프롬프트를 공개로 변경"
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          공개
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            프롬프트 {bulkPromptMakePublic ? "공개" : "비공개"} 설정
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            선택한 {selectedVideos.size}개 동영상 중 프롬프트가 있는 동영상의 프롬프트를{" "}
+                            {bulkPromptMakePublic ? "공개" : "비공개"}로 변경하시겠습니까?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleBulkPromptVisibility(bulkPromptMakePublic)}
                           >
-                            <FileText className="mr-2 h-4 w-4" />
-                            프롬프트 공개
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              프롬프트 {bulkPromptMakePublic ? "공개" : "비공개"} 설정
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              선택한 {selectedVideos.size}개 동영상 중 프롬프트가 있는 동영상의 프롬프트를{" "}
-                              {bulkPromptMakePublic ? "공개" : "비공개"}로 변경하시겠습니까?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>취소</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleBulkPromptVisibility(bulkPromptMakePublic)}
-                            >
-                              {bulkPromptMakePublic ? "공개로 변경" : "비공개로 변경"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setBulkPromptMakePublic(false);
-                          setBulkPromptDialogOpen(true);
-                        }}
-                        title="선택한 동영상의 프롬프트를 비공개로 변경"
-                      >
-                        <EyeOff className="mr-2 h-4 w-4" />
-                        프롬프트 비공개
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setBulkMoveDialogOpen(true)}
-                      >
-                        <FolderInput className="mr-2 h-4 w-4" />
-                        폴더 이동
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setBulkEditDialogOpen(true)}
-                      >
-                        <Pencil className="mr-2 h-4 w-4" />
-                        일괄수정
-                      </Button>
-                      <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            삭제
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>선택한 작품 삭제</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              선택한 {selectedVideos.size}개의 작품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <div className="flex items-center space-x-2 py-4">
-                            <Checkbox
-                              id="batch-delete-agree"
-                              checked={batchDeleteAgreed}
-                              onCheckedChange={(checked) => setBatchDeleteAgreed(checked === true)}
-                            />
-                            <label
-                              htmlFor="batch-delete-agree"
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              위 내용을 이해하고, 삭제 합니다.
-                            </label>
-                          </div>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setBatchDeleteAgreed(false)}>취소</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleBatchDelete}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              disabled={!batchDeleteAgreed}
-                            >
-                              삭제하기
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                            {bulkPromptMakePublic ? "공개로 변경" : "비공개로 변경"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setBulkPromptMakePublic(false);
+                        setBulkPromptDialogOpen(true);
+                      }}
+                      title="선택한 동영상의 프롬프트를 비공개로 변경"
+                    >
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      비공개
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkMoveDialogOpen(true)}
+                    >
+                      <FolderInput className="mr-2 h-4 w-4" />
+                      {selectedVideos.size}개 이동
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkEditDialogOpen(true)}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      {selectedVideos.size}개 일괄수정
+                    </Button>
+                    <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {selectedVideos.size}개 삭제
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>선택한 작품 삭제</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            선택한 {selectedVideos.size}개의 작품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="flex items-center space-x-2 py-4">
+                          <Checkbox
+                            id="batch-delete-agree"
+                            checked={batchDeleteAgreed}
+                            onCheckedChange={(checked) => setBatchDeleteAgreed(checked === true)}
+                          />
+                          <label
+                            htmlFor="batch-delete-agree"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            위 내용을 이해하고, 삭제 합니다.
+                          </label>
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setBatchDeleteAgreed(false)}>취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleBatchDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={!batchDeleteAgreed}
+                          >
+                            삭제하기
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Filter and Sort Controls */}
