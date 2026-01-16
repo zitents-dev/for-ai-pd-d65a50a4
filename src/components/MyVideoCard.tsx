@@ -126,10 +126,10 @@ export function MyVideoCard({
     >
       {/* Belt-style selector */}
       <button
-        className={`absolute left-0 top-0 bottom-0 transition-all duration-300 ease-out z-10 ${
+        className={`absolute left-0 top-0 bottom-0 w-4 transition-all z-10 ${
           isSelected
-            ? 'w-4 bg-primary'
-            : 'w-1 bg-muted-foreground/30 hover:w-2 hover:bg-primary/50'
+            ? 'bg-primary'
+            : 'bg-muted-foreground/20 hover:bg-primary/50'
         }`}
         onClick={(e) => {
           e.stopPropagation();
