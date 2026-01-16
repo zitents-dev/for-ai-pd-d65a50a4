@@ -1185,25 +1185,60 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                   {directoryVideos
                     .slice((directoryVideosPage - 1) * itemsPerPage, directoryVideosPage * itemsPerPage)
                     .map((video) => (
-                      <div key={video.id} className="relative group">
-                        {/* Selection Checkbox */}
-                        <div 
-                          className="absolute top-2 left-2 z-10"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Checkbox
-                            checked={selectedVideos.has(video.id)}
-                            onCheckedChange={() => toggleVideoSelection(video.id)}
-                            className="h-5 w-5 bg-background/80 backdrop-blur-sm border-2"
-                          />
+                      <div 
+                        key={video.id} 
+                        className={`relative group rounded-lg overflow-hidden transition-colors ${
+                          selectedVideos.has(video.id) 
+                            ? 'bg-primary/15' 
+                            : ''
+                        }`}
+                      >
+                        {/* Horizontal Belt-style Selector */}
+                        <button
+                          className={`absolute left-0 right-0 top-0 h-3 w-full transition-all z-10 overflow-hidden ${
+                            selectedVideos.has(video.id)
+                              ? 'bg-primary'
+                              : 'bg-muted-foreground/20 hover:bg-primary/50'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            
+                            // Create horizontal ripple effect
+                            const button = e.currentTarget;
+                            const rect = button.getBoundingClientRect();
+                            const ripple = document.createElement('span');
+                            const size = Math.max(rect.width, rect.height * 4);
+                            const x = e.clientX - rect.left - size / 2;
+                            
+                            ripple.style.cssText = `
+                              position: absolute;
+                              left: ${x}px;
+                              top: 50%;
+                              width: ${size}px;
+                              height: ${size}px;
+                              transform: translateY(-50%) scale(0);
+                              border-radius: 50%;
+                              background: ${selectedVideos.has(video.id) ? 'rgba(255,255,255,0.4)' : 'hsl(var(--primary) / 0.6)'};
+                              animation: ripple-animation-horizontal 0.6s ease-out forwards;
+                              pointer-events: none;
+                            `;
+                            
+                            button.appendChild(ripple);
+                            setTimeout(() => ripple.remove(), 600);
+                            
+                            toggleVideoSelection(video.id);
+                          }}
+                          aria-label={selectedVideos.has(video.id) ? "선택 해제" : "선택"}
+                        />
+                        <div className="pt-3">
+                          <VideoCard video={video} />
                         </div>
-                        <VideoCard video={video} />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
                               variant="destructive"
                               size="sm"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-5 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <X className="h-4 w-4" />
