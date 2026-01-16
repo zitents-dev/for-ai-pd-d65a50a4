@@ -120,25 +120,28 @@ export function MyVideoCard({
       className="group relative overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
       onClick={handleCardClick}
     >
-      <div className="flex gap-3 p-3">
-        {/* Checkbox - Large clickable area */}
-        <button
-          className={`flex items-center justify-center w-8 h-8 rounded-md transition-all border-2 flex-shrink-0 self-center ${
-            isSelected 
-              ? 'bg-primary border-primary text-primary-foreground' 
-              : 'bg-background border-muted-foreground/30 hover:border-primary/50 hover:bg-accent'
-          }`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(video.id);
-          }}
-        >
-          {isSelected && (
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
-        </button>
+      {/* Belt-style selector */}
+      <button
+        className={`absolute left-0 top-0 bottom-0 w-2 transition-all z-10 ${
+          isSelected 
+            ? 'bg-primary' 
+            : 'bg-muted-foreground/20 hover:bg-primary/50'
+        }`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(video.id);
+        }}
+        aria-label={isSelected ? "선택 해제" : "선택"}
+      />
+      {/* Selected indicator checkmark */}
+      {isSelected && (
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
+          <svg className="w-3 h-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+      )}
+      <div className={`flex gap-3 p-3 transition-all ${isSelected ? 'pl-10' : 'pl-5'}`}>
 
         {/* Thumbnail */}
         <div
