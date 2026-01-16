@@ -1359,9 +1359,14 @@ export default function MyPage() {
 
           {/* Videos Section */}
           <div className="md:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="space-y-3">
               <h2 className="text-2xl font-bold">내 작품</h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button asChild size="sm">
+                  <a href="/upload">
+                    <Upload className="mr-2 h-4 w-4" />새 작품
+                  </a>
+                </Button>
                 {selectedVideos.size > 0 && (
                   <>
                     <AlertDialog open={bulkPromptDialogOpen} onOpenChange={setBulkPromptDialogOpen}>
@@ -1465,11 +1470,6 @@ export default function MyPage() {
                     </AlertDialog>
                   </>
                 )}
-                <Button asChild>
-                  <a href="/upload">
-                    <Upload className="mr-2 h-4 w-4" />새 작품
-                  </a>
-                </Button>
               </div>
             </div>
 
