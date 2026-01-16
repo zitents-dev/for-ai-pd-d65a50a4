@@ -117,14 +117,18 @@ export function MyVideoCard({
 
   return (
     <Card
-      className="group relative overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
+      className={`group relative overflow-hidden transition-colors cursor-pointer ${
+        isSelected 
+          ? 'bg-primary/15 hover:bg-primary/20' 
+          : 'hover:bg-accent/50'
+      }`}
       onClick={handleCardClick}
     >
       {/* Belt-style selector */}
       <button
-        className={`absolute left-0 top-0 bottom-0 w-2 transition-all z-10 ${
-          isSelected 
-            ? 'bg-primary' 
+        className={`absolute left-0 top-0 bottom-0 w-4 transition-all z-10 ${
+          isSelected
+            ? 'bg-primary'
             : 'bg-muted-foreground/20 hover:bg-primary/50'
         }`}
         onClick={(e) => {
@@ -133,15 +137,7 @@ export function MyVideoCard({
         }}
         aria-label={isSelected ? "선택 해제" : "선택"}
       />
-      {/* Selected indicator checkmark */}
-      {isSelected && (
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
-          <svg className="w-3 h-3 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </div>
-      )}
-      <div className={`flex gap-3 p-3 transition-all ${isSelected ? 'pl-10' : 'pl-5'}`}>
+      <div className="flex gap-3 p-3 pl-7">
 
         {/* Thumbnail */}
         <div
