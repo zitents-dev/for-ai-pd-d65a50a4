@@ -54,6 +54,7 @@ interface MyVideoCardProps {
   onDelete: (id: string) => void;
   onMoveToDirectory?: (id: string) => void;
   onTogglePromptVisibility?: (id: string, currentVisibility: boolean) => void;
+  isInDirectory?: boolean;
 }
 
 const formatDuration = (seconds: number): string => {
@@ -80,6 +81,7 @@ export function MyVideoCard({
   onDelete,
   onMoveToDirectory,
   onTogglePromptVisibility,
+  isInDirectory = false,
 }: MyVideoCardProps) {
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
@@ -126,7 +128,11 @@ export function MyVideoCard({
     >
       {/* Belt-style selector with ripple effect */}
       <button
-        className={`absolute left-0 top-0 bottom-0 w-4 transition-all z-10 overflow-hidden ${
+        className={`absolute transition-all z-10 overflow-hidden ${
+          isInDirectory 
+            ? 'left-0 right-0 top-0 h-3 w-full' 
+            : 'left-0 top-0 bottom-0 w-4'
+        } ${
           isSelected
             ? 'bg-primary'
             : 'bg-muted-foreground/20 hover:bg-primary/50'
@@ -138,21 +144,42 @@ export function MyVideoCard({
           const button = e.currentTarget;
           const rect = button.getBoundingClientRect();
           const ripple = document.createElement('span');
-          const size = Math.max(rect.height, rect.width * 4);
-          const y = e.clientY - rect.top - size / 2;
           
-          ripple.style.cssText = `
-            position: absolute;
-            left: 50%;
-            top: ${y}px;
-            width: ${size}px;
-            height: ${size}px;
-            transform: translateX(-50%) scale(0);
-            border-radius: 50%;
-            background: ${isSelected ? 'rgba(255,255,255,0.4)' : 'hsl(var(--primary) / 0.6)'};
-            animation: ripple-animation 0.6s ease-out forwards;
-            pointer-events: none;
-          `;
+          if (isInDirectory) {
+            // Horizontal ripple for directory view
+            const size = Math.max(rect.width, rect.height * 4);
+            const x = e.clientX - rect.left - size / 2;
+            
+            ripple.style.cssText = `
+              position: absolute;
+              left: ${x}px;
+              top: 50%;
+              width: ${size}px;
+              height: ${size}px;
+              transform: translateY(-50%) scale(0);
+              border-radius: 50%;
+              background: ${isSelected ? 'rgba(255,255,255,0.4)' : 'hsl(var(--primary) / 0.6)'};
+              animation: ripple-animation-horizontal 0.6s ease-out forwards;
+              pointer-events: none;
+            `;
+          } else {
+            // Vertical ripple for regular view
+            const size = Math.max(rect.height, rect.width * 4);
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.cssText = `
+              position: absolute;
+              left: 50%;
+              top: ${y}px;
+              width: ${size}px;
+              height: ${size}px;
+              transform: translateX(-50%) scale(0);
+              border-radius: 50%;
+              background: ${isSelected ? 'rgba(255,255,255,0.4)' : 'hsl(var(--primary) / 0.6)'};
+              animation: ripple-animation 0.6s ease-out forwards;
+              pointer-events: none;
+            `;
+          }
           
           button.appendChild(ripple);
           setTimeout(() => ripple.remove(), 600);
@@ -161,8 +188,7 @@ export function MyVideoCard({
         }}
         aria-label={isSelected ? "선택 해제" : "선택"}
       />
-      <div className="flex gap-3 p-3 pl-7">
-
+      <div className={`flex gap-3 p-3 ${isInDirectory ? 'pt-5' : 'pl-7'}`}>
         {/* Thumbnail */}
         <div
           ref={lazyRef}
