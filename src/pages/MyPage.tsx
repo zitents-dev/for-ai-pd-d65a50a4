@@ -41,6 +41,7 @@ import {
   UserMinus,
   FolderInput,
   MessageSquare,
+  FileText,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
@@ -774,6 +775,46 @@ export default function MyPage() {
     }
   };
 
+  const handleBulkPromptVisibility = async (makePublic: boolean) => {
+    if (selectedVideos.size === 0) return;
+    
+    try {
+      const videoIds = Array.from(selectedVideos);
+      // Only update videos that have a prompt_command
+      const videosWithPrompt = videos.filter(v => videoIds.includes(v.id) && v.prompt_command);
+      
+      if (videosWithPrompt.length === 0) {
+        toast.error("선택한 동영상 중 프롬프트가 있는 동영상이 없습니다");
+        return;
+      }
+      
+      const idsToUpdate = videosWithPrompt.map(v => v.id);
+      
+      const { error } = await supabase
+        .from("videos")
+        .update({ show_prompt: makePublic })
+        .in("id", idsToUpdate)
+        .eq("creator_id", user!.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setVideos(prev => prev.map(v => 
+        idsToUpdate.includes(v.id) ? { ...v, show_prompt: makePublic } : v
+      ));
+
+      toast.success(
+        makePublic 
+          ? `${idsToUpdate.length}개 동영상의 프롬프트가 공개로 변경되었습니다` 
+          : `${idsToUpdate.length}개 동영상의 프롬프트가 비공개로 변경되었습니다`
+      );
+      setSelectedVideos(new Set());
+    } catch (error: any) {
+      toast.error("프롬프트 공개 설정 변경에 실패했습니다");
+      console.error("Error bulk toggling prompt visibility:", error);
+    }
+  };
+
   // Filter and sort videos
   const filteredAndSortedVideos = useMemo(() => {
     let result = [...videos];
@@ -1321,6 +1362,24 @@ export default function MyPage() {
               <div className="flex items-center gap-2">
                 {selectedVideos.size > 0 && (
                   <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkPromptVisibility(true)}
+                      title="선택한 동영상의 프롬프트를 공개로 변경"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      공개
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkPromptVisibility(false)}
+                      title="선택한 동영상의 프롬프트를 비공개로 변경"
+                    >
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      비공개
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
