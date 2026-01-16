@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -124,15 +124,39 @@ export function MyVideoCard({
       }`}
       onClick={handleCardClick}
     >
-      {/* Belt-style selector */}
+      {/* Belt-style selector with ripple effect */}
       <button
-        className={`absolute left-0 top-0 bottom-0 w-4 transition-all z-10 ${
+        className={`absolute left-0 top-0 bottom-0 w-4 transition-all z-10 overflow-hidden ${
           isSelected
             ? 'bg-primary'
             : 'bg-muted-foreground/20 hover:bg-primary/50'
         }`}
         onClick={(e) => {
           e.stopPropagation();
+          
+          // Create ripple effect
+          const button = e.currentTarget;
+          const rect = button.getBoundingClientRect();
+          const ripple = document.createElement('span');
+          const size = Math.max(rect.height, rect.width * 4);
+          const y = e.clientY - rect.top - size / 2;
+          
+          ripple.style.cssText = `
+            position: absolute;
+            left: 50%;
+            top: ${y}px;
+            width: ${size}px;
+            height: ${size}px;
+            transform: translateX(-50%) scale(0);
+            border-radius: 50%;
+            background: ${isSelected ? 'rgba(255,255,255,0.4)' : 'hsl(var(--primary) / 0.6)'};
+            animation: ripple-animation 0.6s ease-out forwards;
+            pointer-events: none;
+          `;
+          
+          button.appendChild(ripple);
+          setTimeout(() => ripple.remove(), 600);
+          
           onSelect(video.id);
         }}
         aria-label={isSelected ? "선택 해제" : "선택"}
