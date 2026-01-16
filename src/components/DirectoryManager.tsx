@@ -1243,7 +1243,7 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                           className={`flex-shrink-0 w-4 transition-all cursor-pointer rounded-l-lg relative ${
                             selectedVideos.has(video.id)
                               ? 'bg-primary shadow-[2px_0_8px_rgba(var(--primary),0.3)]'
-                              : 'bg-muted hover:bg-primary/50'
+                              : 'bg-muted-foreground/40 hover:bg-primary/70'
                           }`}
                           draggable={selectedVideos.has(video.id)}
                           onClick={(e) => {
