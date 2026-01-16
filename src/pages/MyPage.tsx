@@ -137,8 +137,7 @@ const countries = ["대한민국", "미국", "일본", "중국", "영국", "독�
 const genders = [
   { value: "male", label: "남성" },
   { value: "female", label: "여성" },
-  { value: "other", label: "기타" },
-  { value: "prefer_not_to_say", label: "밝히고 싶지 않음" },
+  { value: "other", label: "임의" },
 ];
 
 export default function MyPage() {
