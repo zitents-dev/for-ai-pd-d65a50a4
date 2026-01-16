@@ -54,6 +54,7 @@ import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
 import { BulkEditDialog } from "@/components/BulkEditDialog";
 import { BulkMoveToDirectoryDialog } from "@/components/BulkMoveToDirectoryDialog";
 import { SubscribedCreatorRow } from "@/components/SubscribedCreatorRow";
+import { DragSelectArea } from "@/components/DragSelectArea";
 import { DateRange } from "react-day-picker";
 
 interface Profile {
@@ -1535,7 +1536,11 @@ export default function MyPage() {
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <DragSelectArea
+                  onSelectionChange={setSelectedVideos}
+                  existingSelection={selectedVideos}
+                  className="space-y-3"
+                >
                   {currentPageVideos.map((video) => (
                     <MyVideoCard
                       key={video.id}
@@ -1547,7 +1552,7 @@ export default function MyPage() {
                       onTogglePromptVisibility={handleTogglePromptVisibility}
                     />
                   ))}
-                </div>
+                </DragSelectArea>
 
                 {/* Pagination Controls */}
                 {filteredAndSortedVideos.length > worksPerPage && (
