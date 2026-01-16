@@ -124,7 +124,7 @@ export function MyVideoCard({
       <button
         className={`absolute left-0 top-0 bottom-0 w-2 transition-all z-10 ${
           isSelected 
-            ? 'bg-primary' 
+            ? 'bg-gradient-to-b from-primary via-primary/80 to-primary' 
             : 'bg-muted-foreground/20 hover:bg-primary/50'
         }`}
         onClick={(e) => {
