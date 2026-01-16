@@ -1232,18 +1232,18 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                     .map((video) => (
                       <div 
                         key={video.id} 
-                        className={`relative group rounded-lg overflow-hidden transition-all ${
+                        className={`relative group transition-all flex ${
                           selectedVideos.has(video.id) 
-                            ? 'bg-primary/15 ring-2 ring-primary/30' 
-                            : 'hover:shadow-lg'
+                            ? 'bg-primary/15 ring-2 ring-primary/30 rounded-lg' 
+                            : 'hover:shadow-lg rounded-lg'
                         }`}
                       >
                         {/* Vertical Belt-style Selector with long-press drag */}
                         <div
-                          className={`absolute left-0 top-0 bottom-0 w-3 transition-all z-20 overflow-hidden cursor-pointer rounded-l-lg ${
+                          className={`flex-shrink-0 w-4 transition-all cursor-pointer rounded-l-lg relative ${
                             selectedVideos.has(video.id)
                               ? 'bg-primary shadow-[2px_0_8px_rgba(var(--primary),0.3)]'
-                              : 'bg-muted/60 hover:bg-primary/50'
+                              : 'bg-muted hover:bg-primary/50'
                           }`}
                           draggable={selectedVideos.has(video.id)}
                           onClick={(e) => {
@@ -1289,12 +1289,12 @@ export const DirectoryManager = ({ itemsPerPage = 4 }: DirectoryManagerProps) =>
                         >
                           {/* Visual drag hint when selected */}
                           {selectedVideos.has(video.id) && (
-                            <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
                               <div className="w-1.5 h-8 bg-primary-foreground/40 rounded-full" />
                             </div>
                           )}
                         </div>
-                        <div className="pl-3">
+                        <div className="flex-1 min-w-0 overflow-hidden rounded-r-lg">
                           <VideoCard video={video} />
                         </div>
                         <AlertDialog>
