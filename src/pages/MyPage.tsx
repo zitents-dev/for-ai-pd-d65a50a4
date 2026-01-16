@@ -989,7 +989,11 @@ export default function MyPage() {
             </Button>
           </div>
         ) : (
-          <p className="text-sm whitespace-pre-wrap">{value || "-"}</p>
+          <p className="text-sm whitespace-pre-wrap">
+            {type === "select" && options 
+              ? (options.find(opt => opt.value === value)?.label || value || "-")
+              : (value || "-")}
+          </p>
         )}
       </div>
       <div className="flex items-center gap-1">
