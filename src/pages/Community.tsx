@@ -31,7 +31,7 @@ import {
   MessageSquare,
   HelpCircle,
   Lightbulb,
-  Image,
+  Image as ImageIcon,
   MessageCircle,
   Plus,
   Eye,
@@ -45,6 +45,8 @@ import {
   Briefcase,
   GraduationCap,
   MoreHorizontal,
+  Upload,
+  X,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -62,6 +64,7 @@ interface Post {
   id: string;
   title: string;
   content: string;
+  image_url: string | null;
   is_pinned: boolean;
   views: number;
   created_at: string;
@@ -80,7 +83,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   MessageSquare,
   HelpCircle,
   Lightbulb,
-  Image,
+  Image: ImageIcon,
   MessageCircle,
   LayoutGrid,
   Wand2,
@@ -105,6 +108,8 @@ const Community = () => {
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostCategory, setNewPostCategory] = useState("");
+  const [newPostImage, setNewPostImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -178,6 +183,30 @@ const Community = () => {
     setLoading(false);
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "파일 크기 초과",
+          description: "이미지는 5MB 이하만 업로드 가능합니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setNewPostImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = () => {
+    setNewPostImage(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+  };
+
   const handleCreatePost = async () => {
     if (!user) {
       toast({
@@ -199,11 +228,40 @@ const Community = () => {
 
     setIsSubmitting(true);
 
+    let imageUrl: string | null = null;
+
+    // Upload image if selected
+    if (newPostImage) {
+      const fileExt = newPostImage.name.split(".").pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("community-images")
+        .upload(fileName, newPostImage);
+
+      if (uploadError) {
+        toast({
+          title: "이미지 업로드 실패",
+          description: "이미지 업로드에 실패했습니다.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("community-images")
+        .getPublicUrl(fileName);
+
+      imageUrl = urlData.publicUrl;
+    }
+
     const { error } = await supabase.from("community_posts").insert({
       user_id: user.id,
       title: newPostTitle.trim(),
       content: newPostContent.trim(),
       category_id: newPostCategory || null,
+      image_url: imageUrl,
     });
 
     setIsSubmitting(false);
@@ -225,6 +283,7 @@ const Community = () => {
     setNewPostTitle("");
     setNewPostContent("");
     setNewPostCategory("");
+    removeImage();
     setIsCreateDialogOpen(false);
     loadPosts();
   };
@@ -285,8 +344,43 @@ const Community = () => {
                   onChange={(e) => setNewPostContent(e.target.value)}
                   rows={6}
                 />
+                
+                {/* Image Upload */}
+                <div>
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full max-h-48 object-cover rounded-lg"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8"
+                        onClick={removeImage}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Upload className="w-5 h-5" />
+                        <span className="text-sm">이미지 첨부 (선택사항)</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageSelect}
+                      />
+                    </label>
+                  )}
+                </div>
+
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); removeImage(); }}>
                     취소
                   </Button>
                   <Button onClick={handleCreatePost} disabled={isSubmitting}>
@@ -373,7 +467,7 @@ const Community = () => {
               >
                 <CardContent className="p-4">
                   <div className="flex gap-4">
-                    <Avatar className="w-10 h-10">
+                    <Avatar className="w-10 h-10 flex-shrink-0">
                       <AvatarImage src={post.profile?.avatar_url || ""} />
                       <AvatarFallback>
                         <User className="w-5 h-5" />
@@ -391,6 +485,9 @@ const Community = () => {
                           >
                             {post.category.name_ko}
                           </Badge>
+                        )}
+                        {post.image_url && (
+                          <ImageIcon className="w-4 h-4 text-muted-foreground" />
                         )}
                       </div>
                       <h3 className="font-semibold truncate">{post.title}</h3>
@@ -420,6 +517,13 @@ const Community = () => {
                         </span>
                       </div>
                     </div>
+                    {post.image_url && (
+                      <img
+                        src={post.image_url}
+                        alt=""
+                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                      />
+                    )}
                   </div>
                 </CardContent>
               </Card>
