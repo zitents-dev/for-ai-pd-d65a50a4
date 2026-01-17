@@ -243,8 +243,16 @@ export default function MyPage() {
   // Name change alert state
   const [nameChangeAlertOpen, setNameChangeAlertOpen] = useState(false);
 
-  // Profile card collapsible state
-  const [profileOpen, setProfileOpen] = useState(true);
+  // Profile card collapsible state (persisted in localStorage)
+  const [profileOpen, setProfileOpen] = useState(() => {
+    const stored = localStorage.getItem('mypage-profile-open');
+    return stored !== null ? stored === 'true' : true;
+  });
+
+  // Persist profile collapsed state
+  useEffect(() => {
+    localStorage.setItem('mypage-profile-open', String(profileOpen));
+  }, [profileOpen]);
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
