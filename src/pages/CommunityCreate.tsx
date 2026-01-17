@@ -167,7 +167,7 @@ const CommunityCreate = () => {
       <ScrollProgressBar />
       <Navbar />
 
-      <div className="container py-8 max-w-2xl">
+      <div className="container py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate("/community")}>
