@@ -48,6 +48,7 @@ interface Post {
   id: string;
   title: string;
   content: string;
+  image_url: string | null;
   is_pinned: boolean;
   views: number;
   created_at: string;
@@ -407,6 +408,13 @@ const CommunityPost = () => {
         {/* Post Content */}
         <div className="prose dark:prose-invert max-w-none mb-8">
           <p className="whitespace-pre-wrap">{post.content}</p>
+          {post.image_url && (
+            <img
+              src={post.image_url}
+              alt="Post image"
+              className="mt-4 rounded-lg max-w-full h-auto"
+            />
+          )}
         </div>
 
         {/* Like Button */}
