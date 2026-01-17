@@ -26,7 +26,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
-  Heart,
+  ThumbsUp,
   MessageSquare,
   Eye,
   Clock,
@@ -34,6 +34,8 @@ import {
   Trash2,
   Edit,
   MoreVertical,
+  CheckCircle,
+  Award,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -54,6 +56,7 @@ interface Post {
   created_at: string;
   category_id: string;
   user_id: string;
+  best_answer_id: string | null;
   profile: {
     id: string;
     name: string;
@@ -213,7 +216,7 @@ const CommunityPost = () => {
     if (!user) {
       toast({
         title: "로그인 필요",
-        description: "댓글을 작성하려면 로그인이 필요합니다.",
+        description: "답변을 작성하려면 로그인이 필요합니다.",
         variant: "destructive",
       });
       return;
@@ -234,7 +237,7 @@ const CommunityPost = () => {
     if (error) {
       toast({
         title: "오류",
-        description: "댓글 작성에 실패했습니다.",
+        description: "답변 작성에 실패했습니다.",
         variant: "destructive",
       });
       return;
@@ -275,13 +278,70 @@ const CommunityPost = () => {
     if (error) {
       toast({
         title: "오류",
-        description: "댓글 삭제에 실패했습니다.",
+        description: "답변 삭제에 실패했습니다.",
         variant: "destructive",
       });
       return;
     }
 
+    // If this was the best answer, clear it
+    if (post?.best_answer_id === commentId) {
+      await supabase
+        .from("community_posts")
+        .update({ best_answer_id: null })
+        .eq("id", id);
+      setPost(prev => prev ? { ...prev, best_answer_id: null } : null);
+    }
+
     loadComments();
+  };
+
+  const handleSelectBestAnswer = async (commentId: string) => {
+    if (!user || user.id !== post?.user_id) return;
+
+    const { error } = await supabase
+      .from("community_posts")
+      .update({ best_answer_id: commentId })
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "오류",
+        description: "채택에 실패했습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPost(prev => prev ? { ...prev, best_answer_id: commentId } : null);
+    toast({
+      title: "채택 완료",
+      description: "답변이 채택되었습니다.",
+    });
+  };
+
+  const handleUnselectBestAnswer = async () => {
+    if (!user || user.id !== post?.user_id) return;
+
+    const { error } = await supabase
+      .from("community_posts")
+      .update({ best_answer_id: null })
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "오류",
+        description: "채택 취소에 실패했습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPost(prev => prev ? { ...prev, best_answer_id: null } : null);
+    toast({
+      title: "채택 취소",
+      description: "답변 채택이 취소되었습니다.",
+    });
   };
 
   if (loading) {
@@ -313,6 +373,13 @@ const CommunityPost = () => {
     );
   }
 
+  // Sort comments to show best answer first
+  const sortedComments = [...comments].sort((a, b) => {
+    if (a.id === post.best_answer_id) return -1;
+    if (b.id === post.best_answer_id) return 1;
+    return 0;
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <ScrollProgressBar />
@@ -327,15 +394,22 @@ const CommunityPost = () => {
 
         {/* Post Header */}
         <div className="mb-6">
-          {post.category && (
-            <Badge
-              variant="secondary"
-              className="mb-3"
-              style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
-            >
-              {post.category.name_ko}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2 mb-3">
+            {post.category && (
+              <Badge
+                variant="secondary"
+                style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
+              >
+                {post.category.name_ko}
+              </Badge>
+            )}
+            {post.best_answer_id && (
+              <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                해결됨
+              </Badge>
+            )}
+          </div>
           <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
 
           <div className="flex items-center justify-between">
@@ -436,24 +510,24 @@ const CommunityPost = () => {
             variant={isLiked ? "default" : "outline"}
             onClick={handleLike}
           >
-            <Heart className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
+            <ThumbsUp className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
             좋아요 {likesCount}
           </Button>
         </div>
 
         <Separator className="my-6" />
 
-        {/* Comments Section */}
+        {/* Answers Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
-            댓글 {comments.length}
+            답변 {comments.length}
           </h2>
 
-          {/* Comment Input */}
+          {/* Answer Input */}
           <div className="mb-6">
             <Textarea
-              placeholder={user ? "댓글을 입력하세요..." : "댓글을 작성하려면 로그인이 필요합니다."}
+              placeholder={user ? "답변을 입력하세요..." : "답변을 작성하려면 로그인이 필요합니다."}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               rows={3}
@@ -464,74 +538,113 @@ const CommunityPost = () => {
                 onClick={handleSubmitComment}
                 disabled={!user || !newComment.trim() || isSubmittingComment}
               >
-                {isSubmittingComment ? "작성 중..." : "댓글 작성"}
+                {isSubmittingComment ? "작성 중..." : "답변 작성"}
               </Button>
             </div>
           </div>
 
-          {/* Comments List */}
+          {/* Answers List */}
           <div className="space-y-4">
             {comments.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!
+                아직 답변이 없습니다. 첫 번째 답변을 작성해보세요!
               </p>
             ) : (
-              comments.map((comment) => (
-                <Card key={comment.id}>
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={comment.profile?.avatar_url || ""} />
-                        <AvatarFallback>
-                          <User className="w-4 h-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Link
-                              to={`/profile/${comment.profile?.id}`}
-                              className="font-medium text-sm hover:underline"
-                            >
-                              {comment.profile?.name || "익명"}
-                            </Link>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(comment.created_at), {
-                                addSuffix: true,
-                                locale: ko,
-                              })}
-                            </span>
-                          </div>
-                          {user?.id === comment.user_id && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6">
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>댓글 삭제</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    정말로 이 댓글을 삭제하시겠습니까?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>취소</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteComment(comment.id)}>
-                                    삭제
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+              sortedComments.map((comment) => {
+                const isBestAnswer = comment.id === post.best_answer_id;
+                
+                return (
+                  <Card 
+                    key={comment.id} 
+                    className={isBestAnswer ? "border-green-500 border-2 bg-green-500/5" : ""}
+                  >
+                    <CardContent className="p-4">
+                      {isBestAnswer && (
+                        <div className="flex items-center gap-2 text-green-500 mb-3 pb-3 border-b border-green-500/30">
+                          <Award className="w-5 h-5" />
+                          <span className="font-semibold">채택된 답변</span>
                         </div>
-                        <p className="text-sm mt-1 whitespace-pre-wrap">{comment.content}</p>
+                      )}
+                      <div className="flex gap-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={comment.profile?.avatar_url || ""} />
+                          <AvatarFallback>
+                            <User className="w-4 h-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                to={`/profile/${comment.profile?.id}`}
+                                className="font-medium text-sm hover:underline"
+                              >
+                                {comment.profile?.name || "익명"}
+                              </Link>
+                              <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(comment.created_at), {
+                                  addSuffix: true,
+                                  locale: ko,
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {/* Best Answer Button - Only for post author */}
+                              {user?.id === post.user_id && (
+                                isBestAnswer ? (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 text-green-500 hover:text-green-600"
+                                    onClick={() => handleUnselectBestAnswer()}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    채택 취소
+                                  </Button>
+                                ) : (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7"
+                                    onClick={() => handleSelectBestAnswer(comment.id)}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    채택
+                                  </Button>
+                                )
+                              )}
+                              {user?.id === comment.user_id && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>답변 삭제</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        정말로 이 답변을 삭제하시겠습니까?
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>취소</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteComment(comment.id)}>
+                                        삭제
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm mt-1 whitespace-pre-wrap">{comment.content}</p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </div>

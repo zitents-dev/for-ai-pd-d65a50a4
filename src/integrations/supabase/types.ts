@@ -270,6 +270,7 @@ export type Database = {
       }
       community_posts: {
         Row: {
+          best_answer_id: string | null
           category_id: string | null
           content: string
           created_at: string
@@ -282,6 +283,7 @@ export type Database = {
           views: number | null
         }
         Insert: {
+          best_answer_id?: string | null
           category_id?: string | null
           content: string
           created_at?: string
@@ -294,6 +296,7 @@ export type Database = {
           views?: number | null
         }
         Update: {
+          best_answer_id?: string | null
           category_id?: string | null
           content?: string
           created_at?: string
@@ -306,6 +309,13 @@ export type Database = {
           views?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "community_posts_best_answer_id_fkey"
+            columns: ["best_answer_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_posts_category_id_fkey"
             columns: ["category_id"]
