@@ -311,7 +311,7 @@ const Community = () => {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                글쓰기
+                질문하기
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
