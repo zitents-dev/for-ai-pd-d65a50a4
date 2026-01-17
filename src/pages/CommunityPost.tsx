@@ -4,7 +4,6 @@ import { Navbar } from "@/components/Navbar";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,19 +21,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -48,8 +34,6 @@ import {
   Trash2,
   Edit,
   MoreVertical,
-  Upload,
-  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -59,13 +43,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-
-interface Category {
-  id: string;
-  name: string;
-  name_ko: string;
-  color: string;
-}
 
 interface Post {
   id: string;
@@ -114,17 +91,6 @@ const CommunityPost = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-
-  // Edit post state
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editContent, setEditContent] = useState("");
-  const [editCategory, setEditCategory] = useState("");
-  const [editImage, setEditImage] = useState<File | null>(null);
-  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
-  const [removeExistingImage, setRemoveExistingImage] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -278,129 +244,6 @@ const CommunityPost = () => {
     loadComments();
   };
 
-  const loadCategories = async () => {
-    const { data, error } = await supabase
-      .from("community_categories")
-      .select("*")
-      .order("created_at");
-
-    if (!error && data) {
-      setCategories(data);
-    }
-  };
-
-  const openEditDialog = () => {
-    if (!post) return;
-    setEditTitle(post.title);
-    setEditContent(post.content);
-    setEditCategory(post.category_id || "");
-    setEditImage(null);
-    setEditImagePreview(post.image_url);
-    setRemoveExistingImage(false);
-    loadCategories();
-    setIsEditDialogOpen(true);
-  };
-
-  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "파일 크기 초과",
-          description: "이미지는 5MB 이하만 업로드 가능합니다.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setEditImage(file);
-      setEditImagePreview(URL.createObjectURL(file));
-      setRemoveExistingImage(false);
-    }
-  };
-
-  const removeEditImage = () => {
-    if (editImage) {
-      URL.revokeObjectURL(editImagePreview || "");
-    }
-    setEditImage(null);
-    setEditImagePreview(null);
-    setRemoveExistingImage(true);
-  };
-
-  const handleUpdatePost = async () => {
-    if (!user || !post) return;
-
-    if (!editTitle.trim() || !editContent.trim()) {
-      toast({
-        title: "입력 오류",
-        description: "제목과 내용을 모두 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUpdating(true);
-
-    let imageUrl: string | null = post.image_url;
-
-    // Upload new image if selected
-    if (editImage) {
-      const fileExt = editImage.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("community-images")
-        .upload(fileName, editImage);
-
-      if (uploadError) {
-        toast({
-          title: "이미지 업로드 실패",
-          description: "이미지 업로드에 실패했습니다.",
-          variant: "destructive",
-        });
-        setIsUpdating(false);
-        return;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("community-images")
-        .getPublicUrl(fileName);
-
-      imageUrl = urlData.publicUrl;
-    } else if (removeExistingImage) {
-      imageUrl = null;
-    }
-
-    const { error } = await supabase
-      .from("community_posts")
-      .update({
-        title: editTitle.trim(),
-        content: editContent.trim(),
-        category_id: editCategory || null,
-        image_url: imageUrl,
-      })
-      .eq("id", id);
-
-    setIsUpdating(false);
-
-    if (error) {
-      toast({
-        title: "오류",
-        description: "게시글 수정에 실패했습니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "성공",
-      description: "게시글이 수정되었습니다.",
-    });
-
-    setIsEditDialogOpen(false);
-    loadPost();
-  };
-
   const handleDeletePost = async () => {
     const { error } = await supabase
       .from("community_posts")
@@ -534,7 +377,7 @@ const CommunityPost = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={openEditDialog}>
+                  <DropdownMenuItem onClick={() => navigate(`/community/${id}/edit`)}>
                     <Edit className="w-4 h-4 mr-2" />
                     수정
                   </DropdownMenuItem>
@@ -695,85 +538,6 @@ const CommunityPost = () => {
       </div>
 
       <BackToTopButton />
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>게시글 수정</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div>
-              <Select value={editCategory} onValueChange={setEditCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="카테고리 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.filter(cat => cat.name !== "all").map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name_ko}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Input
-              placeholder="제목을 입력하세요"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-            />
-            <Textarea
-              placeholder="내용을 입력하세요"
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              rows={6}
-            />
-            
-            {/* Image Upload */}
-            <div>
-              {editImagePreview ? (
-                <div className="relative">
-                  <img
-                    src={editImagePreview}
-                    alt="Preview"
-                    className="w-full max-h-48 object-cover rounded-lg"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-8 w-8"
-                    onClick={removeEditImage}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Upload className="w-5 h-5" />
-                    <span className="text-sm">이미지 첨부 (선택사항)</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleEditImageSelect}
-                  />
-                </label>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                취소
-              </Button>
-              <Button onClick={handleUpdatePost} disabled={isUpdating}>
-                {isUpdating ? "수정 중..." : "수정하기"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -489,7 +489,7 @@ export default function Upload() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="container px-4 py-8 max-w-2xl mx-auto">
+      <div className="container px-4 py-8 w-full max-w-5xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">업로드 파일</CardTitle>

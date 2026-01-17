@@ -3,6 +3,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
+import { Node, mergeAttributes } from "@tiptap/core";
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -37,13 +38,54 @@ interface RichTextEditorProps {
   onChange: (content: string) => void;
   placeholder?: string;
   className?: string;
+  minHeight?: string;
 }
+
+// Custom Image extension that properly handles style attributes
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      style: {
+        default: null,
+        parseHTML: element => element.getAttribute('style'),
+        renderHTML: attributes => {
+          if (!attributes.style) {
+            return {};
+          }
+          return { style: attributes.style };
+        },
+      },
+      'data-size': {
+        default: 'full',
+        parseHTML: element => element.getAttribute('data-size'),
+        renderHTML: attributes => {
+          if (!attributes['data-size']) {
+            return {};
+          }
+          return { 'data-size': attributes['data-size'] };
+        },
+      },
+      'data-align': {
+        default: 'center',
+        parseHTML: element => element.getAttribute('data-align'),
+        renderHTML: attributes => {
+          if (!attributes['data-align']) {
+            return {};
+          }
+          return { 'data-align': attributes['data-align'] };
+        },
+      },
+    };
+  },
+});
 
 export const RichTextEditor = ({
   content,
   onChange,
   placeholder = "내용을 입력하세요...",
   className,
+  minHeight = "400px",
 }: RichTextEditorProps) => {
   const { toast } = useToast();
   const [imageUrl, setImageUrl] = useState("");
@@ -66,7 +108,7 @@ export const RichTextEditor = ({
       Placeholder.configure({
         placeholder,
       }),
-      Image.configure({
+      ResizableImage.configure({
         inline: false,
         allowBase64: true,
         HTMLAttributes: {
@@ -74,14 +116,14 @@ export const RichTextEditor = ({
         },
       }),
       TextAlign.configure({
-        types: ["heading", "paragraph", "image"],
+        types: ["heading", "paragraph"],
       }),
     ],
     content,
     editorProps: {
       attributes: {
-        class:
-          "prose prose-sm sm:prose-base dark:prose-invert max-w-none min-h-[200px] p-4 focus:outline-none",
+        class: "prose prose-sm sm:prose-base dark:prose-invert max-w-none p-4 focus:outline-none",
+        style: `min-height: ${minHeight}`,
       },
     },
     onUpdate: ({ editor }) => {
@@ -164,45 +206,59 @@ export const RichTextEditor = ({
   const setImageSize = (size: "small" | "medium" | "large" | "full") => {
     if (!editor) return;
     
-    const sizeMap = {
+    const sizeMap: Record<string, string> = {
       small: "25%",
       medium: "50%",
       large: "75%",
       full: "100%",
     };
 
-    // Get the current selection and update image attributes
+    // Get current alignment
     const { state } = editor;
     const { selection } = state;
     const node = state.doc.nodeAt(selection.from);
     
     if (node?.type.name === "image") {
+      const currentAlign = node.attrs['data-align'] || 'center';
+      const alignStyles = getAlignmentStyles(currentAlign);
+      
       editor.chain().focus().updateAttributes("image", {
-        style: `width: ${sizeMap[size]}; height: auto;`,
+        style: `width: ${sizeMap[size]}; height: auto; display: block; ${alignStyles}`,
+        'data-size': size,
       }).run();
     }
   };
 
+  const getAlignmentStyles = (align: string): string => {
+    const alignMap: Record<string, string> = {
+      left: "margin-right: auto; margin-left: 0;",
+      center: "margin-left: auto; margin-right: auto;",
+      right: "margin-left: auto; margin-right: 0;",
+    };
+    return alignMap[align] || alignMap.center;
+  };
+
   const setImageAlignment = (align: "left" | "center" | "right") => {
     if (!editor) return;
-    
-    const alignMap = {
-      left: "margin-right: auto;",
-      center: "margin-left: auto; margin-right: auto;",
-      right: "margin-left: auto;",
-    };
 
     const { state } = editor;
     const { selection } = state;
     const node = state.doc.nodeAt(selection.from);
     
     if (node?.type.name === "image") {
-      const currentStyle = node.attrs.style || "";
-      const widthMatch = currentStyle.match(/width:\s*[^;]+;?/);
-      const widthStyle = widthMatch ? widthMatch[0] : "width: 100%;";
+      const currentSize = node.attrs['data-size'] || 'full';
+      const sizeMap: Record<string, string> = {
+        small: "25%",
+        medium: "50%",
+        large: "75%",
+        full: "100%",
+      };
+      const widthStyle = `width: ${sizeMap[currentSize]};`;
+      const alignStyles = getAlignmentStyles(align);
       
       editor.chain().focus().updateAttributes("image", {
-        style: `${widthStyle} height: auto; display: block; ${alignMap[align]}`,
+        style: `${widthStyle} height: auto; display: block; ${alignStyles}`,
+        'data-align': align,
       }).run();
     }
   };
