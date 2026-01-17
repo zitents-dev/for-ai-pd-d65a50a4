@@ -5,25 +5,10 @@ import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -45,8 +30,6 @@ import {
   Briefcase,
   GraduationCap,
   MoreHorizontal,
-  Upload,
-  X,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -102,15 +85,6 @@ const Community = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-
-  // Create post form state
-  const [newPostTitle, setNewPostTitle] = useState("");
-  const [newPostContent, setNewPostContent] = useState("");
-  const [newPostCategory, setNewPostCategory] = useState("");
-  const [newPostImage, setNewPostImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -183,111 +157,6 @@ const Community = () => {
     setLoading(false);
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "파일 크기 초과",
-          description: "이미지는 5MB 이하만 업로드 가능합니다.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setNewPostImage(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const removeImage = () => {
-    setNewPostImage(null);
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-      setImagePreview(null);
-    }
-  };
-
-  const handleCreatePost = async () => {
-    if (!user) {
-      toast({
-        title: "로그인 필요",
-        description: "게시글을 작성하려면 로그인이 필요합니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!newPostTitle.trim() || !newPostContent.trim()) {
-      toast({
-        title: "입력 오류",
-        description: "제목과 내용을 모두 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    let imageUrl: string | null = null;
-
-    // Upload image if selected
-    if (newPostImage) {
-      const fileExt = newPostImage.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("community-images")
-        .upload(fileName, newPostImage);
-
-      if (uploadError) {
-        toast({
-          title: "이미지 업로드 실패",
-          description: "이미지 업로드에 실패했습니다.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("community-images")
-        .getPublicUrl(fileName);
-
-      imageUrl = urlData.publicUrl;
-    }
-
-    const { error } = await supabase.from("community_posts").insert({
-      user_id: user.id,
-      title: newPostTitle.trim(),
-      content: newPostContent.trim(),
-      category_id: newPostCategory || null,
-      image_url: imageUrl,
-    });
-
-    setIsSubmitting(false);
-
-    if (error) {
-      toast({
-        title: "오류",
-        description: "게시글 작성에 실패했습니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "성공",
-      description: "게시글이 작성되었습니다.",
-    });
-
-    setNewPostTitle("");
-    setNewPostContent("");
-    setNewPostCategory("");
-    removeImage();
-    setIsCreateDialogOpen(false);
-    loadPosts();
-  };
-
   const getCategoryIcon = (iconName: string) => {
     const IconComponent = iconMap[iconName] || MessageSquare;
     return IconComponent;
@@ -307,89 +176,10 @@ const Community = () => {
               다른 크리에이터들과 소통하고 정보를 공유해보세요
             </p>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                질문하기
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>새 게시글 작성</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Select value={newPostCategory} onValueChange={setNewPostCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="카테고리 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.filter(cat => cat.name !== "all").map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name_ko}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Input
-                  placeholder="제목을 입력하세요"
-                  value={newPostTitle}
-                  onChange={(e) => setNewPostTitle(e.target.value)}
-                />
-                <Textarea
-                  placeholder="내용을 입력하세요"
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  rows={6}
-                />
-                
-                {/* Image Upload */}
-                <div>
-                  {imagePreview ? (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full max-h-48 object-cover rounded-lg"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 h-8 w-8"
-                        onClick={removeImage}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Upload className="w-5 h-5" />
-                        <span className="text-sm">이미지 첨부 (선택사항)</span>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageSelect}
-                      />
-                    </label>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); removeImage(); }}>
-                    취소
-                  </Button>
-                  <Button onClick={handleCreatePost} disabled={isSubmitting}>
-                    {isSubmitting ? "작성 중..." : "작성하기"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => navigate("/community/create")}>
+            <Plus className="w-4 h-4 mr-2" />
+            질문하기
+          </Button>
         </div>
 
         {/* Category Filter */}
