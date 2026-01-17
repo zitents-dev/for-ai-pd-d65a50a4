@@ -6,7 +6,6 @@ import { BackToTopButton } from "@/components/BackToTopButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -15,10 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { TagInput } from "@/components/TagInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Upload, X, Loader2, Tag, Plus } from "lucide-react";
+import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 
 interface Category {
   id: string;
@@ -55,7 +55,6 @@ const CommunityEdit = () => {
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -142,27 +141,6 @@ const CommunityEdit = () => {
     setImage(null);
     setImagePreview(null);
     setRemoveExistingImage(true);
-  };
-
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 5) {
-      setTags([...tags, trimmedTag]);
-      setTagInput("");
-    }
-  };
-
-  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTag();
-    } else if (e.key === "Backspace" && tagInput === "" && tags.length > 0) {
-      setTags(tags.slice(0, -1));
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const handleSubmit = async () => {
@@ -297,48 +275,7 @@ const CommunityEdit = () => {
               </div>
 
               {/* Tags */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Tag className="w-4 h-4" />
-                  태그 (최대 5개)
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="gap-1 pr-1">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="ml-1 hover:bg-muted rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="태그 입력 후 Enter"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleTagKeyDown}
-                    disabled={tags.length >= 5}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleAddTag}
-                    disabled={!tagInput.trim() || tags.length >= 5}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  태그를 사용하면 다른 사용자가 질문을 쉽게 찾을 수 있습니다.
-                </p>
-              </div>
+              <TagInput tags={tags} onTagsChange={setTags} />
 
               {/* Content */}
               <div className="space-y-2">
