@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
   ThumbsUp,
+  ThumbsDown,
   MessageSquare,
   Eye,
   Clock,
@@ -81,6 +82,18 @@ interface Comment {
   };
 }
 
+interface CommentVote {
+  comment_id: string;
+  vote_type: 'upvote' | 'downvote';
+}
+
+interface CommentVoteCounts {
+  [commentId: string]: {
+    upvotes: number;
+    downvotes: number;
+  };
+}
+
 const CommunityPost = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -94,6 +107,8 @@ const CommunityPost = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentVotes, setCommentVotes] = useState<CommentVoteCounts>({});
+  const [userVotes, setUserVotes] = useState<CommentVote[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -150,6 +165,117 @@ const CommunityPost = () => {
 
     if (!error && data) {
       setComments(data);
+      loadCommentVotes(data.map(c => c.id));
+    }
+  };
+
+  const loadCommentVotes = async (commentIds: string[]) => {
+    if (commentIds.length === 0) return;
+
+    // Get all votes for these comments
+    const { data: votes } = await supabase
+      .from("community_comment_votes")
+      .select("comment_id, vote_type")
+      .in("comment_id", commentIds);
+
+    // Calculate vote counts
+    const counts: CommentVoteCounts = {};
+    commentIds.forEach(id => {
+      counts[id] = { upvotes: 0, downvotes: 0 };
+    });
+
+    if (votes) {
+      votes.forEach(vote => {
+        if (vote.vote_type === 'upvote') {
+          counts[vote.comment_id].upvotes++;
+        } else {
+          counts[vote.comment_id].downvotes++;
+        }
+      });
+    }
+
+    setCommentVotes(counts);
+
+    // Load user's votes
+    if (user) {
+      const { data: userVotesData } = await supabase
+        .from("community_comment_votes")
+        .select("comment_id, vote_type")
+        .in("comment_id", commentIds)
+        .eq("user_id", user.id);
+
+      if (userVotesData) {
+        setUserVotes(userVotesData as CommentVote[]);
+      }
+    }
+  };
+
+  const handleVote = async (commentId: string, voteType: 'upvote' | 'downvote') => {
+    if (!user) {
+      toast({
+        title: "로그인 필요",
+        description: "투표하려면 로그인이 필요합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const existingVote = userVotes.find(v => v.comment_id === commentId);
+
+    if (existingVote) {
+      if (existingVote.vote_type === voteType) {
+        // Remove vote
+        await supabase
+          .from("community_comment_votes")
+          .delete()
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+
+        setUserVotes(prev => prev.filter(v => v.comment_id !== commentId));
+        setCommentVotes(prev => ({
+          ...prev,
+          [commentId]: {
+            ...prev[commentId],
+            [voteType === 'upvote' ? 'upvotes' : 'downvotes']: prev[commentId][voteType === 'upvote' ? 'upvotes' : 'downvotes'] - 1
+          }
+        }));
+      } else {
+        // Change vote
+        await supabase
+          .from("community_comment_votes")
+          .update({ vote_type: voteType })
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+
+        setUserVotes(prev => prev.map(v => 
+          v.comment_id === commentId ? { ...v, vote_type: voteType } : v
+        ));
+        setCommentVotes(prev => ({
+          ...prev,
+          [commentId]: {
+            upvotes: voteType === 'upvote' ? prev[commentId].upvotes + 1 : prev[commentId].upvotes - 1,
+            downvotes: voteType === 'downvote' ? prev[commentId].downvotes + 1 : prev[commentId].downvotes - 1
+          }
+        }));
+      }
+    } else {
+      // New vote
+      await supabase
+        .from("community_comment_votes")
+        .insert({
+          comment_id: commentId,
+          user_id: user.id,
+          vote_type: voteType
+        });
+
+      setUserVotes(prev => [...prev, { comment_id: commentId, vote_type: voteType }]);
+      setCommentVotes(prev => ({
+        ...prev,
+        [commentId]: {
+          ...prev[commentId],
+          [voteType === 'upvote' ? 'upvotes' : 'downvotes']: prev[commentId][voteType === 'upvote' ? 'upvotes' : 'downvotes'] + 1
+        }
+      }));
     }
   };
 
@@ -638,7 +764,29 @@ const CommunityPost = () => {
                               )}
                             </div>
                           </div>
-                          <p className="text-sm mt-1 whitespace-pre-wrap">{comment.content}</p>
+                          <p className="text-sm mt-2 whitespace-pre-wrap">{comment.content}</p>
+                          
+                          {/* Vote Buttons */}
+                          <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-7 px-2 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'upvote') ? 'text-green-500 hover:text-green-600' : 'text-muted-foreground hover:text-foreground'}`}
+                              onClick={() => handleVote(comment.id, 'upvote')}
+                            >
+                              <ThumbsUp className={`w-4 h-4 mr-1 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'upvote') ? 'fill-current' : ''}`} />
+                              {commentVotes[comment.id]?.upvotes || 0}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-7 px-2 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'downvote') ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-foreground'}`}
+                              onClick={() => handleVote(comment.id, 'downvote')}
+                            >
+                              <ThumbsDown className={`w-4 h-4 mr-1 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'downvote') ? 'fill-current' : ''}`} />
+                              {commentVotes[comment.id]?.downvotes || 0}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
