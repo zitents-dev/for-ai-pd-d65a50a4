@@ -1379,20 +1379,20 @@ export default function MyPage() {
         {/* Quick Stats Section (collapsible) */}
         <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
           <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg px-2 py-1 -ml-2">
                     <CardTitle>통계</CardTitle>
                     <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border shadow-sm">
                       <Keyboard className="h-3 w-3" />
                       <span>S</span>
                     </span>
+                    <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${statsOpen ? 'rotate-180' : ''}`} />
                   </div>
-                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${statsOpen ? 'rotate-180' : ''}`} />
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
+                </CollapsibleTrigger>
+              </div>
+            </CardHeader>
             <CollapsibleContent>
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
