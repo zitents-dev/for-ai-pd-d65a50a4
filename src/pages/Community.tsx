@@ -40,6 +40,11 @@ import {
   Search,
   Pin,
   User,
+  LayoutGrid,
+  Wand2,
+  Briefcase,
+  GraduationCap,
+  MoreHorizontal,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -77,6 +82,11 @@ const iconMap: { [key: string]: React.ElementType } = {
   Lightbulb,
   Image,
   MessageCircle,
+  LayoutGrid,
+  Wand2,
+  Briefcase,
+  GraduationCap,
+  MoreHorizontal,
 };
 
 const Community = () => {
@@ -256,7 +266,7 @@ const Community = () => {
                       <SelectValue placeholder="카테고리 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
+                      {categories.filter(cat => cat.name !== "all").map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name_ko}
                         </SelectItem>
@@ -295,9 +305,10 @@ const Community = () => {
             size="sm"
             onClick={() => setSelectedCategory("all")}
           >
+            <LayoutGrid className="w-4 h-4 mr-1" />
             전체
           </Button>
-          {categories.map((category) => {
+          {categories.filter(cat => cat.name !== "all").map((category) => {
             const IconComponent = getCategoryIcon(category.icon);
             return (
               <Button
