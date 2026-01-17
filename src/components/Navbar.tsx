@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NavLink } from "./NavLink";
 import { useAuth } from "@/lib/auth";
-import { Upload, User, Search } from "lucide-react";
+import { Upload, User, Search, Home, Users, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/hephai-logo.png";
@@ -42,6 +42,24 @@ export const Navbar = () => {
             <Search className="w-4 h-4" />
           </Button>
         </form>
+
+        <div className="flex items-center gap-1">
+          <Button asChild variant="ghost" size="sm">
+            <NavLink to="/">
+              <Home className="w-4 h-4 mr-1" />홈
+            </NavLink>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <NavLink to="/community">
+              <Users className="w-4 h-4 mr-1" />커뮤니티
+            </NavLink>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <NavLink to="/inquiry">
+              <HelpCircle className="w-4 h-4 mr-1" />문의하기
+            </NavLink>
+          </Button>
+        </div>
 
         <div className="flex items-center gap-2 ml-auto">
           {loading ? (
