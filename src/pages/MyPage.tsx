@@ -1395,14 +1395,20 @@ export default function MyPage() {
         {/* Profile Card - Private Info (moved to top, collapsible) */}
         <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
           <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <CardTitle>프로필 정보</CardTitle>
-                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg px-2 py-1 -ml-2">
+                    <CardTitle>프로필 정보</CardTitle>
+                    <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </CollapsibleTrigger>
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  로그 아웃
+                </Button>
+              </div>
+            </CardHeader>
             <CollapsibleContent>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -1472,12 +1478,6 @@ export default function MyPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex justify-end">
-                  <Button variant="outline" onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    로그 아웃
-                  </Button>
-                </div>
               </CardContent>
             </CollapsibleContent>
           </Card>
