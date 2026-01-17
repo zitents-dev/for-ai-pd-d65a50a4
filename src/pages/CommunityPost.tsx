@@ -567,16 +567,25 @@ const CommunityPost = () => {
         <Separator className="my-6" />
 
         {/* Post Content */}
-        <div className="prose dark:prose-invert max-w-none mb-8">
-          <p className="whitespace-pre-wrap">{post.content}</p>
-          {post.image_url && (
-            <img
-              src={post.image_url}
-              alt="Post image"
-              className="mt-4 rounded-lg max-w-full h-auto"
-            />
-          )}
-        </div>
+        <div 
+          className="prose prose-sm sm:prose-base dark:prose-invert max-w-none mb-8 
+            prose-headings:font-semibold prose-headings:text-foreground
+            prose-p:text-foreground prose-p:leading-relaxed
+            prose-strong:text-foreground prose-strong:font-semibold
+            prose-em:text-foreground
+            prose-ul:text-foreground prose-ol:text-foreground
+            prose-li:text-foreground prose-li:marker:text-muted-foreground
+            prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-blockquote:not-italic
+            prose-code:bg-muted prose-code:text-foreground prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
+        {post.image_url && (
+          <img
+            src={post.image_url}
+            alt="Post image"
+            className="mb-8 rounded-lg max-w-full h-auto"
+          />
+        )}
 
         {/* Like Button */}
         <div className="flex items-center gap-4 mb-8">
