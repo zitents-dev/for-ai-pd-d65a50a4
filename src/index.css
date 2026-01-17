@@ -167,6 +167,38 @@ All colors MUST be HSL.
   height: auto;
   border-radius: 0.5rem;
   margin: 1rem 0;
+  display: block;
+}
+
+.tiptap .editor-image[data-align="left"] {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.tiptap .editor-image[data-align="center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tiptap .editor-image[data-align="right"] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.tiptap .editor-image[data-size="small"] {
+  width: 25%;
+}
+
+.tiptap .editor-image[data-size="medium"] {
+  width: 50%;
+}
+
+.tiptap .editor-image[data-size="large"] {
+  width: 75%;
+}
+
+.tiptap .editor-image[data-size="full"] {
+  width: 100%;
 }
 
 .tiptap .editor-image.ProseMirror-selectednode {

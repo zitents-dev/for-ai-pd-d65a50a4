@@ -15,6 +15,7 @@ import VideosListing from "./pages/VideosListing";
 import Community from "./pages/Community";
 import CommunityCreate from "./pages/CommunityCreate";
 import CommunityPost from "./pages/CommunityPost";
+import CommunityEdit from "./pages/CommunityEdit";
 import Inquiry from "./pages/Inquiry";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/community/create" element={<CommunityCreate />} />
             <Route path="/community/:id" element={<CommunityPost />} />
+            <Route path="/community/:id/edit" element={<CommunityEdit />} />
             <Route path="/inquiry" element={<Inquiry />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
