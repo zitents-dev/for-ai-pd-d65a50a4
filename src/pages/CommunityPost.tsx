@@ -57,6 +57,7 @@ import {
   FileText,
   Pencil,
   Trophy,
+  Tag,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -78,6 +79,7 @@ interface Post {
   category_id: string;
   user_id: string;
   best_answer_id: string | null;
+  tags: string[] | null;
   profile: {
     id: string;
     name: string;
@@ -651,11 +653,19 @@ const CommunityPost = () => {
       <div className="min-h-screen bg-background">
         <ScrollProgressBar />
         <Navbar />
-        <div className="container py-8 max-w-3xl">
+        <div className="container py-8 max-w-7xl">
           <Skeleton className="h-8 w-24 mb-6" />
-          <Skeleton className="h-10 w-3/4 mb-4" />
-          <Skeleton className="h-6 w-1/2 mb-8" />
-          <Skeleton className="h-40 w-full" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <Skeleton className="h-10 w-3/4 mb-4" />
+              <Skeleton className="h-6 w-1/2 mb-8" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+            <div>
+              <Skeleton className="h-8 w-32 mb-4" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -695,370 +705,402 @@ const CommunityPost = () => {
       <ScrollProgressBar />
       <Navbar />
 
-      <div className="container py-8 max-w-3xl">
+      <div className="container py-8 max-w-7xl">
         {/* Back Button */}
         <Button variant="ghost" size="sm" onClick={() => navigate("/community")} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           목록으로
         </Button>
 
-        {/* Post Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            {post.category && (
-              <Badge
-                variant="secondary"
-                style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
-              >
-                {post.category.name_ko}
-              </Badge>
-            )}
-            {post.best_answer_id && (
-              <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                해결됨
-              </Badge>
-            )}
-          </div>
-          <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Side - Question Zone */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                {/* Post Header */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    {post.category && (
+                      <Badge
+                        variant="secondary"
+                        style={{ backgroundColor: `${post.category.color}20`, color: post.category.color }}
+                      >
+                        {post.category.name_ko}
+                      </Badge>
+                    )}
+                    {post.best_answer_id && (
+                      <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        해결됨
+                      </Badge>
+                    )}
+                  </div>
+                  <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={post.profile?.avatar_url || ""} />
-                <AvatarFallback>
-                  <User className="w-5 h-5" />
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <Link
-                  to={`/profile/${post.profile?.id}`}
-                  className="font-medium hover:underline"
-                >
-                  {post.profile?.name || "익명"}
-                </Link>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatDistanceToNow(new Date(post.created_at), {
-                      addSuffix: true,
-                      locale: ko,
-                    })}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    {post.views}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {user?.id === post.user_id && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate(`/community/${id}/edit`)}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    수정
-                  </DropdownMenuItem>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        삭제
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>게시글 삭제</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          정말로 이 게시글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>취소</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeletePost}>삭제</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-
-        <Separator className="my-6" />
-
-        {/* Post Content */}
-        <div 
-          className="prose prose-sm sm:prose-base dark:prose-invert max-w-none mb-8 
-            prose-headings:font-semibold prose-headings:text-foreground
-            prose-p:text-foreground prose-p:leading-relaxed
-            prose-strong:text-foreground prose-strong:font-semibold
-            prose-em:text-foreground
-            prose-ul:text-foreground prose-ol:text-foreground
-            prose-li:text-foreground prose-li:marker:text-muted-foreground
-            prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-blockquote:not-italic
-            prose-code:bg-muted prose-code:text-foreground prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
-        {post.image_url && (
-          <img
-            src={post.image_url}
-            alt="Post image"
-            className="mb-8 rounded-lg max-w-full h-auto"
-          />
-        )}
-
-        {/* Like Button */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant={isLiked ? "default" : "outline"}
-            onClick={handleLike}
-          >
-            <ThumbsUp className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
-            좋아요 {likesCount}
-          </Button>
-        </div>
-
-        <Separator className="my-6" />
-
-        {/* Answers Section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            답변 {comments.length}
-          </h2>
-
-          {/* Answer Input */}
-          <div className="mb-6">
-            <Tabs defaultValue="write" className="w-full">
-              <TabsList className="mb-2">
-                <TabsTrigger value="write" className="gap-1">
-                  <Pencil className="w-3 h-3" />
-                  작성
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="gap-1">
-                  <FileText className="w-3 h-3" />
-                  미리보기
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="write" className="mt-0">
-                <Textarea
-                  placeholder={user ? "답변을 입력하세요... (마크다운 지원)" : "답변을 작성하려면 로그인이 필요합니다."}
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={5}
-                  disabled={!user}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  **굵게**, *기울임*, `코드`, - 목록, # 제목 등 마크다운 문법을 사용할 수 있습니다.
-                </p>
-              </TabsContent>
-              <TabsContent value="preview" className="mt-0">
-                <div className="min-h-[120px] p-3 border rounded-md bg-muted/30">
-                  {newComment.trim() ? (
-                    <MarkdownContent content={newComment} />
-                  ) : (
-                    <p className="text-muted-foreground text-sm">미리보기할 내용이 없습니다.</p>
+                  {/* Tags */}
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap mb-4">
+                      <Tag className="w-4 h-4 text-muted-foreground" />
+                      {post.tags.map((tag, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
                   )}
-                </div>
-              </TabsContent>
-            </Tabs>
-            <div className="flex justify-end mt-2">
-              <Button
-                onClick={handleSubmitComment}
-                disabled={!user || !newComment.trim() || isSubmittingComment}
-              >
-                {isSubmittingComment ? "작성 중..." : "답변 작성"}
-              </Button>
-            </div>
-          </div>
 
-          {/* Answers List */}
-          <div className="space-y-4">
-            {comments.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                아직 답변이 없습니다. 첫 번째 답변을 작성해보세요!
-              </p>
-            ) : (
-              sortedComments.map((comment) => {
-                const isBestAnswer = comment.id === post.best_answer_id;
-                
-                return (
-                  <Card 
-                    key={comment.id} 
-                    className={isBestAnswer ? "border-green-500 border-2 bg-green-500/5" : ""}
-                  >
-                    <CardContent className="p-4">
-                      {isBestAnswer && (
-                        <div className="flex items-center gap-2 text-green-500 mb-3 pb-3 border-b border-green-500/30">
-                          <Award className="w-5 h-5" />
-                          <span className="font-semibold">채택된 답변</span>
-                        </div>
-                      )}
-                      <div className="flex gap-3">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={comment.profile?.avatar_url || ""} />
-                          <AvatarFallback>
-                            <User className="w-4 h-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Link
-                                to={`/profile/${comment.profile?.id}`}
-                                className="font-medium text-sm hover:underline"
-                              >
-                                {comment.profile?.name || "익명"}
-                              </Link>
-                              {userBestAnswerCounts[comment.user_id] > 0 && (
-                                <Badge variant="secondary" className="h-5 px-1.5 gap-1 text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
-                                  <Trophy className="w-3 h-3" />
-                                  {userBestAnswerCounts[comment.user_id]}
-                                </Badge>
-                              )}
-                              <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(comment.created_at), {
-                                  addSuffix: true,
-                                  locale: ko,
-                                })}
-                              </span>
-                              {hasBeenEdited(comment) && (
-                                <span className="text-xs text-muted-foreground italic">
-                                  (수정됨)
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {/* Best Answer Button - Only for post author */}
-                              {user?.id === post.user_id && (
-                                isBestAnswer ? (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-7 text-green-500 hover:text-green-600"
-                                    onClick={() => handleUnselectBestAnswer()}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    채택 취소
-                                  </Button>
-                                ) : (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-7"
-                                    onClick={() => handleSelectBestAnswer(comment.id)}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    채택
-                                  </Button>
-                                )
-                              )}
-                              {user?.id === comment.user_id && (
-                                <>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-6 w-6"
-                                    onClick={() => handleEditComment(comment)}
-                                  >
-                                    <Edit className="w-3 h-3" />
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-6 w-6">
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>답변 삭제</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          정말로 이 답변을 삭제하시겠습니까?
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>취소</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteComment(comment.id)}>
-                                          삭제
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <MarkdownContent content={comment.content} className="mt-2" />
-                          
-                          {/* Edit History */}
-                          {editHistories[comment.id]?.length > 0 && (
-                            <Collapsible 
-                              open={openHistories.has(comment.id)}
-                              onOpenChange={() => toggleHistory(comment.id)}
-                              className="mt-3"
-                            >
-                              <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground">
-                                  <History className="w-3 h-3 mr-1" />
-                                  수정 이력 ({editHistories[comment.id].length})
-                                  <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${openHistories.has(comment.id) ? 'rotate-180' : ''}`} />
-                                </Button>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent className="mt-2">
-                                <div className="space-y-2 p-3 bg-muted/50 rounded-md text-xs">
-                                  {editHistories[comment.id].map((edit, index) => (
-                                    <div key={edit.id} className="pb-2 border-b border-border/50 last:border-0 last:pb-0">
-                                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                        <Clock className="w-3 h-3" />
-                                        {format(new Date(edit.edited_at), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
-                                        <span className="text-xs">
-                                          (버전 {editHistories[comment.id].length - index})
-                                        </span>
-                                      </div>
-                                      <p className="whitespace-pre-wrap text-foreground/70">{edit.previous_content}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </CollapsibleContent>
-                            </Collapsible>
-                          )}
-                          
-                          {/* Vote Buttons */}
-                          <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className={`h-7 px-2 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'upvote') ? 'text-green-500 hover:text-green-600' : 'text-muted-foreground hover:text-foreground'}`}
-                              onClick={() => handleVote(comment.id, 'upvote')}
-                            >
-                              <ThumbsUp className={`w-4 h-4 mr-1 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'upvote') ? 'fill-current' : ''}`} />
-                              {commentVotes[comment.id]?.upvotes || 0}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className={`h-7 px-2 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'downvote') ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-foreground'}`}
-                              onClick={() => handleVote(comment.id, 'downvote')}
-                            >
-                              <ThumbsDown className={`w-4 h-4 mr-1 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'downvote') ? 'fill-current' : ''}`} />
-                              {commentVotes[comment.id]?.downvotes || 0}
-                            </Button>
-                          </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={post.profile?.avatar_url || ""} />
+                        <AvatarFallback>
+                          <User className="w-5 h-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <Link
+                          to={`/profile/${post.profile?.id}`}
+                          className="font-medium hover:underline"
+                        >
+                          {post.profile?.name || "익명"}
+                        </Link>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatDistanceToNow(new Date(post.created_at), {
+                              addSuffix: true,
+                              locale: ko,
+                            })}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {post.views}
+                          </span>
                         </div>
                       </div>
+                    </div>
+
+                    {user?.id === post.user_id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => navigate(`/community/${id}/edit`)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            수정
+                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                삭제
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>게시글 삭제</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  정말로 이 게시글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>취소</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeletePost}>삭제</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+
+                <Separator className="my-4" />
+
+                {/* Post Content */}
+                <div 
+                  className="prose prose-sm sm:prose-base dark:prose-invert max-w-none mb-6 
+                    prose-headings:font-semibold prose-headings:text-foreground
+                    prose-p:text-foreground prose-p:leading-relaxed
+                    prose-strong:text-foreground prose-strong:font-semibold
+                    prose-em:text-foreground
+                    prose-ul:text-foreground prose-ol:text-foreground
+                    prose-li:text-foreground prose-li:marker:text-muted-foreground
+                    prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground prose-blockquote:not-italic
+                    prose-code:bg-muted prose-code:text-foreground prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+                {post.image_url && (
+                  <img
+                    src={post.image_url}
+                    alt="Post image"
+                    className="mb-6 rounded-lg max-w-full h-auto"
+                  />
+                )}
+
+                {/* Like Button */}
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant={isLiked ? "default" : "outline"}
+                    onClick={handleLike}
+                  >
+                    <ThumbsUp className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
+                    좋아요 {likesCount}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Side - Answer Zone */}
+          <div className="space-y-6">
+            {/* Answer Input */}
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  답변 작성
+                </h2>
+                <Tabs defaultValue="write" className="w-full">
+                  <TabsList className="mb-2">
+                    <TabsTrigger value="write" className="gap-1">
+                      <Pencil className="w-3 h-3" />
+                      작성
+                    </TabsTrigger>
+                    <TabsTrigger value="preview" className="gap-1">
+                      <FileText className="w-3 h-3" />
+                      미리보기
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="write" className="mt-0">
+                    <Textarea
+                      placeholder={user ? "답변을 입력하세요..." : "답변을 작성하려면 로그인이 필요합니다."}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      rows={5}
+                      disabled={!user}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      **굵게**, *기울임*, `코드`, - 목록, # 제목 등 마크다운 문법을 사용할 수 있습니다.
+                    </p>
+                  </TabsContent>
+                  <TabsContent value="preview" className="mt-0">
+                    <div className="min-h-[120px] p-3 border rounded-md bg-muted/30">
+                      {newComment.trim() ? (
+                        <MarkdownContent content={newComment} />
+                      ) : (
+                        <p className="text-muted-foreground text-sm">미리보기할 내용이 없습니다.</p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+                <div className="flex justify-end mt-2">
+                  <Button
+                    onClick={handleSubmitComment}
+                    disabled={!user || !newComment.trim() || isSubmittingComment}
+                  >
+                    {isSubmittingComment ? "작성 중..." : "답변 작성"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Answers List */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                답변 {comments.length}
+              </h2>
+
+              <div className="space-y-4">
+                {comments.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-8">
+                      <p className="text-center text-muted-foreground">
+                        아직 답변이 없습니다. 첫 번째 답변을 작성해보세요!
+                      </p>
                     </CardContent>
                   </Card>
-                );
-              })
-            )}
+                ) : (
+                  sortedComments.map((comment) => {
+                    const isBestAnswer = comment.id === post.best_answer_id;
+                    
+                    return (
+                      <Card 
+                        key={comment.id} 
+                        className={isBestAnswer ? "border-green-500 border-2 bg-green-500/5" : ""}
+                      >
+                        <CardContent className="p-4">
+                          {isBestAnswer && (
+                            <div className="flex items-center gap-2 text-green-500 mb-3 pb-3 border-b border-green-500/30">
+                              <Award className="w-5 h-5" />
+                              <span className="font-semibold">채택된 답변</span>
+                            </div>
+                          )}
+                          <div className="flex gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={comment.profile?.avatar_url || ""} />
+                              <AvatarFallback>
+                                <User className="w-4 h-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Link
+                                    to={`/profile/${comment.profile?.id}`}
+                                    className="font-medium text-sm hover:underline"
+                                  >
+                                    {comment.profile?.name || "익명"}
+                                  </Link>
+                                  {userBestAnswerCounts[comment.user_id] > 0 && (
+                                    <Badge variant="secondary" className="h-5 px-1.5 gap-1 text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                                      <Trophy className="w-3 h-3" />
+                                      {userBestAnswerCounts[comment.user_id]}
+                                    </Badge>
+                                  )}
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(comment.created_at), {
+                                      addSuffix: true,
+                                      locale: ko,
+                                    })}
+                                  </span>
+                                  {hasBeenEdited(comment) && (
+                                    <span className="text-xs text-muted-foreground italic">
+                                      (수정됨)
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {/* Best Answer Button - Only for post author */}
+                                  {user?.id === post.user_id && (
+                                    isBestAnswer ? (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-7 text-green-500 hover:text-green-600"
+                                        onClick={() => handleUnselectBestAnswer()}
+                                      >
+                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                        채택 취소
+                                      </Button>
+                                    ) : (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-7"
+                                        onClick={() => handleSelectBestAnswer(comment.id)}
+                                      >
+                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                        채택
+                                      </Button>
+                                    )
+                                  )}
+                                  {user?.id === comment.user_id && (
+                                    <>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-6 w-6"
+                                        onClick={() => handleEditComment(comment)}
+                                      >
+                                        <Edit className="w-3 h-3" />
+                                      </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                                            <Trash2 className="w-3 h-3" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>답변 삭제</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              정말로 이 답변을 삭제하시겠습니까?
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>취소</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteComment(comment.id)}>
+                                              삭제
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <MarkdownContent content={comment.content} className="mt-2" />
+                              
+                              {/* Edit History */}
+                              {editHistories[comment.id]?.length > 0 && (
+                                <Collapsible 
+                                  open={openHistories.has(comment.id)}
+                                  onOpenChange={() => toggleHistory(comment.id)}
+                                  className="mt-3"
+                                >
+                                  <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground">
+                                      <History className="w-3 h-3 mr-1" />
+                                      수정 이력 ({editHistories[comment.id].length})
+                                      <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${openHistories.has(comment.id) ? 'rotate-180' : ''}`} />
+                                    </Button>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="mt-2">
+                                    <div className="space-y-2 p-3 bg-muted/50 rounded-md text-xs">
+                                      {editHistories[comment.id].map((edit, index) => (
+                                        <div key={edit.id} className="pb-2 border-b border-border/50 last:border-0 last:pb-0">
+                                          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                            <Clock className="w-3 h-3" />
+                                            {format(new Date(edit.edited_at), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
+                                            <span className="text-xs">
+                                              (버전 {editHistories[comment.id].length - index})
+                                            </span>
+                                          </div>
+                                          <p className="whitespace-pre-wrap text-foreground/70">{edit.previous_content}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              )}
+                              
+                              {/* Vote Buttons */}
+                              <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-7 px-2 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'upvote') ? 'text-green-500 hover:text-green-600' : 'text-muted-foreground hover:text-foreground'}`}
+                                  onClick={() => handleVote(comment.id, 'upvote')}
+                                >
+                                  <ThumbsUp className={`w-4 h-4 mr-1 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'upvote') ? 'fill-current' : ''}`} />
+                                  {commentVotes[comment.id]?.upvotes || 0}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-7 px-2 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'downvote') ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-foreground'}`}
+                                  onClick={() => handleVote(comment.id, 'downvote')}
+                                >
+                                  <ThumbsDown className={`w-4 h-4 mr-1 ${userVotes.find(v => v.comment_id === comment.id && v.vote_type === 'downvote') ? 'fill-current' : ''}`} />
+                                  {commentVotes[comment.id]?.downvotes || 0}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1088,7 +1130,7 @@ const CommunityPost = () => {
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={8}
-                placeholder="답변 내용을 입력하세요... (마크다운 지원)"
+                placeholder="답변 내용을 입력하세요..."
                 className="font-mono text-sm"
               />
               <p className="text-xs text-muted-foreground mt-1">
