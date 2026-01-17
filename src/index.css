@@ -161,6 +161,19 @@ All colors MUST be HSL.
   font-size: 0.875rem;
 }
 
+/* Editor Image Styles */
+.tiptap .editor-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.tiptap .editor-image.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
 @keyframes ripple-animation {
   0% {
     transform: translateX(-50%) scale(0);
