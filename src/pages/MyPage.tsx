@@ -46,6 +46,8 @@ import {
   FileText,
   Video,
   ChevronDown,
+  ThumbsUp,
+  Play,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
@@ -167,6 +169,14 @@ export default function MyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Quick stats
+  const [stats, setStats] = useState({
+    totalVideos: 0,
+    totalViews: 0,
+    totalLikes: 0,
+    subscriberCount: 0,
+  });
+
   // Editable fields
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -272,6 +282,7 @@ export default function MyPage() {
       loadSubscriptions();
       loadUserDirectories();
       loadMyReplies();
+      loadStats();
     }
   }, [user]);
 
@@ -305,6 +316,41 @@ export default function MyPage() {
       console.error("Error loading profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    if (!user) return;
+    try {
+      // Get user statistics from the view
+      const { data: statsData, error: statsError } = await supabase
+        .from("user_statistics_view")
+        .select("videos_uploaded, total_views, likes_given")
+        .eq("user_id", user.id)
+        .single();
+
+      // Get total likes received on user's videos
+      const { data: videosData, error: videosError } = await supabase
+        .from("video_details_view")
+        .select("likes_count")
+        .eq("creator_id", user.id);
+
+      // Get subscriber count
+      const { count: subCount, error: subError } = await supabase
+        .from("subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("creator_id", user.id);
+
+      const totalLikes = videosData?.reduce((sum, v) => sum + (Number(v.likes_count) || 0), 0) || 0;
+
+      setStats({
+        totalVideos: Number(statsData?.videos_uploaded) || 0,
+        totalViews: Number(statsData?.total_views) || 0,
+        totalLikes: totalLikes,
+        subscriberCount: subCount || 0,
+      });
+    } catch (error) {
+      console.error("Error loading stats:", error);
     }
   };
 
@@ -1298,6 +1344,54 @@ export default function MyPage() {
       </div>
 
       <div className="container px-4 py-8 max-w-6xl mx-auto space-y-6">
+        {/* Quick Stats Section */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Video className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.totalVideos}</p>
+                <p className="text-sm text-muted-foreground">작품</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Play className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.totalViews.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">조회수</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <ThumbsUp className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.totalLikes.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">좋아요</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <Users className="h-5 w-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.subscriberCount.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">구독자</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
         {/* Profile Card - Private Info (moved to top, collapsible) */}
         <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
           <Card>
