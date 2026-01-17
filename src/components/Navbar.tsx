@@ -2,18 +2,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NavLink } from "./NavLink";
 import { useAuth } from "@/lib/auth";
-import { Upload, User, Search, Home, Users, HelpCircle } from "lucide-react";
+import { Upload, User, Search, Home, Users, HelpCircle, Menu } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/hephai-logo.png";
 import str from "@/assets/hephai-str-only.png";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const Navbar = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,12 +30,18 @@ export const Navbar = () => {
     }
   };
 
+  const navItems = [
+    { to: "/", icon: Home, label: "홈" },
+    { to: "/community", icon: Users, label: "커뮤니티" },
+    { to: "/inquiry", icon: HelpCircle, label: "문의하기" },
+  ];
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center gap-4 px-4">
-        <NavLink to="/" className="font-bold text-xl flex items-center">
+      <div className="container flex h-16 items-center gap-2 sm:gap-4 px-4">
+        <NavLink to="/" className="font-bold text-xl flex items-center flex-shrink-0">
           <img src={logo} alt="Hephai logo" className="h-8 w-9" />
-          <img src={str} alt="Hephai string" className="h-8 w-32" />
+          <img src={str} alt="Hephai string" className="h-8 w-32 hidden sm:block" />
         </NavLink>
 
         <form onSubmit={handleSearch} className="flex-1 max-w-xl flex gap-2">
@@ -43,34 +57,28 @@ export const Navbar = () => {
           </Button>
         </form>
 
-        <div className="flex items-center gap-1">
-          <Button asChild variant="ghost" size="sm">
-            <NavLink to="/">
-              <Home className="w-4 h-4 mr-1" />홈
-            </NavLink>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <NavLink to="/community">
-              <Users className="w-4 h-4 mr-1" />커뮤니티
-            </NavLink>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <NavLink to="/inquiry">
-              <HelpCircle className="w-4 h-4 mr-1" />문의하기
-            </NavLink>
-          </Button>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-1">
+          {navItems.map((item) => (
+            <Button key={item.to} asChild variant="ghost" size="sm">
+              <NavLink to={item.to}>
+                <item.icon className="w-4 h-4 mr-1" />
+                {item.label}
+              </NavLink>
+            </Button>
+          ))}
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
           {loading ? (
             <>
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-20 hidden sm:block" />
               <Skeleton className="h-8 w-8 rounded-full" />
               <Skeleton className="h-8 w-8 rounded-full" />
             </>
           ) : user ? (
             <>
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
                 <NavLink to="/upload">
                   <Upload className="w-4 h-4 mr-2" />새 작품
                 </NavLink>
@@ -89,6 +97,51 @@ export const Navbar = () => {
               </Button>
             </>
           )}
+
+          {/* Mobile Hamburger Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <img src={logo} alt="Hephai logo" className="h-6 w-7" />
+                  메뉴
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-2 mt-6">
+                {navItems.map((item) => (
+                  <Button
+                    key={item.to}
+                    asChild
+                    variant="ghost"
+                    className="justify-start"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <NavLink to={item.to}>
+                      <item.icon className="w-4 h-4 mr-2" />
+                      {item.label}
+                    </NavLink>
+                  </Button>
+                ))}
+                {user && (
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="justify-start"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <NavLink to="/upload">
+                      <Upload className="w-4 h-4 mr-2" />새 작품
+                    </NavLink>
+                  </Button>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>
