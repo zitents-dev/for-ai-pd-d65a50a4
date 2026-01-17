@@ -21,6 +21,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +50,8 @@ import {
   MoreVertical,
   CheckCircle,
   Award,
+  History,
+  ChevronDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,7 +59,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
 
 interface Post {
@@ -73,6 +88,7 @@ interface Comment {
   id: string;
   content: string;
   created_at: string;
+  updated_at: string;
   user_id: string;
   parent_id: string | null;
   profile: {
@@ -94,6 +110,16 @@ interface CommentVoteCounts {
   };
 }
 
+interface CommentEdit {
+  id: string;
+  previous_content: string;
+  edited_at: string;
+}
+
+interface CommentEditHistory {
+  [commentId: string]: CommentEdit[];
+}
+
 const CommunityPost = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -109,6 +135,11 @@ const CommunityPost = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentVotes, setCommentVotes] = useState<CommentVoteCounts>({});
   const [userVotes, setUserVotes] = useState<CommentVote[]>([]);
+  const [editingComment, setEditingComment] = useState<Comment | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [editHistories, setEditHistories] = useState<CommentEditHistory>({});
+  const [openHistories, setOpenHistories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (id) {
@@ -165,7 +196,34 @@ const CommunityPost = () => {
 
     if (!error && data) {
       setComments(data);
-      loadCommentVotes(data.map(c => c.id));
+      const commentIds = data.map(c => c.id);
+      loadCommentVotes(commentIds);
+      loadEditHistories(commentIds);
+    }
+  };
+
+  const loadEditHistories = async (commentIds: string[]) => {
+    if (commentIds.length === 0) return;
+
+    const { data } = await supabase
+      .from("community_comment_edits")
+      .select("id, comment_id, previous_content, edited_at")
+      .in("comment_id", commentIds)
+      .order("edited_at", { ascending: false });
+
+    if (data) {
+      const histories: CommentEditHistory = {};
+      data.forEach(edit => {
+        if (!histories[edit.comment_id]) {
+          histories[edit.comment_id] = [];
+        }
+        histories[edit.comment_id].push({
+          id: edit.id,
+          previous_content: edit.previous_content,
+          edited_at: edit.edited_at,
+        });
+      });
+      setEditHistories(histories);
     }
   };
 
@@ -470,6 +528,82 @@ const CommunityPost = () => {
     });
   };
 
+  const handleEditComment = (comment: Comment) => {
+    setEditingComment(comment);
+    setEditContent(comment.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!user || !editingComment) return;
+    if (!editContent.trim()) {
+      toast({
+        title: "오류",
+        description: "내용을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsEditingComment(true);
+
+    // Save current content to edit history
+    const { error: historyError } = await supabase
+      .from("community_comment_edits")
+      .insert({
+        comment_id: editingComment.id,
+        previous_content: editingComment.content,
+        edited_by: user.id,
+      });
+
+    if (historyError) {
+      console.error("Error saving edit history:", historyError);
+    }
+
+    // Update the comment
+    const { error } = await supabase
+      .from("community_comments")
+      .update({ 
+        content: editContent.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", editingComment.id);
+
+    setIsEditingComment(false);
+
+    if (error) {
+      toast({
+        title: "오류",
+        description: "답변 수정에 실패했습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "수정 완료",
+      description: "답변이 수정되었습니다.",
+    });
+    setEditingComment(null);
+    setEditContent("");
+    loadComments();
+  };
+
+  const toggleHistory = (commentId: string) => {
+    setOpenHistories(prev => {
+      const next = new Set(prev);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+      } else {
+        next.add(commentId);
+      }
+      return next;
+    });
+  };
+
+  const hasBeenEdited = (comment: Comment) => {
+    return comment.created_at !== comment.updated_at;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -713,6 +847,11 @@ const CommunityPost = () => {
                                   locale: ko,
                                 })}
                               </span>
+                              {hasBeenEdited(comment) && (
+                                <span className="text-xs text-muted-foreground italic">
+                                  (수정됨)
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-1">
                               {/* Best Answer Button - Only for post author */}
@@ -740,31 +879,74 @@ const CommunityPost = () => {
                                 )
                               )}
                               {user?.id === comment.user_id && (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>답변 삭제</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        정말로 이 답변을 삭제하시겠습니까?
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>취소</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeleteComment(comment.id)}>
-                                        삭제
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+                                <>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-6 w-6"
+                                    onClick={() => handleEditComment(comment)}
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>답변 삭제</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          정말로 이 답변을 삭제하시겠습니까?
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>취소</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteComment(comment.id)}>
+                                          삭제
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
                               )}
                             </div>
                           </div>
                           <p className="text-sm mt-2 whitespace-pre-wrap">{comment.content}</p>
+                          
+                          {/* Edit History */}
+                          {editHistories[comment.id]?.length > 0 && (
+                            <Collapsible 
+                              open={openHistories.has(comment.id)}
+                              onOpenChange={() => toggleHistory(comment.id)}
+                              className="mt-3"
+                            >
+                              <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground">
+                                  <History className="w-3 h-3 mr-1" />
+                                  수정 이력 ({editHistories[comment.id].length})
+                                  <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${openHistories.has(comment.id) ? 'rotate-180' : ''}`} />
+                                </Button>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="mt-2">
+                                <div className="space-y-2 p-3 bg-muted/50 rounded-md text-xs">
+                                  {editHistories[comment.id].map((edit, index) => (
+                                    <div key={edit.id} className="pb-2 border-b border-border/50 last:border-0 last:pb-0">
+                                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                        <Clock className="w-3 h-3" />
+                                        {format(new Date(edit.edited_at), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
+                                        <span className="text-xs">
+                                          (버전 {editHistories[comment.id].length - index})
+                                        </span>
+                                      </div>
+                                      <p className="whitespace-pre-wrap text-foreground/70">{edit.previous_content}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          )}
                           
                           {/* Vote Buttons */}
                           <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
@@ -797,6 +979,32 @@ const CommunityPost = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Comment Dialog */}
+      <Dialog open={!!editingComment} onOpenChange={(open) => !open && setEditingComment(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>답변 수정</DialogTitle>
+            <DialogDescription>
+              답변 내용을 수정하세요. 수정 이력은 저장됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            rows={5}
+            placeholder="답변 내용을 입력하세요..."
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingComment(null)}>
+              취소
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={isEditingComment}>
+              {isEditingComment ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BackToTopButton />
     </div>

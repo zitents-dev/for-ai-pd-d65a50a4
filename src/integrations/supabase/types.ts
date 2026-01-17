@@ -166,6 +166,52 @@ export type Database = {
         }
         Relationships: []
       }
+      community_comment_edits: {
+        Row: {
+          comment_id: string
+          edited_at: string
+          edited_by: string
+          id: string
+          previous_content: string
+        }
+        Insert: {
+          comment_id: string
+          edited_at?: string
+          edited_by: string
+          id?: string
+          previous_content: string
+        }
+        Update: {
+          comment_id?: string
+          edited_at?: string
+          edited_by?: string
+          id?: string
+          previous_content?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comment_edits_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_comment_edits_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_comment_edits_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "user_statistics_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       community_comment_votes: {
         Row: {
           comment_id: string
