@@ -38,7 +38,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import ReactMarkdown from "react-markdown";
+import { MarkdownContent } from "@/components/MarkdownContent";
 import {
   ArrowLeft,
   ThumbsUp,
@@ -825,9 +825,7 @@ const CommunityPost = () => {
               <TabsContent value="preview" className="mt-0">
                 <div className="min-h-[120px] p-3 border rounded-md bg-muted/30">
                   {newComment.trim() ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
-                      <ReactMarkdown>{newComment}</ReactMarkdown>
-                    </div>
+                    <MarkdownContent content={newComment} />
                   ) : (
                     <p className="text-muted-foreground text-sm">미리보기할 내용이 없습니다.</p>
                   )}
@@ -954,9 +952,7 @@ const CommunityPost = () => {
                               )}
                             </div>
                           </div>
-                          <div className="prose prose-sm dark:prose-invert max-w-none mt-2 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
-                            <ReactMarkdown>{comment.content}</ReactMarkdown>
-                          </div>
+                          <MarkdownContent content={comment.content} className="mt-2" />
                           
                           {/* Edit History */}
                           {editHistories[comment.id]?.length > 0 && (
@@ -1058,9 +1054,7 @@ const CommunityPost = () => {
             <TabsContent value="preview" className="mt-0">
               <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-3 border rounded-md bg-muted/30">
                 {editContent.trim() ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
-                    <ReactMarkdown>{editContent}</ReactMarkdown>
-                  </div>
+                  <MarkdownContent content={editContent} />
                 ) : (
                   <p className="text-muted-foreground text-sm">미리보기할 내용이 없습니다.</p>
                 )}
