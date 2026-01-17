@@ -5,8 +5,7 @@ import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -14,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -208,12 +208,10 @@ const CommunityCreate = () => {
             {/* Content */}
             <div className="space-y-2">
               <label className="text-sm font-medium">내용 *</label>
-              <Textarea
-                placeholder="내용을 입력하세요"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={10}
-                className="resize-none"
+              <RichTextEditor
+                content={content}
+                onChange={setContent}
+                placeholder="내용을 입력하세요..."
               />
             </div>
 
