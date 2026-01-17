@@ -437,7 +437,12 @@ const Community = () => {
                             : "border-muted-foreground/30 bg-muted/50"
                       }`}>
                         {isSolved ? (
-                          <CheckCircle className="w-5 h-5 text-green-500 mb-0.5" />
+                          <div className="flex items-center gap-1">
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span className="text-lg font-bold text-green-500">
+                              {post.comments_count}
+                            </span>
+                          </div>
                         ) : (
                           <span className={`text-lg font-bold ${hasAnswers ? "text-primary" : "text-muted-foreground"}`}>
                             {post.comments_count}
