@@ -1284,14 +1284,14 @@ export default function MyPage() {
         </div>
       </div>
 
-      <div className="container px-4 py-8 max-w-6xl mx-auto">
-        <div className="grid gap-8 md:grid-cols-3">
-          {/* Profile Card - Private Info */}
-          <Card className="md:col-span-1">
-            <CardHeader>
-              <CardTitle>프로필 정보</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1">
+      <div className="container px-4 py-8 max-w-6xl mx-auto space-y-6">
+        {/* Profile Card - Private Info (moved to top) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>프로필 정보</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <EditableField
                 label="이메일"
                 value={email}
@@ -1345,7 +1345,7 @@ export default function MyPage() {
                 options={countries.map((c) => ({ value: c, label: c }))}
               />
 
-              <div className="pt-4">
+              <div className="md:col-span-2 lg:col-span-2">
                 <EditableField
                   label="코멘트"
                   value={bio}
@@ -1356,19 +1356,19 @@ export default function MyPage() {
                   isTextarea
                 />
               </div>
+            </div>
 
-              <div className="pt-4 space-y-2">
-                <Button variant="outline" className="w-full" onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  로그 아웃
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                로그 아웃
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Tabs Section */}
-          <div className="md:col-span-2">
-            <Tabs 
+        {/* Tabs Section */}
+        <Tabs
               value={activeTab} 
               onValueChange={(value) => {
                 setActiveTab(value);
@@ -1820,8 +1820,6 @@ export default function MyPage() {
                 <MyCommunityActivity />
               </TabsContent>
             </Tabs>
-          </div>
-        </div>
       </div>
 
       {/* Image Crop Dialog */}
