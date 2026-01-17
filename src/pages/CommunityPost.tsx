@@ -633,11 +633,19 @@ const CommunityPost = () => {
     );
   }
 
-  // Sort comments to show best answer first
+  // Sort comments: best answer first, then by net votes (upvotes - downvotes)
   const sortedComments = [...comments].sort((a, b) => {
+    // Best answer always first
     if (a.id === post.best_answer_id) return -1;
     if (b.id === post.best_answer_id) return 1;
-    return 0;
+    
+    // Sort by net votes (upvotes - downvotes)
+    const aVotes = commentVotes[a.id] || { upvotes: 0, downvotes: 0 };
+    const bVotes = commentVotes[b.id] || { upvotes: 0, downvotes: 0 };
+    const aNetVotes = aVotes.upvotes - aVotes.downvotes;
+    const bNetVotes = bVotes.upvotes - bVotes.downvotes;
+    
+    return bNetVotes - aNetVotes;
   });
 
   return (
