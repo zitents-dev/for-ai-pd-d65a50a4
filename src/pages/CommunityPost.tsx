@@ -56,6 +56,7 @@ import {
   ChevronDown,
   FileText,
   Pencil,
+  Trophy,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -124,6 +125,10 @@ interface CommentEditHistory {
   [commentId: string]: CommentEdit[];
 }
 
+interface UserBestAnswerCounts {
+  [userId: string]: number;
+}
+
 const CommunityPost = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -144,6 +149,7 @@ const CommunityPost = () => {
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [editHistories, setEditHistories] = useState<CommentEditHistory>({});
   const [openHistories, setOpenHistories] = useState<Set<string>>(new Set());
+  const [userBestAnswerCounts, setUserBestAnswerCounts] = useState<UserBestAnswerCounts>({});
 
   useEffect(() => {
     if (id) {
@@ -201,8 +207,40 @@ const CommunityPost = () => {
     if (!error && data) {
       setComments(data);
       const commentIds = data.map(c => c.id);
+      const userIds = [...new Set(data.map(c => c.user_id))];
       loadCommentVotes(commentIds);
       loadEditHistories(commentIds);
+      loadUserBestAnswerCounts(userIds);
+    }
+  };
+
+  const loadUserBestAnswerCounts = async (userIds: string[]) => {
+    if (userIds.length === 0) return;
+
+    // Get all best answers where the answer author is one of these users
+    const { data: postsWithBestAnswers } = await supabase
+      .from("community_posts")
+      .select("best_answer_id")
+      .not("best_answer_id", "is", null);
+
+    if (!postsWithBestAnswers || postsWithBestAnswers.length === 0) {
+      return;
+    }
+
+    const bestAnswerIds = postsWithBestAnswers.map(p => p.best_answer_id).filter(Boolean);
+
+    // Get the authors of these best answers
+    const { data: bestAnswerComments } = await supabase
+      .from("community_comments")
+      .select("user_id")
+      .in("id", bestAnswerIds);
+
+    if (bestAnswerComments) {
+      const counts: UserBestAnswerCounts = {};
+      bestAnswerComments.forEach(comment => {
+        counts[comment.user_id] = (counts[comment.user_id] || 0) + 1;
+      });
+      setUserBestAnswerCounts(counts);
     }
   };
 
@@ -880,6 +918,12 @@ const CommunityPost = () => {
                               >
                                 {comment.profile?.name || "익명"}
                               </Link>
+                              {userBestAnswerCounts[comment.user_id] > 0 && (
+                                <Badge variant="secondary" className="h-5 px-1.5 gap-1 text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                                  <Trophy className="w-3 h-3" />
+                                  {userBestAnswerCounts[comment.user_id]}
+                                </Badge>
+                              )}
                               <span className="text-xs text-muted-foreground">
                                 {formatDistanceToNow(new Date(comment.created_at), {
                                   addSuffix: true,
