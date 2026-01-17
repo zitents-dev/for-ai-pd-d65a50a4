@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import { BackToTopButton } from "@/components/BackToTopButton";
@@ -38,6 +38,8 @@ import {
   GraduationCap,
   MoreHorizontal,
   CheckCircle,
+  Tag,
+  X,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -62,6 +64,7 @@ interface Post {
   category_id: string;
   user_id: string;
   best_answer_id: string | null;
+  tags: string[] | null;
   profile: {
     name: string;
     avatar_url: string;
@@ -94,6 +97,7 @@ const Community = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -102,11 +106,25 @@ const Community = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [answerFilter, setAnswerFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("recent");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [popularTags, setPopularTags] = useState<{ tag: string; count: number }[]>([]);
+
+  // Initialize tag from URL params
+  useEffect(() => {
+    const tagParam = searchParams.get("tag");
+    if (tagParam) {
+      setSelectedTag(tagParam);
+    }
+  }, []);
 
   useEffect(() => {
     loadCategories();
     loadPosts();
-  }, [selectedCategory, searchQuery, answerFilter, sortOrder]);
+  }, [selectedCategory, searchQuery, answerFilter, sortOrder, selectedTag]);
+
+  useEffect(() => {
+    loadPopularTags();
+  }, []);
 
   const loadCategories = async () => {
     const { data, error } = await supabase
@@ -116,6 +134,31 @@ const Community = () => {
 
     if (!error && data) {
       setCategories(data);
+    }
+  };
+
+  const loadPopularTags = async () => {
+    const { data, error } = await supabase
+      .from("community_posts")
+      .select("tags")
+      .not("tags", "is", null);
+
+    if (!error && data) {
+      const tagCounts: { [key: string]: number } = {};
+      data.forEach((post) => {
+        if (post.tags) {
+          post.tags.forEach((tag: string) => {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          });
+        }
+      });
+
+      const sortedTags = Object.entries(tagCounts)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      setPopularTags(sortedTags);
     }
   };
 
@@ -168,10 +211,17 @@ const Community = () => {
       })
     );
 
-    // Apply answer filter
+    // Apply tag filter
     let filteredPosts = postsWithCounts;
+    if (selectedTag) {
+      filteredPosts = filteredPosts.filter(post => 
+        post.tags && post.tags.includes(selectedTag)
+      );
+    }
+
+    // Apply answer filter
     if (answerFilter === "unanswered") {
-      filteredPosts = postsWithCounts.filter(post => post.comments_count === 0);
+      filteredPosts = filteredPosts.filter(post => post.comments_count === 0);
     }
 
     // Apply sort order
@@ -200,6 +250,19 @@ const Community = () => {
   const getCategoryIcon = (iconName: string) => {
     const IconComponent = iconMap[iconName] || MessageSquare;
     return IconComponent;
+  };
+
+  const handleTagClick = (tag: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setSelectedTag(tag);
+    setSearchParams({ tag });
+  };
+
+  const clearTagFilter = () => {
+    setSelectedTag(null);
+    setSearchParams({});
   };
 
   return (
@@ -287,6 +350,46 @@ const Community = () => {
           </div>
         </div>
 
+        {/* Active Tag Filter */}
+        {selectedTag && (
+          <div className="flex items-center gap-2 mb-4 p-3 bg-primary/10 rounded-lg">
+            <Tag className="w-4 h-4 text-primary" />
+            <span className="text-sm">태그 필터:</span>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              #{selectedTag}
+              <button
+                onClick={clearTagFilter}
+                className="ml-1 hover:text-destructive"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </Badge>
+          </div>
+        )}
+
+        {/* Popular Tags */}
+        {!selectedTag && popularTags.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Tag className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">인기 태그:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {popularTags.map(({ tag, count }) => (
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => handleTagClick(tag)}
+                >
+                  #{tag}
+                  <span className="ml-1 text-xs opacity-70">({count})</span>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Posts List */}
         <div className="space-y-4">
           {loading ? (
@@ -366,6 +469,26 @@ const Community = () => {
                         <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                           {stripHtml(post.content)}
                         </p>
+                        {/* Tags */}
+                        {post.tags && post.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {post.tags.slice(0, 3).map((tag) => (
+                              <Badge
+                                key={tag}
+                                variant="outline"
+                                className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                onClick={(e) => handleTagClick(tag, e)}
+                              >
+                                #{tag}
+                              </Badge>
+                            ))}
+                            {post.tags.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{post.tags.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Avatar className="w-5 h-5">
