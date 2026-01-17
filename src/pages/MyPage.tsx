@@ -48,6 +48,7 @@ import {
   ChevronDown,
   ThumbsUp,
   Play,
+  Keyboard,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
@@ -1383,7 +1384,10 @@ export default function MyPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CardTitle>통계</CardTitle>
-                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">S</span>
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border shadow-sm">
+                      <Keyboard className="h-3 w-3" />
+                      <span>S</span>
+                    </span>
                   </div>
                   <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${statsOpen ? 'rotate-180' : ''}`} />
                 </div>
@@ -1442,7 +1446,10 @@ export default function MyPage() {
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg px-2 py-1 -ml-2">
                     <CardTitle>프로필 정보</CardTitle>
-                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">P</span>
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border shadow-sm">
+                      <Keyboard className="h-3 w-3" />
+                      <span>P</span>
+                    </span>
                     <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </CollapsibleTrigger>
