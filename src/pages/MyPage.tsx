@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ import {
   FolderInput,
   MessageSquare,
   FileText,
+  Video,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
@@ -54,6 +56,7 @@ import { VideoFilterSort, SortOption } from "@/components/VideoFilterSort";
 import { BulkEditDialog } from "@/components/BulkEditDialog";
 import { BulkMoveToDirectoryDialog } from "@/components/BulkMoveToDirectoryDialog";
 import { SubscribedCreatorRow } from "@/components/SubscribedCreatorRow";
+import { MyCommunityActivity } from "@/components/MyCommunityActivity";
 import { DateRange } from "react-day-picker";
 
 interface Profile {
@@ -143,6 +146,8 @@ const genders = [
 export default function MyPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "videos");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
@@ -1361,11 +1366,32 @@ export default function MyPage() {
             </CardContent>
           </Card>
 
-          {/* Videos Section */}
-          <div className="md:col-span-2 space-y-6">
-            <div className="space-y-3">
-              <h2 className="text-2xl font-bold">내 작품</h2>
-              <div className="flex items-center gap-2 flex-wrap">
+          {/* Tabs Section */}
+          <div className="md:col-span-2">
+            <Tabs 
+              value={activeTab} 
+              onValueChange={(value) => {
+                setActiveTab(value);
+                setSearchParams({ tab: value });
+              }}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="videos" className="flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  작품 관리
+                </TabsTrigger>
+                <TabsTrigger value="community" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  커뮤니티 활동
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="videos" className="space-y-6">
+                {/* Videos Section */}
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-bold">내 작품</h2>
+                  <div className="flex items-center gap-2 flex-wrap">
                 <Button asChild size="sm">
                   <a href="/upload">
                     <Upload className="mr-2 h-4 w-4" />새 작품
@@ -1474,321 +1500,327 @@ export default function MyPage() {
                     </AlertDialog>
                   </>
                 )}
-              </div>
-            </div>
-
-            {/* Filter and Sort Controls */}
-            <VideoFilterSort
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              searchQuery={searchQuery}
-              onSearchQueryChange={setSearchQuery}
-              categoryFilter={categoryFilter}
-              onCategoryFilterChange={setCategoryFilter}
-              aiSolutionFilter={aiSolutionFilter}
-              onAiSolutionFilterChange={setAiSolutionFilter}
-              directoryFilter={directoryFilter}
-              onDirectoryFilterChange={setDirectoryFilter}
-              directories={userDirectories}
-              publicPromptFilter={publicPromptFilter}
-              onPublicPromptFilterChange={setPublicPromptFilter}
-            />
-
-            {filteredAndSortedVideos.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    {videos.length === 0 
-                      ? "아직 업로드된 작품이 없습니다" 
-                      : "조건에 맞는 작품이 없습니다"}
-                  </p>
-                  {videos.length === 0 && (
-                    <Button asChild>
-                      <a href="/upload">당신의 첫 작품을 업로드 하세요</a>
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                {/* Select All Checkboxes */}
-                <div className="flex items-center gap-6 pb-2">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="select-all-videos"
-                      checked={allCurrentPageSelected}
-                      onCheckedChange={handleSelectAll}
-                    />
-                    <label htmlFor="select-all-videos" className="text-sm font-medium leading-none cursor-pointer">
-                      현재 페이지 전체 선택
-                    </label>
                   </div>
-                  {filteredAndSortedVideos.length > worksPerPage && (
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="select-all-pages"
-                        checked={allVideosSelected}
-                        onCheckedChange={handleSelectAllPages}
-                      />
-                      <label htmlFor="select-all-pages" className="text-sm font-medium leading-none cursor-pointer">
-                        모든 페이지 전체 선택 ({filteredAndSortedVideos.length}개)
-                      </label>
-                    </div>
-                  )}
                 </div>
 
-                <div className="space-y-3">
-                  {currentPageVideos.map((video) => (
-                    <MyVideoCard
-                      key={video.id}
-                      video={video}
-                      isSelected={selectedVideos.has(video.id)}
-                      onSelect={handleToggleVideoSelect}
-                      onEdit={handleEditVideo}
-                      onDelete={handleDeleteVideo}
-                      onTogglePromptVisibility={handleTogglePromptVisibility}
-                    />
-                  ))}
-                </div>
+                {/* Filter and Sort Controls */}
+                <VideoFilterSort
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  searchQuery={searchQuery}
+                  onSearchQueryChange={setSearchQuery}
+                  categoryFilter={categoryFilter}
+                  onCategoryFilterChange={setCategoryFilter}
+                  aiSolutionFilter={aiSolutionFilter}
+                  onAiSolutionFilterChange={setAiSolutionFilter}
+                  directoryFilter={directoryFilter}
+                  onDirectoryFilterChange={setDirectoryFilter}
+                  directories={userDirectories}
+                  publicPromptFilter={publicPromptFilter}
+                  onPublicPromptFilterChange={setPublicPromptFilter}
+                />
 
-                {/* Pagination Controls */}
-                {filteredAndSortedVideos.length > worksPerPage && (
-                  <div className="flex items-center justify-center gap-2 pt-4">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setWorkPage((prev) => Math.max(1, prev - 1))}
-                      disabled={workPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.ceil(filteredAndSortedVideos.length / worksPerPage) }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={workPage === page ? "default" : "outline"}
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setWorkPage(page)}
-                        >
-                          {page}
+                {filteredAndSortedVideos.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <p className="text-muted-foreground mb-4">
+                        {videos.length === 0 
+                          ? "아직 업로드된 작품이 없습니다" 
+                          : "조건에 맞는 작품이 없습니다"}
+                      </p>
+                      {videos.length === 0 && (
+                        <Button asChild>
+                          <a href="/upload">당신의 첫 작품을 업로드 하세요</a>
                         </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {/* Select All Checkboxes */}
+                    <div className="flex items-center gap-6 pb-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="select-all-videos"
+                          checked={allCurrentPageSelected}
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <label htmlFor="select-all-videos" className="text-sm font-medium leading-none cursor-pointer">
+                          현재 페이지 전체 선택
+                        </label>
+                      </div>
+                      {filteredAndSortedVideos.length > worksPerPage && (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="select-all-pages"
+                            checked={allVideosSelected}
+                            onCheckedChange={handleSelectAllPages}
+                          />
+                          <label htmlFor="select-all-pages" className="text-sm font-medium leading-none cursor-pointer">
+                            모든 페이지 전체 선택 ({filteredAndSortedVideos.length}개)
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      {currentPageVideos.map((video) => (
+                        <MyVideoCard
+                          key={video.id}
+                          video={video}
+                          isSelected={selectedVideos.has(video.id)}
+                          onSelect={handleToggleVideoSelect}
+                          onEdit={handleEditVideo}
+                          onDelete={handleDeleteVideo}
+                          onTogglePromptVisibility={handleTogglePromptVisibility}
+                        />
                       ))}
                     </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setWorkPage((prev) => Math.min(Math.ceil(filteredAndSortedVideos.length / worksPerPage), prev + 1))}
-                      disabled={workPage === Math.ceil(filteredAndSortedVideos.length / worksPerPage)}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
 
-        {/* Directory Section */}
-        <div className="mt-8">
-          <DirectoryManager itemsPerPage={4} />
-        </div>
-
-        <Separator className="my-8" />
-
-        {/* Favorites Section */}
-        <div className="mt-8 space-y-6">
-          <h2 className="text-2xl font-bold">즐겨찾기</h2>
-
-          {favoriteVideos.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">즐겨찾기한 영상이 없습니다</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {favoriteVideos
-                  .slice((favoritesPage - 1) * favoritesPerPage, favoritesPage * favoritesPerPage)
-                  .map((video) => (
-                    <VideoCard key={video.id} video={video} />
-                  ))}
-              </div>
-
-              {/* Favorites Pagination */}
-              {favoriteVideos.length > favoritesPerPage && (
-                <div className="flex items-center justify-center gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setFavoritesPage((prev) => Math.max(1, prev - 1))}
-                    disabled={favoritesPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.ceil(favoriteVideos.length / favoritesPerPage) }, (_, i) => i + 1).map(
-                      (page) => (
+                    {/* Pagination Controls */}
+                    {filteredAndSortedVideos.length > worksPerPage && (
+                      <div className="flex items-center justify-center gap-2 pt-4">
                         <Button
-                          key={page}
-                          variant={favoritesPage === page ? "default" : "outline"}
+                          variant="outline"
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setFavoritesPage(page)}
+                          onClick={() => setWorkPage((prev) => Math.max(1, prev - 1))}
+                          disabled={workPage === 1}
                         >
-                          {page}
+                          <ChevronLeft className="h-4 w-4" />
                         </Button>
-                      ),
-                    )}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      setFavoritesPage((prev) =>
-                        Math.min(Math.ceil(favoriteVideos.length / favoritesPerPage), prev + 1),
-                      )
-                    }
-                    disabled={favoritesPage === Math.ceil(favoriteVideos.length / favoritesPerPage)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <Separator className="my-8" />
-
-        {/* Subscriptions Section */}
-        <div className="mt-8 space-y-6">
-          <div className="flex items-center gap-2">
-            <Users className="h-6 w-6" />
-            <h2 className="text-2xl font-bold">구독 중인 크리에이터</h2>
-            <span className="text-muted-foreground text-lg">({subscriptions.length})</span>
-          </div>
-
-          <SubscribedCreatorRow
-            subscriptions={subscriptions}
-            onUnsubscribe={loadSubscriptions}
-            loading={subscriptionsLoading}
-          />
-        </div>
-
-        <Separator className="my-8" />
-
-        {/* My Replies Section */}
-        <div className="mt-8 space-y-6">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-6 w-6" />
-            <h2 className="text-2xl font-bold">내가 작성한 댓글</h2>
-            <span className="text-muted-foreground text-lg">({totalRepliesCount})</span>
-          </div>
-
-          {myRepliesLoading ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-              </CardContent>
-            </Card>
-          ) : myReplies.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">작성한 댓글이 없습니다</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {(showAllReplies ? myReplies : myReplies.slice(0, 5)).map((reply) => (
-                <Card
-                  key={reply.id}
-                  className="cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => navigate(`/video/${reply.video_id}?commentId=${reply.id}`)}
-                >
-                  <CardContent className="py-4">
-                    <div className="flex gap-4">
-                      {reply.video_thumbnail && (
-                        <img
-                          src={reply.video_thumbnail}
-                          alt={reply.video_title}
-                          className="w-24 h-16 object-cover rounded flex-shrink-0"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-muted-foreground mb-1 truncate">
-                          {reply.video_title}
-                        </p>
-                        {reply.parent_id && reply.parent_content && (
-                          <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 mb-1 line-clamp-1">
-                            <span
-                              className="text-primary hover:underline cursor-pointer font-medium"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (reply.parent_user_id) {
-                                  navigate(`/profile/${reply.parent_user_id}`);
-                                }
-                              }}
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.ceil(filteredAndSortedVideos.length / worksPerPage) }, (_, i) => i + 1).map((page) => (
+                            <Button
+                              key={page}
+                              variant={workPage === page ? "default" : "outline"}
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setWorkPage(page)}
                             >
-                              @{reply.parent_user_name}
-                            </span>
-                            님의 댓글에 대한 답글: '{reply.parent_content}'
+                              {page}
+                            </Button>
+                          ))}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setWorkPage((prev) => Math.min(Math.ceil(filteredAndSortedVideos.length / worksPerPage), prev + 1))}
+                          disabled={workPage === Math.ceil(filteredAndSortedVideos.length / worksPerPage)}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Directory Section */}
+                <div className="mt-8">
+                  <DirectoryManager itemsPerPage={4} />
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* Favorites Section */}
+                <div className="mt-8 space-y-6">
+                  <h2 className="text-2xl font-bold">즐겨찾기</h2>
+
+                  {favoriteVideos.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-12 text-center">
+                        <p className="text-muted-foreground">즐겨찾기한 영상이 없습니다</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {favoriteVideos
+                          .slice((favoritesPage - 1) * favoritesPerPage, favoritesPage * favoritesPerPage)
+                          .map((video) => (
+                            <VideoCard key={video.id} video={video} />
+                          ))}
+                      </div>
+
+                      {/* Favorites Pagination */}
+                      {favoriteVideos.length > favoritesPerPage && (
+                        <div className="flex items-center justify-center gap-2 pt-4">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setFavoritesPage((prev) => Math.max(1, prev - 1))}
+                            disabled={favoritesPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.ceil(favoriteVideos.length / favoritesPerPage) }, (_, i) => i + 1).map(
+                              (page) => (
+                                <Button
+                                  key={page}
+                                  variant={favoritesPage === page ? "default" : "outline"}
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => setFavoritesPage(page)}
+                                >
+                                  {page}
+                                </Button>
+                              ),
+                            )}
                           </div>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() =>
+                              setFavoritesPage((prev) =>
+                                Math.min(Math.ceil(favoriteVideos.length / favoritesPerPage), prev + 1),
+                              )
+                            }
+                            disabled={favoritesPage === Math.ceil(favoriteVideos.length / favoritesPerPage)}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* Subscriptions Section */}
+                <div className="mt-8 space-y-6">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-6 w-6" />
+                    <h2 className="text-2xl font-bold">구독 중인 크리에이터</h2>
+                    <span className="text-muted-foreground text-lg">({subscriptions.length})</span>
+                  </div>
+
+                  <SubscribedCreatorRow
+                    subscriptions={subscriptions}
+                    onUnsubscribe={loadSubscriptions}
+                    loading={subscriptionsLoading}
+                  />
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* My Replies Section */}
+                <div className="mt-8 space-y-6">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-6 w-6" />
+                    <h2 className="text-2xl font-bold">내가 작성한 댓글</h2>
+                    <span className="text-muted-foreground text-lg">({totalRepliesCount})</span>
+                  </div>
+
+                  {myRepliesLoading ? (
+                    <Card>
+                      <CardContent className="py-12 text-center">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                      </CardContent>
+                    </Card>
+                  ) : myReplies.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-12 text-center">
+                        <p className="text-muted-foreground">작성한 댓글이 없습니다</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-3">
+                      {(showAllReplies ? myReplies : myReplies.slice(0, 5)).map((reply) => (
+                        <Card
+                          key={reply.id}
+                          className="cursor-pointer hover:bg-accent/50 transition-colors"
+                          onClick={() => navigate(`/video/${reply.video_id}?commentId=${reply.id}`)}
+                        >
+                          <CardContent className="py-4">
+                            <div className="flex gap-4">
+                              {reply.video_thumbnail && (
+                                <img
+                                  src={reply.video_thumbnail}
+                                  alt={reply.video_title}
+                                  className="w-24 h-16 object-cover rounded flex-shrink-0"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-muted-foreground mb-1 truncate">
+                                  {reply.video_title}
+                                </p>
+                                {reply.parent_id && reply.parent_content && (
+                                  <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 mb-1 line-clamp-1">
+                                    <span
+                                      className="text-primary hover:underline cursor-pointer font-medium"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (reply.parent_user_id) {
+                                          navigate(`/profile/${reply.parent_user_id}`);
+                                        }
+                                      }}
+                                    >
+                                      @{reply.parent_user_name}
+                                    </span>
+                                    님의 댓글에 대한 답글: '{reply.parent_content}'
+                                  </div>
+                                )}
+                                <p className="text-sm line-clamp-2">{reply.content}</p>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  {new Date(reply.created_at).toLocaleDateString("ko-KR", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+
+                      <div className="flex justify-center gap-2 pt-2">
+                        {!showAllReplies && myReplies.length > 5 && (
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowAllReplies(true)}
+                          >
+                            전체 보기 ({myReplies.length}개)
+                          </Button>
                         )}
-                        <p className="text-sm line-clamp-2">{reply.content}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(reply.created_at).toLocaleDateString("ko-KR", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </p>
+                        {showAllReplies && myReplies.length > 5 && (
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowAllReplies(false)}
+                          >
+                            접기
+                          </Button>
+                        )}
+                        {showAllReplies && hasMoreReplies && (
+                          <Button
+                            variant="outline"
+                            onClick={loadMoreReplies}
+                            disabled={loadingMoreReplies}
+                          >
+                            {loadingMoreReplies ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                로딩 중...
+                              </>
+                            ) : (
+                              `더 불러오기`
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  )}
+                </div>
+              </TabsContent>
 
-              <div className="flex justify-center gap-2 pt-2">
-                {!showAllReplies && myReplies.length > 5 && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAllReplies(true)}
-                  >
-                    전체 보기 ({myReplies.length}개)
-                  </Button>
-                )}
-                {showAllReplies && myReplies.length > 5 && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAllReplies(false)}
-                  >
-                    접기
-                  </Button>
-                )}
-                {showAllReplies && hasMoreReplies && (
-                  <Button
-                    variant="outline"
-                    onClick={loadMoreReplies}
-                    disabled={loadingMoreReplies}
-                  >
-                    {loadingMoreReplies ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        로딩 중...
-                      </>
-                    ) : (
-                      `더 불러오기`
-                    )}
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
+              <TabsContent value="community">
+                <MyCommunityActivity />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
 
