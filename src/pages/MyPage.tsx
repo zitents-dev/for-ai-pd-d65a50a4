@@ -253,16 +253,47 @@ export default function MyPage() {
   // Name change alert state
   const [nameChangeAlertOpen, setNameChangeAlertOpen] = useState(false);
 
+  // Stats card collapsible state (persisted in localStorage)
+  const [statsOpen, setStatsOpen] = useState(() => {
+    const stored = localStorage.getItem('mypage-stats-open');
+    return stored !== null ? stored === 'true' : true;
+  });
+
   // Profile card collapsible state (persisted in localStorage)
   const [profileOpen, setProfileOpen] = useState(() => {
     const stored = localStorage.getItem('mypage-profile-open');
     return stored !== null ? stored === 'true' : true;
   });
 
-  // Persist profile collapsed state
+  // Persist collapsed states
+  useEffect(() => {
+    localStorage.setItem('mypage-stats-open', String(statsOpen));
+  }, [statsOpen]);
+
   useEffect(() => {
     localStorage.setItem('mypage-profile-open', String(profileOpen));
   }, [profileOpen]);
+
+  // Keyboard shortcuts for collapsing sections
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        setStatsOpen(prev => !prev);
+      } else if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        setProfileOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -1344,53 +1375,64 @@ export default function MyPage() {
       </div>
 
       <div className="container px-4 py-8 max-w-6xl mx-auto space-y-6">
-        {/* Quick Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Video className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.totalVideos}</p>
-                <p className="text-sm text-muted-foreground">작품</p>
-              </div>
-            </div>
+        {/* Quick Stats Section (collapsible) */}
+        <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CardTitle>통계</CardTitle>
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">S</span>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${statsOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Video className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.totalVideos}</p>
+                      <p className="text-sm text-muted-foreground">작품</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-blue-500/10">
+                      <Play className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.totalViews.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">조회수</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-green-500/10">
+                      <ThumbsUp className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.totalLikes.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">좋아요</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-purple-500/10">
+                      <Users className="h-5 w-5 text-purple-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.subscriberCount.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">구독자</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Play className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.totalViews.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">조회수</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <ThumbsUp className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.totalLikes.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">좋아요</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <Users className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.subscriberCount.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">구독자</p>
-              </div>
-            </div>
-          </Card>
-        </div>
+        </Collapsible>
 
         {/* Profile Card - Private Info (moved to top, collapsible) */}
         <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
@@ -1400,6 +1442,7 @@ export default function MyPage() {
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg px-2 py-1 -ml-2">
                     <CardTitle>프로필 정보</CardTitle>
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">P</span>
                     <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </CollapsibleTrigger>
