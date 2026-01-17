@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
 import {
   ArrowLeft,
   ThumbsUp,
@@ -52,6 +54,8 @@ import {
   Award,
   History,
   ChevronDown,
+  FileText,
+  Pencil,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -794,13 +798,42 @@ const CommunityPost = () => {
 
           {/* Answer Input */}
           <div className="mb-6">
-            <Textarea
-              placeholder={user ? "답변을 입력하세요..." : "답변을 작성하려면 로그인이 필요합니다."}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              rows={3}
-              disabled={!user}
-            />
+            <Tabs defaultValue="write" className="w-full">
+              <TabsList className="mb-2">
+                <TabsTrigger value="write" className="gap-1">
+                  <Pencil className="w-3 h-3" />
+                  작성
+                </TabsTrigger>
+                <TabsTrigger value="preview" className="gap-1">
+                  <FileText className="w-3 h-3" />
+                  미리보기
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="write" className="mt-0">
+                <Textarea
+                  placeholder={user ? "답변을 입력하세요... (마크다운 지원)" : "답변을 작성하려면 로그인이 필요합니다."}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  rows={5}
+                  disabled={!user}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  **굵게**, *기울임*, `코드`, - 목록, # 제목 등 마크다운 문법을 사용할 수 있습니다.
+                </p>
+              </TabsContent>
+              <TabsContent value="preview" className="mt-0">
+                <div className="min-h-[120px] p-3 border rounded-md bg-muted/30">
+                  {newComment.trim() ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
+                      <ReactMarkdown>{newComment}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">미리보기할 내용이 없습니다.</p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
             <div className="flex justify-end mt-2">
               <Button
                 onClick={handleSubmitComment}
@@ -921,7 +954,9 @@ const CommunityPost = () => {
                               )}
                             </div>
                           </div>
-                          <p className="text-sm mt-2 whitespace-pre-wrap">{comment.content}</p>
+                          <div className="prose prose-sm dark:prose-invert max-w-none mt-2 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
+                            <ReactMarkdown>{comment.content}</ReactMarkdown>
+                          </div>
                           
                           {/* Edit History */}
                           {editHistories[comment.id]?.length > 0 && (
@@ -990,19 +1025,48 @@ const CommunityPost = () => {
 
       {/* Edit Comment Dialog */}
       <Dialog open={!!editingComment} onOpenChange={(open) => !open && setEditingComment(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>답변 수정</DialogTitle>
             <DialogDescription>
-              답변 내용을 수정하세요. 수정 이력은 저장됩니다.
+              답변 내용을 수정하세요. 수정 이력은 저장됩니다. 마크다운을 지원합니다.
             </DialogDescription>
           </DialogHeader>
-          <Textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            rows={5}
-            placeholder="답변 내용을 입력하세요..."
-          />
+          <Tabs defaultValue="write" className="w-full">
+            <TabsList className="mb-2">
+              <TabsTrigger value="write" className="gap-1">
+                <Pencil className="w-3 h-3" />
+                작성
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-1">
+                <FileText className="w-3 h-3" />
+                미리보기
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="write" className="mt-0">
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={8}
+                placeholder="답변 내용을 입력하세요... (마크다운 지원)"
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                **굵게**, *기울임*, `코드`, - 목록, # 제목 등 마크다운 문법을 사용할 수 있습니다.
+              </p>
+            </TabsContent>
+            <TabsContent value="preview" className="mt-0">
+              <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-3 border rounded-md bg-muted/30">
+                {editContent.trim() ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
+                    <ReactMarkdown>{editContent}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">미리보기할 내용이 없습니다.</p>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingComment(null)}>
               취소
