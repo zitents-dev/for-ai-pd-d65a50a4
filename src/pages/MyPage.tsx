@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ import {
   MessageSquare,
   FileText,
   Video,
+  ChevronDown,
 } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { MyVideoCard } from "@/components/MyVideoCard";
@@ -240,6 +242,9 @@ export default function MyPage() {
 
   // Name change alert state
   const [nameChangeAlertOpen, setNameChangeAlertOpen] = useState(false);
+
+  // Profile card collapsible state
+  const [profileOpen, setProfileOpen] = useState(true);
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -1285,87 +1290,96 @@ export default function MyPage() {
       </div>
 
       <div className="container px-4 py-8 max-w-6xl mx-auto space-y-6">
-        {/* Profile Card - Private Info (moved to top) */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>프로필 정보</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <EditableField
-                label="이메일"
-                value={email}
-                setValue={setEmail}
-                fieldName="email"
-                isEditing={editingEmail}
-                setIsEditing={setEditingEmail}
-                showField={showEmail}
-                setShowField={setShowEmail}
-                showFieldName="show_email"
-              />
+        {/* Profile Card - Private Info (moved to top, collapsible) */}
+        <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <CardTitle>프로필 정보</CardTitle>
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <EditableField
+                    label="이메일"
+                    value={email}
+                    setValue={setEmail}
+                    fieldName="email"
+                    isEditing={editingEmail}
+                    setIsEditing={setEditingEmail}
+                    showField={showEmail}
+                    setShowField={setShowEmail}
+                    showFieldName="show_email"
+                  />
 
-              <EditableField
-                label="생년월일"
-                value={birthday}
-                setValue={setBirthday}
-                fieldName="birthday"
-                isEditing={editingBirthday}
-                setIsEditing={setEditingBirthday}
-                showField={showBirthday}
-                setShowField={setShowBirthday}
-                showFieldName="show_birthday"
-                type="date"
-              />
+                  <EditableField
+                    label="생년월일"
+                    value={birthday}
+                    setValue={setBirthday}
+                    fieldName="birthday"
+                    isEditing={editingBirthday}
+                    setIsEditing={setEditingBirthday}
+                    showField={showBirthday}
+                    setShowField={setShowBirthday}
+                    showFieldName="show_birthday"
+                    type="date"
+                  />
 
-              <EditableField
-                label="성별"
-                value={gender}
-                setValue={setGender}
-                fieldName="gender"
-                isEditing={editingGender}
-                setIsEditing={setEditingGender}
-                showField={showGender}
-                setShowField={setShowGender}
-                showFieldName="show_gender"
-                type="select"
-                options={genders}
-              />
+                  <EditableField
+                    label="성별"
+                    value={gender}
+                    setValue={setGender}
+                    fieldName="gender"
+                    isEditing={editingGender}
+                    setIsEditing={setEditingGender}
+                    showField={showGender}
+                    setShowField={setShowGender}
+                    showFieldName="show_gender"
+                    type="select"
+                    options={genders}
+                  />
 
-              <EditableField
-                label="거주 국가"
-                value={country}
-                setValue={setCountry}
-                fieldName="country"
-                isEditing={editingCountry}
-                setIsEditing={setEditingCountry}
-                showField={showCountry}
-                setShowField={setShowCountry}
-                showFieldName="show_country"
-                type="select"
-                options={countries.map((c) => ({ value: c, label: c }))}
-              />
+                  <EditableField
+                    label="거주 국가"
+                    value={country}
+                    setValue={setCountry}
+                    fieldName="country"
+                    isEditing={editingCountry}
+                    setIsEditing={setEditingCountry}
+                    showField={showCountry}
+                    setShowField={setShowCountry}
+                    showFieldName="show_country"
+                    type="select"
+                    options={countries.map((c) => ({ value: c, label: c }))}
+                  />
 
-              <div className="md:col-span-2 lg:col-span-2">
-                <EditableField
-                  label="코멘트"
-                  value={bio}
-                  setValue={setBio}
-                  fieldName="bio"
-                  isEditing={editingBio}
-                  setIsEditing={setEditingBio}
-                  isTextarea
-                />
-              </div>
-            </div>
+                  <div className="md:col-span-2 lg:col-span-2">
+                    <EditableField
+                      label="코멘트"
+                      value={bio}
+                      setValue={setBio}
+                      fieldName="bio"
+                      isEditing={editingBio}
+                      setIsEditing={setEditingBio}
+                      isTextarea
+                    />
+                  </div>
+                </div>
 
-            <div className="mt-4 flex justify-end">
-              <Button variant="outline" onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                로그 아웃
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="mt-4 flex justify-end">
+                  <Button variant="outline" onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    로그 아웃
+                  </Button>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Tabs Section */}
         <Tabs
