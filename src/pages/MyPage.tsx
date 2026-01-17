@@ -1403,10 +1403,28 @@ export default function MyPage() {
                     <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </CollapsibleTrigger>
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  로그 아웃
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      로그 아웃
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>로그아웃</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        정말 로그아웃 하시겠습니까?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSignOut}>
+                        로그 아웃
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardHeader>
             <CollapsibleContent>
